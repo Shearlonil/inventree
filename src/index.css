@@ -1,6 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Rubik+Doodle+Shadow&family=Rubik+Mono+One&family=Rubik:ital,wght@0,300..900;1,300..900&family=Space+Grotesk:wght@300..700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=Work+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 
-
+* {
+  margin: 0;
+  padding: 0;
+}
+p{
+  margin: 0 !important;
+}
 
 h1,
 h2,
@@ -18,21 +24,17 @@ h6 {
 
 p,button{
   font-family: "Work Sans", sans-serif !important;
-  font-optical-sizing: auto;
+  /* font-optical-sizing: auto; */
   /* font-weight: <weight>; */
-  font-style: normal;
+  /* font-style: normal; */
 
 }
-
-.work-sans {
-  font-family: "Work Sans", sans-serif;
-  font-optical-sizing: auto;
-  /* font-weight: <weight>; */
-  font-style: normal;
+span{
+  font-family: inherit;
 }
 
 .space-grotesk{
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Space Grotesk", sans-serif !important;
   font-optical-sizing: auto;
   /* font-weight: <weight>; */
   font-style: normal;
@@ -40,32 +42,20 @@ p,button{
 
 
 .space-mono-regular {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
+  font-family: "Space Mono", monospace !important;
+  /* font-weight: 400; */
   font-style: normal;
 }
 
 .space-mono-bold {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
+  font-family: "Space Mono", monospace !important;
+  /* font-weight: 700; */
   font-style: normal;
-}
-
-.space-mono-regular-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.space-mono-bold-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  font-style: italic;
 }
 
 
 .bricolage-grotesque {
-  font-family: "Bricolage Grotesque", sans-serif;
+  font-family: "Bricolage Grotesque", sans-serif !important;
   font-optical-sizing: auto;
   /* font-weight: <weight>; */
   font-style: normal;
@@ -74,13 +64,13 @@ p,button{
 }
 
 .rubik-mono-one-regular {
-  font-family: "Rubik Mono One", monospace;
+  font-family: "Rubik Mono One", monospace !important;
   font-weight: 400;
   font-style: normal;
 }
 
 .rubik{
-  font-family: "Rubik", sans-serif;
+  font-family: "Rubik", sans-serif !important;
   font-optical-sizing: auto;
   /* font-weight: <weight>; */
   font-style: normal;
@@ -88,7 +78,7 @@ p,button{
 
 
 .rubik-doodle-shadow-regular {
-  font-family: "Rubik Doodle Shadow", system-ui;
+  font-family: "Rubik Doodle Shadow", system-ui !important;
   font-weight: 400;
   font-style: normal;
 }
