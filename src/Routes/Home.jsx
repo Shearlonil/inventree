@@ -11,7 +11,7 @@ import { TiVendorAndroid } from "react-icons/ti";
 import { MdSell } from "react-icons/md";
 
 const Home = () => {
-	const { svg_1, svg_2, svg_3_red, svg_3_yellow } = SVG;
+	const { svg_1, svg_2, svg_3_red, svg_3_yellow, svg_4 } = SVG;
 
 	return (
 		<HomeWrapper>
@@ -146,7 +146,7 @@ const Home = () => {
 									Outpost Management.
 								</p>
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									Ceate, manage & track items.
+									Create, manage & track items.
 								</p>
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
 									Outpost are like branches & with{" "}
@@ -163,7 +163,7 @@ const Home = () => {
 				<div className="child-2 my-4">
 					<div className="row">
 						<div className="col-12 col-sm-6 my-2 my-sm-auto" id="branch">
-							<h4 className="fw-normal text-center">Vendor Management</h4>
+							<h4 className="fw-normal text-center mb-3">Vendor Management</h4>
 							<div className="d-flex flex-column gap-2 list-group">
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
 									You can keep track of transactions with your Vendors without
@@ -181,35 +181,26 @@ const Home = () => {
 					</div>
 				</div>
 
-				{/* <div className="child-1 mb-4">
+				<div className="child-1 mb-4">
 					<div className="row">
 						<div className="col-12 col-sm-6 my-2">
 							<img
-								src={svg_2}
+								src={svg_4}
 								style={{ width: "80vh", maxWidth: "100%", maxHeight: "400px" }}
 								alt=""
 							/>
 						</div>
-						<div className="col-12 col-sm-6 my-2" id="branch">
-							<h4 className="fw-normal text-center">Branch</h4>
+						<div className="col-12 col-sm-6 my-2 my-sm-auto" id="branch">
+							<h4 className="fw-normal text-center mb-3">Wallet Management.</h4>
 							<div className="d-flex flex-column gap-2 list-group">
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									Outpost Management.
-								</p>
-								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									Ceate, manage & track items.
-								</p>
-								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									Outpost are like branches & with{" "}
-									<span className="bg-info-subtle px-1 rounded space-mono-regular small">
-										Inventree
-									</span>{" "}
-									you can create.
+									Customer can trust you with their money and use it later to
+									purchase items.
 								</p>
 							</div>
 						</div>
 					</div>
-				</div> */}
+				</div>
 			</div>
 		</HomeWrapper>
 	);
