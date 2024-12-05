@@ -22,7 +22,7 @@ h6 {
 
 }
 
-p,button{
+p,button, td, label{
   font-family: "Work Sans", sans-serif !important;
   /* font-optical-sizing: auto; */
   /* font-weight: <weight>; */

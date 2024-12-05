@@ -46,10 +46,10 @@ function NavBar() {
 						<Nav.Link
 							onClick={() => {
 								handleNavSelect();
-								navigate("/about");
+								navigate("/cashier-window");
 							}}
 						>
-							About
+							Cashier Window
 						</Nav.Link>
 						<NavDropdown title="Dropdown" id="basic-nav-dropdown">
 							<NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
