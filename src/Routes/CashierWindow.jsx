@@ -74,7 +74,7 @@ const CashierWindow = () => {
 					</h5>
 				</div>
 			</div>
-			<div className="container">
+			<div className="container bg-secondary-subtle p-1 rounded-4">
 				<div className="border border-primary rounded-3 p-3">
 					<h3 className="text-primary">Customer Details</h3>
 					<div className="row mb-2 align-items-center">
@@ -119,7 +119,7 @@ const CashierWindow = () => {
 
 					<div className="row mb-2">
 						<div className="col-4">
-							<p className="text-center">
+							<p className=" text-end">
 								<HiMiniWallet size={25} />
 							</p>
 						</div>
@@ -137,6 +137,7 @@ const CashierWindow = () => {
 								<Form.Check
 									type="checkbox"
 									value="yes"
+									className="shadow-sm p-0 m-0"
 									id="deduct_wallet_discount_from_payment"
 									name="deduct_wallet_discount_from_payment"
 								/>
@@ -146,8 +147,126 @@ const CashierWindow = () => {
 					</div>
 
 					<div className="row mb-2">
-						<div className="col-12 col-sm-4"></div>
-						<div className="col-12 col-sm-8"></div>
+						<div className="col-12 col-sm-4">
+							<p className="text-sm-end h5">Payment Mode:</p>
+						</div>
+						<div className="col-12 col-sm-8">
+							<div className="d-flex gap-3 flex-wrap mt-2">
+								<div className="d-flex flex-column gap-3">
+									<label
+										className="d-flex gap-2 fw-bold"
+										htmlFor="payment_mode_cash"
+									>
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="payment_mode_cash"
+											name="payment_mode_cash"
+										/>
+										Cash
+									</label>
+									<input
+										type="number"
+										className="form-control"
+										id="payment_mode_cash_amount"
+										placeholder="0"
+									/>
+								</div>
+								<div className="d-flex flex-column gap-3">
+									<label
+										className="d-flex gap-2 fw-bold"
+										htmlFor="payment_mode_transfer"
+									>
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="payment_mode_transfer"
+											name="payment_mode_transfer"
+										/>
+										Transfer
+									</label>
+									<input
+										type="number"
+										className="form-control"
+										id="payment_mode_transfer_amount"
+										placeholder="0"
+									/>
+								</div>
+								<div className="d-flex flex-column gap-3">
+									<label
+										className="d-flex gap-2 fw-bold"
+										htmlFor="payment_mode_pos_atm"
+									>
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="payment_mode_pos_atm"
+											name="payment_mode_pos_atm"
+										/>
+										POS/ATM
+									</label>
+									<input
+										type="number"
+										className="form-control"
+										id="payment_mode_pos_atm_amount"
+										placeholder="0"
+									/>
+								</div>
+
+								<div className="d-flex flex-column gap-3">
+									<label
+										className="d-flex gap-2 fw-bold"
+										htmlFor="payment_mode_wallet"
+									>
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="payment_mode_wallet"
+											name="payment_mode_wallet"
+										/>
+										Wallet
+									</label>
+									<input
+										type="number"
+										className="form-control"
+										id="payment_mode_wallet_amount"
+										placeholder="0"
+									/>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div className="d-flex justify-content-between align-items-center p-3">
+					<div>
+						<label className="d-flex gap-2" htmlFor="print_receipt">
+							<Form.Check
+								type="checkbox"
+								value="yes"
+								className="shadow-sm p-0 m-0"
+								id="print_receipt"
+								name="print_receipt"
+							/>
+							Print Receipt
+						</label>
+					</div>
+					<div className="d-flex gap-3">
+						<button
+							className="btn btn-danger rounded-pill"
+							style={{ width: "160px" }}
+						>
+							Cancel
+						</button>
+						<button
+							className="btn btn-success rounded-pill"
+							style={{ width: "160px" }}
+						>
+							OK
+						</button>
 					</div>
 				</div>
 			</div>
