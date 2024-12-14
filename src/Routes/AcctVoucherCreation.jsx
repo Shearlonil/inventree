@@ -17,7 +17,7 @@ const AcctVoucherCreation = () => {
 			<h3 className="text-center my-3 fw-bold">Request Voucher</h3>
 			<div className="container">
 				<div className="row p-3 rounded-2 my-3 py-4 border shadow">
-					<div className="col-4">
+					<div className="col-12 col-md-4 my-3">
 						<div className="d-flex flex-column gap-3">
 							<Select
 								required
@@ -69,7 +69,7 @@ const AcctVoucherCreation = () => {
 							<button className="btn btn-success rounded-1">Next</button>
 						</div>
 					</div>
-					<div className="col-8 border bg-light">
+					<div className="col-12 col-md-8 border bg-light my-3">
 						<Table className="rounded-2" striped hover responsive>
 							<thead>
 								<tr className="shadow-sm">
@@ -93,7 +93,7 @@ const AcctVoucherCreation = () => {
 						</Table>
 					</div>
 				</div>
-				<div className="d-flex flex-end justify-content-end gap-5">
+				<div className="d-flex flex-end justify-content-end gap-5 p-3">
 					<div className="text-center">
 						<p className="fw-bold">Total Debit</p>
 						<h5>0.00</h5>
