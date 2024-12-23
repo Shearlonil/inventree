@@ -1,6 +1,5 @@
 import React from "react";
 import { Form, Table } from "react-bootstrap";
-import { Controller } from "react-hook-form";
 import Select from "react-select";
 
 const AcctVoucherCreation = () => {
