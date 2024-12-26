@@ -143,11 +143,11 @@ const MonoTransaction = () => {
 				</div>
 			</div>
 			{/*  */}
-			<div className="container my-4 text-center">
+			<div className="container my-5 text-center d-flex flex-column align-items-center gap-3">
 				<h2 className="mb-2">
 					Total (N): <span className="text-danger">9560.00</span>
 				</h2>
-				<div className="d-flex justify-content-center align-items-center gap-4">
+				<div className="d-flex justify-content-center align-items-center gap-3">
 					<input
 						type="number"
 						className="form-control"
@@ -158,190 +158,199 @@ const MonoTransaction = () => {
 
 					<Form.Check type="radio" label="N" value="unit" name="invoice_disc" />
 					<Form.Check type="radio" label="%" value="perc" name="invoice_disc" />
-					<div className="btn btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+					<div className="btn btn-lg btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
 						<BiPlus />
 					</div>
-					<div className="btn btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+					<div className="btn btn-lg btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
 						<BiMinus />
 					</div>
+				</div>
+				<div>
+					<p>
+						(N):
+						<span className="text-warning">0</span>
+					</p>
 				</div>
 			</div>
 			{/*  */}
 			<div className="container">
-				<div className="border bg-secondary-subtle p-3 rounded-4">
+				<div className="border bg-secondary-subtle rounded-3 shadow">
 					<div className="row">
-						<div className="col-7 border border-2 border-primary rounded-2">
-							<h3 className="text-primary mt-3">Customer Details</h3>
-							<div
-								className="d-flex flex-column gap-4"
-								style={{ minHeight: "300px" }}
-							>
-								<div className="row mb-2 align-items-center">
-									<div className="col-12 col-sm-4">
-										<p className="text-sm-end h5">Search By:</p>
-									</div>
-									<div className="col-12 col-sm-8">
-										<Form.Group className="my-2">
-											<div className="pe-3">
-												<div className="d-flex gap-5">
-													<Form.Check
-														type="radio"
-														label="Name"
-														value="name"
-														name="search_param"
-													/>
-													<Form.Check
-														type="radio"
-														label="Card NO."
-														value="card_no"
-														name="search_param"
-													/>
+						<div className="col-12 col-xl-7 my-2">
+							<div className="border border-2 border-primary rounded-2 p-2">
+								<h4 className="text-primary mt-3 fw-bold">Customer Details</h4>
+								<div
+									className="d-flex flex-column gap-4"
+									style={{ minHeight: "300px" }}
+								>
+									<div className="row mb-2 align-items-center">
+										<div className="col-12 col-sm-4">
+											<p className="text-sm-end h5">Search By:</p>
+										</div>
+										<div className="col-12 col-sm-8">
+											<Form.Group className="my-2">
+												<div className="pe-3">
+													<div className="d-flex gap-5">
+														<Form.Check
+															type="radio"
+															label="Name"
+															value="name"
+															name="search_param"
+														/>
+														<Form.Check
+															type="radio"
+															label="Card NO."
+															value="card_no"
+															name="search_param"
+														/>
+													</div>
 												</div>
-											</div>
-										</Form.Group>
+											</Form.Group>
+										</div>
 									</div>
-								</div>
 
-								<div className="row mb-2">
-									<div className="col-4">
-										<p className="text-sm-end h5">Full Name:</p>
+									<div className="row mb-2">
+										<div className="col-4">
+											<p className="text-sm-end h5">Full Name:</p>
+										</div>
+										<div className="col-8">
+											<p className="text-success fw-bold">Customer</p>
+										</div>
 									</div>
-									<div className="col-8">
-										<p className="text-success fw-bold">Customer</p>
-									</div>
-								</div>
 
-								<div className="row mb-2">
-									<div className="col-4">
-										<p className=" text-end">
-											<HiMiniWallet size={25} />
-										</p>
-									</div>
-									<div className="col-8 d-flex flex-column gap-3">
-										<div className="d-flex gap-5">
-											<p className="text-danger">1100.00</p>
-											<p>
-												Disount {"(%)"}: <span className="text-success">0</span>
+									<div className="row mb-2">
+										<div className="col-4">
+											<p className=" text-end">
+												<HiMiniWallet size={25} />
 											</p>
 										</div>
+										<div className="col-8 d-flex flex-column gap-3">
+											<div className="d-flex gap-5">
+												<p className="text-danger">1100.00</p>
+												<p>
+													Disount {"(%)"}:{" "}
+													<span className="text-success">0</span>
+												</p>
+											</div>
+											<label
+												className="d-flex gap-2 text-success fw-bold"
+												htmlFor="deduct_wallet_discount_from_payment"
+											>
+												<Form.Check
+													type="checkbox"
+													value="yes"
+													className="shadow-sm p-0 m-0"
+													id="deduct_wallet_discount_from_payment"
+													name="deduct_wallet_discount_from_payment"
+												/>
+												deduct wallet discount from payment
+											</label>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						{/*  */}
+						<div className="col-12 col-xl-5 my-2">
+							<div className="border border-2 border-primary rounded-2 p-2">
+								<div className="row"></div>
+								<h4 className="text-primary mt-3">Payment Mode:</h4>
+								<div
+									className="d-flex gap-3 flex-wrap"
+									style={{ minHeight: "300px" }}
+								>
+									<div className="d-flex flex-column gap-3">
 										<label
-											className="d-flex gap-2 text-success fw-bold"
-											htmlFor="deduct_wallet_discount_from_payment"
+											className="d-flex gap-2 fw-bold"
+											htmlFor="payment_mode_cash"
 										>
 											<Form.Check
 												type="checkbox"
 												value="yes"
 												className="shadow-sm p-0 m-0"
-												id="deduct_wallet_discount_from_payment"
-												name="deduct_wallet_discount_from_payment"
+												id="payment_mode_cash"
+												name="payment_mode_cash"
 											/>
-											deduct wallet discount from payment
+											Cash
 										</label>
+										<input
+											type="number"
+											className="form-control"
+											id="payment_mode_cash_amount"
+											placeholder="0"
+										/>
 									</div>
-								</div>
-							</div>
-						</div>
+									<div className="d-flex flex-column gap-3">
+										<label
+											className="d-flex gap-2 fw-bold"
+											htmlFor="payment_mode_transfer"
+										>
+											<Form.Check
+												type="checkbox"
+												value="yes"
+												className="shadow-sm p-0 m-0"
+												id="payment_mode_transfer"
+												name="payment_mode_transfer"
+											/>
+											Transfer
+										</label>
+										<input
+											type="number"
+											className="form-control"
+											id="payment_mode_transfer_amount"
+											placeholder="0"
+										/>
+									</div>
+									<div className="d-flex flex-column gap-3">
+										<label
+											className="d-flex gap-2 fw-bold"
+											htmlFor="payment_mode_pos_atm"
+										>
+											<Form.Check
+												type="checkbox"
+												value="yes"
+												className="shadow-sm p-0 m-0"
+												id="payment_mode_pos_atm"
+												name="payment_mode_pos_atm"
+											/>
+											POS/ATM
+										</label>
+										<input
+											type="number"
+											className="form-control"
+											id="payment_mode_pos_atm_amount"
+											placeholder="0"
+										/>
+									</div>
 
-						{/*  */}
-						<div className="col-5">
-							<div className="row mb-2">
-								<div className="col-12 col-sm-4">
-									<p className="text-sm-end h5">Payment Mode:</p>
-								</div>
-								<div className="col-12 col-sm-8">
-									<div className="d-flex gap-3 flex-wrap mt-2">
-										<div className="d-flex flex-column gap-3">
-											<label
-												className="d-flex gap-2 fw-bold"
-												htmlFor="payment_mode_cash"
-											>
-												<Form.Check
-													type="checkbox"
-													value="yes"
-													className="shadow-sm p-0 m-0"
-													id="payment_mode_cash"
-													name="payment_mode_cash"
-												/>
-												Cash
-											</label>
-											<input
-												type="number"
-												className="form-control"
-												id="payment_mode_cash_amount"
-												placeholder="0"
+									<div className="d-flex flex-column gap-3">
+										<label
+											className="d-flex gap-2 fw-bold"
+											htmlFor="payment_mode_wallet"
+										>
+											<Form.Check
+												type="checkbox"
+												value="yes"
+												className="shadow-sm p-0 m-0"
+												id="payment_mode_wallet"
+												name="payment_mode_wallet"
 											/>
-										</div>
-										<div className="d-flex flex-column gap-3">
-											<label
-												className="d-flex gap-2 fw-bold"
-												htmlFor="payment_mode_transfer"
-											>
-												<Form.Check
-													type="checkbox"
-													value="yes"
-													className="shadow-sm p-0 m-0"
-													id="payment_mode_transfer"
-													name="payment_mode_transfer"
-												/>
-												Transfer
-											</label>
-											<input
-												type="number"
-												className="form-control"
-												id="payment_mode_transfer_amount"
-												placeholder="0"
-											/>
-										</div>
-										<div className="d-flex flex-column gap-3">
-											<label
-												className="d-flex gap-2 fw-bold"
-												htmlFor="payment_mode_pos_atm"
-											>
-												<Form.Check
-													type="checkbox"
-													value="yes"
-													className="shadow-sm p-0 m-0"
-													id="payment_mode_pos_atm"
-													name="payment_mode_pos_atm"
-												/>
-												POS/ATM
-											</label>
-											<input
-												type="number"
-												className="form-control"
-												id="payment_mode_pos_atm_amount"
-												placeholder="0"
-											/>
-										</div>
-
-										<div className="d-flex flex-column gap-3">
-											<label
-												className="d-flex gap-2 fw-bold"
-												htmlFor="payment_mode_wallet"
-											>
-												<Form.Check
-													type="checkbox"
-													value="yes"
-													className="shadow-sm p-0 m-0"
-													id="payment_mode_wallet"
-													name="payment_mode_wallet"
-												/>
-												Wallet
-											</label>
-											<input
-												type="number"
-												className="form-control"
-												id="payment_mode_wallet_amount"
-												placeholder="0"
-											/>
-										</div>
+											Wallet
+										</label>
+										<input
+											type="number"
+											className="form-control"
+											id="payment_mode_wallet_amount"
+											placeholder="0"
+										/>
 									</div>
 								</div>
 							</div>
 						</div>
 						{/*  */}
 					</div>
-					<div className="d-flex justify-content-between align-items-center p-3">
+					<div className="d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-center my-2 p-2">
 						<div>
 							<label className="d-flex gap-2" htmlFor="print_receipt">
 								<Form.Check
@@ -354,7 +363,7 @@ const MonoTransaction = () => {
 								Print Receipt
 							</label>
 						</div>
-						<div className="d-flex gap-3">
+						<div className="d-flex flex-column flex-sm-row gap-3">
 							<button
 								className="btn btn-danger rounded-pill"
 								style={{ width: "160px" }}
