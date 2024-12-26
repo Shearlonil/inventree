@@ -241,7 +241,7 @@ const CashierWindow = () => {
 						</div>
 					</div>
 				</div>
-				<div className="d-flex justify-content-between align-items-center p-3">
+				<div className="d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-center my-2 p-2">
 					<div>
 						<label className="d-flex gap-2" htmlFor="print_receipt">
 							<Form.Check
@@ -254,7 +254,7 @@ const CashierWindow = () => {
 							Print Receipt
 						</label>
 					</div>
-					<div className="d-flex gap-3">
+					<div className="d-flex flex-column flex-sm-row gap-3">
 						<button
 							className="btn btn-danger rounded-pill"
 							style={{ width: "160px" }}
