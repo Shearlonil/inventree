@@ -57,7 +57,7 @@ const MonoTransaction = () => {
 							type="radio"
 							label="Unit"
 							value="unit"
-							name="quan	tity_type"
+							name="quantity_type"
 							// checked={field.value === "babysitting"}
 							// onChange={(e) => field.onChange(e.target.value)}
 						/>
@@ -97,7 +97,7 @@ const MonoTransaction = () => {
 							type="radio"
 							label="%"
 							value="perc"
-							name="quantity_type"
+							name="discount"
 							// checked={field.value === "babysitting"}
 							// onChange={(e) => field.onChange(e.target.value)}
 						/>

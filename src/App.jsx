@@ -4,6 +4,7 @@ import Home from "./Routes/Home";
 import CashierWindow from "./Routes/CashierWindow";
 import AcctVoucherCreation from "./Routes/AcctVoucherCreation";
 import MonoTransaction from "./Routes/MonoTransaction";
+import Store from "./Routes/Store";
 
 function App() {
 	return (
@@ -16,6 +17,7 @@ function App() {
 					element={<AcctVoucherCreation />}
 				/>
 				<Route path={"/mono-transaction"} element={<MonoTransaction />} />
+				<Route path={"/store"} element={<Store />} />
 			</Routes>
 		</>
 	);
