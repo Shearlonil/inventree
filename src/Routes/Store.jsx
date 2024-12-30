@@ -19,8 +19,8 @@ const Store = () => {
 		<div className="d-flex flex-column flex-md-row vh-100">
 			{/* Sidebar for large screens */}
 			<aside
-				className="d-none d-md-block bg-light p-3"
-				style={{ width: "35%", overflowY: "auto" }}
+				className="d-none d-md-block bg-light p-3 shadow-sm"
+				style={{ width: "450px", overflowY: "auto" }}
 			>
 				<h5>Form Input</h5>
 				<StoreFormInputs />
