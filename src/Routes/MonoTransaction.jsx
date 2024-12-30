@@ -2,7 +2,7 @@ import React from "react";
 import { Form, Table } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { CgAdd } from "react-icons/cg";
-import { HiMiniWallet } from "react-icons/hi2";
+import { HiMiniWallet, HiUser } from "react-icons/hi2";
 import { IoAddSharp } from "react-icons/io5";
 import Select from "react-select";
 
@@ -15,22 +15,56 @@ const MonoTransaction = () => {
 		{ value: "others", label: "Others" },
 	];
 
+	const customerName = [
+		{ value: "olumide", label: "Olumide" },
+		{ value: "olumide", label: "Olumide" },
+		{ value: "olumide", label: "Olumide" },
+		{ value: "olumide", label: "Olumide" },
+		{ value: "olumide", label: "Olumide" },
+	];
+
+	const customStyles = {
+		control: (provided, state) => ({
+			...provided,
+			backgroundColor: "#ffffff",
+			borderColor: "#cecec8ca",
+			borderRadius: "2px",
+			padding: "10px 0px",
+			boxShadow: state.isFocused
+				? "0 0 0 0.25rem rgba(0, 123, 255, 0.25)"
+				: "none",
+			// "&:hover": {
+			// 	borderColor: "transparent",
+			// },
+			"&:focus": {
+				boxShadow: "0 0 0 0.25rem rgba(0, 123, 255, 0.25)",
+			},
+			width: "100%",
+			// height: "48px", // Match Bootstrap's default form control height
+			minHeight: "48px", // Ensures the minimum height is 38px
+		}),
+		dropdownIndicator: (provided) => ({
+			...provided,
+			color: "rgba(0, 123, 255, 0.75)", // customize color of the dropdown arrow
+		}),
+	};
+
 	return (
 		<>
 			<div className="container my-3 p-3 rounded bg-light shadow">
 				<div className="row mt-4 mb-3">
 					<div className="col-4 text-end">
-						<p className="h5">Product Name:</p>
+						<p className="h5">Product:</p>
 					</div>
 					<div className="col-8 d-flex flex-column gap-3">
 						<Select
 							required
 							placeholder="Select..."
-							className="shadow-sm"
+							className="shadow-sm col-12 col-md-6"
 							options={selectOption}
 							onChange={""}
 						/>
-						<div className="d-flex gap-5">
+						<div className="d-flex gap-3">
 							<p>
 								Unit (N): <span className="text-info fw-bold">{"0"}</span>
 							</p>
@@ -44,31 +78,33 @@ const MonoTransaction = () => {
 					<div className="col-4 text-end">
 						<p className="h5">Quantity:</p>
 					</div>
-					<div className="col-8 d-flex flex-column flex-sm-row gap-3 align-items-center">
-						<input
-							type="number"
-							className="form-control"
-							id="quantity_value"
-							placeholder="0"
-							style={{ width: "160px" }}
-						/>
-
-						<Form.Check
-							type="radio"
-							label="Unit"
-							value="unit"
-							name="quantity_type"
-							// checked={field.value === "babysitting"}
-							// onChange={(e) => field.onChange(e.target.value)}
-						/>
-						<Form.Check
-							type="radio"
-							label="Pack"
-							value="pack"
-							name="quantity_type"
-							// checked={field.value === "babysitting"}
-							// onChange={(e) => field.onChange(e.target.value)}
-						/>
+					<div className="col-8">
+						<div className="row">
+							<div className="col-12 col-md-6">
+								<input
+									type="number"
+									className="form-control"
+									id="quantity_value"
+									placeholder="0"
+								/>
+							</div>
+							<div className="col-12 col-md-6">
+								<div className="d-flex gap-3">
+									<Form.Check
+										type="radio"
+										label="Unit"
+										value="unit"
+										name="quantity_type"
+									/>
+									<Form.Check
+										type="radio"
+										label="Pack"
+										value="pack"
+										name="quantity_type"
+									/>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 
@@ -76,44 +112,47 @@ const MonoTransaction = () => {
 					<div className="col-4 text-end">
 						<p className="h5">Discount:</p>
 					</div>
-					<div className="col-8 d-flex flex-column flex-sm-row gap-3 align-items-center">
-						<input
-							type="number"
-							className="form-control"
-							id="dicount_amount"
-							placeholder="0"
-							style={{ width: "160px" }}
-						/>
-
-						<Form.Check
-							type="radio"
-							label="N"
-							value="unit"
-							name="discount"
-							// checked={field.value === "babysitting"}
-							// onChange={(e) => field.onChange(e.target.value)}
-						/>
-						<Form.Check
-							type="radio"
-							label="%"
-							value="perc"
-							name="discount"
-							// checked={field.value === "babysitting"}
-							// onChange={(e) => field.onChange(e.target.value)}
-						/>
+					<div className="col-8">
+						<div className="row">
+							<div className="col-12 col-md-6">
+								<input
+									type="number"
+									className="form-control"
+									id="quantity_value"
+									placeholder="0"
+								/>
+							</div>
+							<div className="col-12 col-md-6">
+								<div className="d-flex gap-3">
+									<Form.Check
+										type="radio"
+										label="N"
+										value="unit"
+										name="discount"
+									/>
+									<Form.Check
+										type="radio"
+										label="%"
+										value="perc"
+										name="discount"
+									/>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
+
 				<div className="d-flex">
-					<div className="btn btn-success ms-auto">
-						<span className="d-flex gap-2 align-items-center">
+					<button className="btn btn-outline-dark mx-auto">
+						<span className="d-flex gap-2 align-items-center px-4">
 							<IoAddSharp size={"25"} />
 							<span className="fs-5">Add</span>
 						</span>
-					</div>
+					</button>
 				</div>
 			</div>
 
-			<div className="container mt-4 p-3 shadow-sm border border-2 border-primary rounded-1">
+			<div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
 				<div className="border bg-light my-3">
 					<Table className="rounded-2" striped hover responsive>
 						<thead>
@@ -143,239 +182,158 @@ const MonoTransaction = () => {
 				</div>
 			</div>
 			{/*  */}
-			<div className="container my-5 text-center d-flex flex-column align-items-center gap-3">
+			<div className="container my-5 py-3 d-flex flex-column flex-lg-row justify-content-center align-items-center gap-5">
 				<h2 className="mb-2">
 					Total (N): <span className="text-danger">9560.00</span>
 				</h2>
-				<div className="d-flex justify-content-center align-items-center gap-3">
-					<input
-						type="number"
-						className="form-control"
-						id="discount_value"
-						placeholder="0"
-						style={{ width: "160px" }}
-					/>
-
-					<Form.Check type="radio" label="N" value="unit" name="invoice_disc" />
-					<Form.Check type="radio" label="%" value="perc" name="invoice_disc" />
-					<div className="btn btn-lg btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
-						<BiPlus />
+				<div className="border rounded shadow-sm p-3 my-2">
+					<h5>Add Invoice Discount</h5>
+					<div className="row">
+						<div className="col-12 col-md-4">
+							<input
+								type="number"
+								className="form-control"
+								id="discount_value"
+								placeholder="0"
+							/>
+						</div>
+						<div className="col-12 col-md-5 text-center my-2">
+							<div className="d-flex gap-4 align-items-center">
+								<Form.Check
+									type="radio"
+									label="N"
+									value="unit"
+									name="invoice_disc"
+								/>
+								<Form.Check
+									type="radio"
+									label="%"
+									value="perc"
+									name="invoice_disc"
+								/>
+								<div className="btn btn-lg btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+									<BiPlus />
+								</div>
+								<div className="btn btn-lg btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+									<BiMinus />
+								</div>
+							</div>
+						</div>
+						<div className="col-12 col-md-3 my-2">
+							<p className="h4">
+								(N):
+								<span className="text-success">456.00</span>
+							</p>
+						</div>
 					</div>
-					<div className="btn btn-lg btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
-						<BiMinus />
-					</div>
-				</div>
-				<div>
-					<p>
-						(N):
-						<span className="text-warning">0</span>
-					</p>
 				</div>
 			</div>
 			{/*  */}
-			<div className="container">
-				<div className="border bg-secondary-subtle rounded-3 shadow">
-					<div className="row">
-						<div className="col-12 col-xl-7 my-2">
-							<div className="border border-2 border-primary rounded-2 p-2">
-								<h4 className="text-primary mt-3 fw-bold">Customer Details</h4>
-								<div
-									className="d-flex flex-column gap-4"
-									style={{ minHeight: "300px" }}
-								>
-									<div className="row mb-2 align-items-center">
-										<div className="col-12 col-sm-4">
-											<p className="text-sm-end h5">Search By:</p>
-										</div>
-										<div className="col-12 col-sm-8">
-											<Form.Group className="my-2">
-												<div className="pe-3">
-													<div className="d-flex gap-5">
-														<Form.Check
-															type="radio"
-															label="Name"
-															value="name"
-															name="search_param"
-														/>
-														<Form.Check
-															type="radio"
-															label="Card NO."
-															value="card_no"
-															name="search_param"
-														/>
-													</div>
+			<div className="container mb-5">
+				<div className="border rounded-3 shadow">
+					<div
+						className="container bg-light border rounded-4 shadow-sm  p-3"
+						style={{ width: "100%", maxWidth: "1200px" }}
+					>
+						<h3 className="display-5 fw-bold">Customer Details</h3>
+
+						<div className="row mx-auto">
+							{/* Customer Profile Section */}
+							<div className="col-12 col-md-6 bg-success text-white p-4 d-flex flex-column align-items-center mb-3">
+								<div className="text-center mb-4">
+									<HiUser size={80} className="mb-3" />
+									<p>Customer Name: </p>
+									<h4>John Doe</h4>
+								</div>
+
+								{/* Wallet Info */}
+								<div className="mb-3 text-center">
+									<p className="fw-bold">
+										Wallet Balance:{" "}
+										<span className="text-warning h3">₦1100.00</span>
+									</p>
+									<p>
+										Discount: <span className="text-warning h3">0%</span>
+									</p>
+
+									<label
+										className="d-flex gap-2 text-light"
+										htmlFor="deduct_wallet_discount_from_payment"
+									>
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="deduct_wallet_discount_from_payment"
+											name="deduct_wallet_discount_from_payment"
+										/>
+										deduct wallet discount from payment
+									</label>
+								</div>
+							</div>
+
+							{/* Payment Section */}
+							<div className="col-12 col-md-5 mb-4">
+								<div className="mb-4">
+									<Select
+										required
+										styles={customStyles}
+										placeholder="Select Customer..."
+										className="shadow-sm"
+										options={customerName}
+										onChange={""}
+									/>
+								</div>
+								<h3 className="mb-3">Payment Mode</h3>
+								<div className="row payment-mode-cards mx-auto">
+									{["Cash", "Transfer", "POS/ATM", "Wallet"].map(
+										(mode, index) => (
+											<div key={index} className="col-6 p-2">
+												<div className="border p-3 rounded shadow-sm">
+													<Form.Check
+														type="checkbox"
+														label={mode}
+														className="fw-bold"
+													/>
+													<Form.Control
+														type="number"
+														placeholder="Enter Amount"
+													/>
 												</div>
-											</Form.Group>
-										</div>
-									</div>
-
-									<div className="row mb-2">
-										<div className="col-4">
-											<p className="text-sm-end h5">Full Name:</p>
-										</div>
-										<div className="col-8">
-											<p className="text-success fw-bold">Customer</p>
-										</div>
-									</div>
-
-									<div className="row mb-2">
-										<div className="col-4">
-											<p className=" text-end">
-												<HiMiniWallet size={25} />
-											</p>
-										</div>
-										<div className="col-8 d-flex flex-column gap-3">
-											<div className="d-flex gap-5">
-												<p className="text-danger">1100.00</p>
-												<p>
-													Disount {"(%)"}:{" "}
-													<span className="text-success">0</span>
-												</p>
 											</div>
-											<label
-												className="d-flex gap-2 text-success fw-bold"
-												htmlFor="deduct_wallet_discount_from_payment"
-											>
-												<Form.Check
-													type="checkbox"
-													value="yes"
-													className="shadow-sm p-0 m-0"
-													id="deduct_wallet_discount_from_payment"
-													name="deduct_wallet_discount_from_payment"
-												/>
-												deduct wallet discount from payment
-											</label>
-										</div>
-									</div>
+										)
+									)}
+									{/* </div> */}
+								</div>
+								<div className="mt-2">
+									<label className="d-flex gap-2" htmlFor="print_receipt">
+										<Form.Check
+											type="checkbox"
+											value="yes"
+											className="shadow-sm p-0 m-0"
+											id="print_receipt"
+											name="print_receipt"
+										/>
+										Print Receipt
+									</label>
 								</div>
 							</div>
 						</div>
-
-						{/*  */}
-						<div className="col-12 col-xl-5 my-2">
-							<div className="border border-2 border-primary rounded-2 p-2">
-								<div className="row"></div>
-								<h4 className="text-primary mt-3">Payment Mode:</h4>
-								<div
-									className="d-flex gap-3 flex-wrap"
-									style={{ minHeight: "300px" }}
+						<div className="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center my-2 p-2">
+							<div className="d-flex flex-column flex-sm-row gap-3">
+								<button
+									className="btn btn-lg btn-danger rounded-3"
+									style={{ width: "270px" }}
 								>
-									<div className="d-flex flex-column gap-3">
-										<label
-											className="d-flex gap-2 fw-bold"
-											htmlFor="payment_mode_cash"
-										>
-											<Form.Check
-												type="checkbox"
-												value="yes"
-												className="shadow-sm p-0 m-0"
-												id="payment_mode_cash"
-												name="payment_mode_cash"
-											/>
-											Cash
-										</label>
-										<input
-											type="number"
-											className="form-control"
-											id="payment_mode_cash_amount"
-											placeholder="0"
-										/>
-									</div>
-									<div className="d-flex flex-column gap-3">
-										<label
-											className="d-flex gap-2 fw-bold"
-											htmlFor="payment_mode_transfer"
-										>
-											<Form.Check
-												type="checkbox"
-												value="yes"
-												className="shadow-sm p-0 m-0"
-												id="payment_mode_transfer"
-												name="payment_mode_transfer"
-											/>
-											Transfer
-										</label>
-										<input
-											type="number"
-											className="form-control"
-											id="payment_mode_transfer_amount"
-											placeholder="0"
-										/>
-									</div>
-									<div className="d-flex flex-column gap-3">
-										<label
-											className="d-flex gap-2 fw-bold"
-											htmlFor="payment_mode_pos_atm"
-										>
-											<Form.Check
-												type="checkbox"
-												value="yes"
-												className="shadow-sm p-0 m-0"
-												id="payment_mode_pos_atm"
-												name="payment_mode_pos_atm"
-											/>
-											POS/ATM
-										</label>
-										<input
-											type="number"
-											className="form-control"
-											id="payment_mode_pos_atm_amount"
-											placeholder="0"
-										/>
-									</div>
-
-									<div className="d-flex flex-column gap-3">
-										<label
-											className="d-flex gap-2 fw-bold"
-											htmlFor="payment_mode_wallet"
-										>
-											<Form.Check
-												type="checkbox"
-												value="yes"
-												className="shadow-sm p-0 m-0"
-												id="payment_mode_wallet"
-												name="payment_mode_wallet"
-											/>
-											Wallet
-										</label>
-										<input
-											type="number"
-											className="form-control"
-											id="payment_mode_wallet_amount"
-											placeholder="0"
-										/>
-									</div>
-								</div>
+									Cancel
+								</button>
+								<button
+									className="btn btn-lg btn-success rounded-3"
+									style={{ width: "270px" }}
+								>
+									OK
+								</button>
 							</div>
-						</div>
-						{/*  */}
-					</div>
-					<div className="d-flex flex-column flex-sm-row gap-2 justify-content-between align-items-center my-2 p-2">
-						<div>
-							<label className="d-flex gap-2" htmlFor="print_receipt">
-								<Form.Check
-									type="checkbox"
-									value="yes"
-									className="shadow-sm p-0 m-0"
-									id="print_receipt"
-									name="print_receipt"
-								/>
-								Print Receipt
-							</label>
-						</div>
-						<div className="d-flex flex-column flex-sm-row gap-3">
-							<button
-								className="btn btn-danger rounded-pill"
-								style={{ width: "160px" }}
-							>
-								Cancel
-							</button>
-							<button
-								className="btn btn-success rounded-pill"
-								style={{ width: "160px" }}
-							>
-								OK
-							</button>
 						</div>
 					</div>
 				</div>
