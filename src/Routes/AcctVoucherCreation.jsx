@@ -1,5 +1,10 @@
 import React from "react";
 import { Form, Table } from "react-bootstrap";
+import { BiWindow } from "react-icons/bi";
+import { FaCashRegister, FaReceipt } from "react-icons/fa";
+import { RiReceiptFill } from "react-icons/ri";
+import { TbReceiptTax } from "react-icons/tb";
+import { VscLayoutActivitybarRight } from "react-icons/vsc";
 import Select from "react-select";
 
 const AcctVoucherCreation = () => {
@@ -13,7 +18,12 @@ const AcctVoucherCreation = () => {
 
 	return (
 		<>
-			<h3 className="text-center my-3 fw-bold">Request Voucher</h3>
+			<div className="text-center my-5">
+				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
+					<span className="me-4">Voucher</span>
+					<FaReceipt className="text-success" size={"30px"} />
+				</h2>
+			</div>
 			<div className="container">
 				<div className="row p-3 rounded-2 my-3 py-4 border shadow">
 					<div className="col-12 col-md-4 my-3">
@@ -104,13 +114,13 @@ const AcctVoucherCreation = () => {
 				</div>
 				<div className="d-flex flex-end justify-content-end gap-3">
 					<button
-						className="btn btn-danger rounded-pill py-1"
+						className="btn btn-danger rounded-3 py-1"
 						style={{ width: "7em" }}
 					>
 						Cancel
 					</button>
 					<button
-						className="btn btn-success rounded-pill py-1"
+						className="btn btn-success rounded-3 py-1"
 						style={{ width: "7em" }}
 					>
 						Ok

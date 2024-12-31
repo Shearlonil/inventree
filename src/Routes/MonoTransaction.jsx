@@ -1,7 +1,9 @@
 import React from "react";
 import { Form, Table } from "react-bootstrap";
+import { AiOutlineTransaction } from "react-icons/ai";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { CgAdd } from "react-icons/cg";
+import { GrTransaction } from "react-icons/gr";
 import { HiMiniWallet, HiUser } from "react-icons/hi2";
 import { IoAddSharp } from "react-icons/io5";
 import Select from "react-select";
@@ -51,6 +53,12 @@ const MonoTransaction = () => {
 
 	return (
 		<>
+			<div className="text-center my-5">
+				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
+					<span className="me-4">Transactions</span>
+					<GrTransaction className="text-black" size={"30px"} />
+				</h2>
+			</div>
 			<div className="container my-3 p-3 rounded bg-light shadow">
 				<div className="row mt-4 mb-3">
 					<div className="col-4 text-end">

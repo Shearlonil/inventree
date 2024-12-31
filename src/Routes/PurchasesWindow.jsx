@@ -1,11 +1,18 @@
 import React from "react";
 import { Table } from "react-bootstrap";
 import ReactMenu from "../Components/ReactMenu";
+import { FaReceipt } from "react-icons/fa";
 
 const PurchasesWindow = () => {
 	return (
 		<>
-			<div className="container">
+			<div className="text-center my-5">
+				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
+					<span className="me-4">Purchases</span>
+					<FaReceipt className="text-success" size={"30px"} />
+				</h2>
+			</div>
+			<div className="container-fluid px-2">
 				<Table id="myTable" striped bordered hover responsive>
 					<thead>
 						<tr>
@@ -30,21 +37,21 @@ const PurchasesWindow = () => {
 					<tbody>
 						{Array.from({ length: 10 }).map((_, index) => (
 							<tr key={index}>
-								<td>{index + 1}</td>
-								<td>Item A</td>
-								<td>4500</td>
-								<td>Unit</td>
-								<td>34</td>
-								<td>1</td>
-								<td>1</td>
-								<td>1</td>
-								<td>1</td>
-								<td>N/A</td>
-								<td>Pharmacy</td>
-								<td>4500000.00</td>
+								<td className="text-nowrap">{index + 1}</td>
+								<td className="text-nowrap">Item A</td>
+								<td className="text-nowrap">4500</td>
+								<td className="text-nowrap">Unit</td>
+								<td className="text-nowrap">34</td>
+								<td className="text-nowrap">1</td>
+								<td className="text-nowrap">1</td>
+								<td className="text-nowrap">1</td>
+								<td className="text-nowrap">1</td>
+								<td className="text-nowrap">N/A</td>
+								<td className="text-nowrap">Pharmacy</td>
+								<td className="text-nowrap">4500000.00</td>
 								<td className="text-nowrap">WORLDWIDE HEALTHCARE (GSK)</td>
-								<td>4500000.00</td>
-								<td>4500000.00</td>
+								<td className="text-nowrap">4500000.00</td>
+								<td className="text-nowrap">4500000.00</td>
 								<td>
 									<ReactMenu />
 								</td>

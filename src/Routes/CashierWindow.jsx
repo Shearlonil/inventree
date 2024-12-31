@@ -44,7 +44,7 @@ const CashierWindow = () => {
 	return (
 		<>
 			<div className="text-center mt-5">
-				<h2 className="my-4 text-center display-4 p-3 bg-light-subtle d-inline rounded-4 shadow">
+				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
 					<span className="me-4">Cashier</span>
 					<FaCashRegister className="text-success" size={"30px"} />
 				</h2>
@@ -80,7 +80,7 @@ const CashierWindow = () => {
 						id="myTable"
 						className="table-bordered table-striped shadow-sm"
 					>
-						<thead>
+						<thead className="my-1">
 							<tr>
 								<th>#</th>
 								<th>Product Name</th>
@@ -91,7 +91,7 @@ const CashierWindow = () => {
 						</thead>
 						<tbody>
 							{Array.from({ length: 10 }).map((_, index) => (
-								<tr key={index}>
+								<tr className="shadow" key={index}>
 									<td>{index + 1}</td>
 									<td>Huggies Pant Size 3 and 4 Jumbo</td>
 									<td>2.00</td>

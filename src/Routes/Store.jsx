@@ -9,7 +9,7 @@ import {
 	Table,
 } from "react-bootstrap";
 import Select from "react-select";
-import { BiLeftIndent } from "react-icons/bi";
+import { BiLeftIndent, BiStore, BiStoreAlt } from "react-icons/bi";
 import { RxPinLeft } from "react-icons/rx";
 import { CgMenuLeft } from "react-icons/cg";
 
@@ -17,6 +17,7 @@ import { CgMenuLeft } from "react-icons/cg";
 import StoreTable from "../Components/StoreComp/StoreTable";
 import StoreFormInputs from "../Components/StoreComp/StoreFormInputs";
 import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
+import { FaReceipt, FaStore, FaStoreAlt } from "react-icons/fa";
 
 const Store = () => {
 	const [show, setShow] = useState(false);
@@ -41,9 +42,15 @@ const Store = () => {
 				/>
 			</div>
 			<div className="container-fluid row">
+				<div className="text-center my-5">
+					<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
+						<span className="me-4">Store</span>
+						<FaStoreAlt className="text-black" size={"30px"} />
+					</h2>
+				</div>
 				{/* Sidebar for large screens */}
 				<aside
-					className="col-4 p-3 d-none d-md-block bg-light shadow-sm"
+					className="col-4 p-3 d-none d-md-block bg-light shadow-sm vh-100"
 					// style={{ width: "450px", overflowY: "auto" }}
 				>
 					<h5>Form Input</h5>

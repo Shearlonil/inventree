@@ -22,7 +22,7 @@ const Home = () => {
 				<div className="row">
 					<div className="col-12 col-md-6 my-auto">
 						<h1
-							className="space-mono-bold fw-bold display-5 mb-3"
+							className="space-mono-bold fw-bold display-6 mb-3"
 							style={{ textTransform: "capitalize" }}
 						>
 							Simple Smart Store App + Accounting Software for small businesses
