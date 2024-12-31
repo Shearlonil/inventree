@@ -5,6 +5,7 @@ import { HiMiniWallet, HiUser } from "react-icons/hi2";
 import "../Components/Styles/CashierWindow.css";
 import Select from "react-select";
 import { FaCashRegister } from "react-icons/fa";
+import ReactMenu from "../Components/ReactMenu";
 
 const CashierWindow = () => {
 	const customerName = [
@@ -85,6 +86,7 @@ const CashierWindow = () => {
 								<th>Product Name</th>
 								<th>Quantity</th>
 								<th>Amount</th>
+								<th>Options</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -94,6 +96,9 @@ const CashierWindow = () => {
 									<td>Huggies Pant Size 3 and 4 Jumbo</td>
 									<td>2.00</td>
 									<td>1050.00</td>
+									<td>
+										<ReactMenu />
+									</td>
 								</tr>
 							))}
 						</tbody>

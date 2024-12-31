@@ -5,7 +5,7 @@ const StoreTable = () => {
 	return (
 		<>
 			<h5>Table Data</h5>
-			<Table striped bordered hover responsive>
+			<Table id="myTable" striped bordered hover responsive>
 				<thead>
 					<tr>
 						<th>#</th>
@@ -26,11 +26,12 @@ const StoreTable = () => {
 					</tr>
 				</thead>
 				<tbody>
-					{Array.from({ length: 5 }).map(() => (
-						<tr>
+					{Array.from({ length: 10 }).map((_, index) => (
+						<tr key={index}>
+							<td>{index + 1}</td>
 							<td>1</td>
 							<td>Item A</td>
-							<td>45</td>
+							<td>4500</td>
 							<td>Unit</td>
 							<td>34</td>
 							<td>1</td>
@@ -39,10 +40,10 @@ const StoreTable = () => {
 							<td>1</td>
 							<td>N/A</td>
 							<td>Pharmacy</td>
-							<td>45</td>
-							<td>WORLDWIDE HEALTHCARE (GSK)</td>
-							<td>45</td>
-							<td>00</td>
+							<td>4500000.00</td>
+							<td className="text-nowrap">WORLDWIDE HEALTHCARE (GSK)</td>
+							<td>4500000.00</td>
+							<td>4500000.00</td>
 						</tr>
 					))}
 				</tbody>

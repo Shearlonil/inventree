@@ -50,7 +50,7 @@ const StoreFormInputs = () => {
 							/>
 							<Select
 								required
-								placeholder="Choose Store..."
+								placeholder="Package Unit..."
 								className="shadow-sm"
 								options={unitOption}
 								onChange={""}
@@ -76,7 +76,7 @@ const StoreFormInputs = () => {
 							<Form.Label>Exp Date:</Form.Label>
 						</Col>
 						<Col sm={"12"} md="8">
-							<Form.Control type="number" placeholder="0" />
+							<Form.Control type="date" placeholder="0" />
 						</Col>
 					</Row>
 				</Form.Group>
@@ -125,7 +125,7 @@ const StoreFormInputs = () => {
 				</Form.Group>
 
 				<Button variant="primary" type="submit">
-					Submit
+					Save
 				</Button>
 			</Form>
 		</>

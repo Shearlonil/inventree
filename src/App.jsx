@@ -6,6 +6,8 @@ import AcctVoucherCreation from "./Routes/AcctVoucherCreation";
 import MonoTransaction from "./Routes/MonoTransaction";
 import Store from "./Routes/Store";
 import Test from "./Routes/Test";
+// import EditProfilePage from "./Routes/ViewItemsDetails";
+import PurchasesWindow from "./Routes/PurchasesWindow";
 
 function App() {
 	return (
@@ -19,6 +21,7 @@ function App() {
 				/>
 				<Route path={"/mono-transaction"} element={<MonoTransaction />} />
 				<Route path={"/store"} element={<Store />} />
+				<Route path={"/purchases"} element={<PurchasesWindow />} />
 				<Route path={"/test"} element={<Test />} />
 			</Routes>
 		</>

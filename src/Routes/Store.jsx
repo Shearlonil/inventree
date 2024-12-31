@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Button, Col, Form, Offcanvas, Row, Table } from "react-bootstrap";
+import {
+	Button,
+	Col,
+	Form,
+	Modal,
+	Offcanvas,
+	Row,
+	Table,
+} from "react-bootstrap";
 import Select from "react-select";
 import { BiLeftIndent } from "react-icons/bi";
 import { RxPinLeft } from "react-icons/rx";
@@ -8,49 +16,56 @@ import { CgMenuLeft } from "react-icons/cg";
 //
 import StoreTable from "../Components/StoreComp/StoreTable";
 import StoreFormInputs from "../Components/StoreComp/StoreFormInputs";
+import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
 
 const Store = () => {
 	const [show, setShow] = useState(false);
 
+	const [showModal, setShowModal] = useState(false);
+
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
 
-	return (
-		<div className="d-flex flex-column flex-md-row vh-100">
-			{/* Sidebar for large screens */}
-			<aside
-				className="d-none d-md-block bg-light p-3 shadow-sm"
-				style={{ width: "450px", overflowY: "auto" }}
-			>
-				<h5>Form Input</h5>
-				<StoreFormInputs />
-			</aside>
+	const handleCloseModal = () => {
+		setShowModal(false);
+	};
+	const handleShowModal = () => setShowModal(true);
 
+	return (
+		<>
 			{/* Offcanvas Sidebar for small screens */}
 			<div>
-				<Button variant="dark" className="d-md-none m-2" onClick={handleShow}>
-					<div className="d-flex align-items-center gap-2">
-						{/* <BiLeftIndent /> */}
-						{/* <RxPinLeft /> */}
-						<CgMenuLeft />
-						<span>Item Menu</span>
-					</div>
-				</Button>
+				<MyOffcanvasMenu
+					handleShowModal={handleShowModal}
+					handleCloseModal={handleCloseModal}
+				/>
 			</div>
-			<Offcanvas show={show} onHide={handleClose}>
-				<Offcanvas.Header closeButton>
-					<Offcanvas.Title>Form Input</Offcanvas.Title>
-				</Offcanvas.Header>
-				<Offcanvas.Body>
+			<div className="container-fluid row">
+				{/* Sidebar for large screens */}
+				<aside
+					className="col-4 p-3 d-none d-md-block bg-light shadow-sm"
+					// style={{ width: "450px", overflowY: "auto" }}
+				>
+					<h5>Form Input</h5>
 					<StoreFormInputs />
-				</Offcanvas.Body>
-			</Offcanvas>
+				</aside>
 
-			{/* Main Content */}
-			<main className="flex-grow-1 p-3">
-				<StoreTable />
-			</main>
-		</div>
+				{/* Main Content */}
+				<main className="p-3 col-md-8 col-12">
+					<StoreTable />
+				</main>
+
+				<Modal show={showModal} onHide={handleCloseModal}>
+					<Modal.Header closeButton>
+						<Modal.Title>Add Item</Modal.Title>
+					</Modal.Header>
+					<Modal.Body>
+						<StoreFormInputs />
+					</Modal.Body>
+					<Modal.Footer></Modal.Footer>
+				</Modal>
+			</div>
+		</>
 	);
 };
 

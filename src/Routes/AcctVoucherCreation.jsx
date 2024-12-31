@@ -69,7 +69,7 @@ const AcctVoucherCreation = () => {
 						</div>
 					</div>
 					<div className="col-12 col-md-8 border bg-light my-3">
-						<Table className="rounded-2" striped hover responsive>
+						<Table id="myTable" className="rounded-2" striped hover responsive>
 							<thead>
 								<tr className="shadow-sm">
 									<th>Ledger</th>
