@@ -124,7 +124,7 @@ const StoreFormInputs = () => {
 					</Row>
 				</Form.Group>
 
-				<Button variant="primary" type="submit">
+				<Button className="w-75 mx-auto" variant="primary" type="submit">
 					Save
 				</Button>
 			</Form>

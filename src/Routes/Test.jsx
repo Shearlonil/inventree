@@ -1,12 +1,11 @@
 import React from "react";
-import { Button, Form, Table } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { HiUser } from "react-icons/hi2";
 import Select from "react-select";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import "../Components/Styles/test.css";
-import ReactMenu from "../Components/ReactMenu";
 
 const customStyles = {
 	control: (provided) => ({
@@ -175,46 +174,6 @@ const CashierDetails = () => {
 					</div>
 				</div>
 
-				<div className="table-container">
-					<Table id="myTable" className="table-bordered table-striped">
-						<thead>
-							<tr>
-								<th>#</th>
-								<th>Product Name</th>
-								<th>Quantity</th>
-								<th>Amount</th>
-								<th>Options</th>
-							</tr>
-						</thead>
-						<tbody>
-							{Array.from({ length: 10 }).map((_, index) => (
-								<tr key={index}>
-									<td>{index + 1}</td>
-									<td>Huggies Pant Size 3 and 4 Jumbo</td>
-									<td>2.00</td>
-									<td>1050.00</td>
-									<td>
-										<ReactMenu />
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</Table>
-				</div>
-
-				<div className="detached-section">
-					<h3 className="display-5 fw-bold">Customer Details</h3>
-					<div className="row mx-auto">
-						{/* Customer Profile Section */}
-						<div className="col-12 col-md-6 bg-success text-white p-4 d-flex flex-column align-items-center mb-3">
-							{/* Content */}
-						</div>
-
-						{/* Payment Section */}
-						<div className="col-12 col-md-5">{/* Content */}</div>
-					</div>
-				</div>
-				{/*  */}
 			</div>
 		</form>
 	);

@@ -1,21 +1,22 @@
 import React from "react";
-import { Button, Form, Table } from "react-bootstrap";
-import { BiSearch, BiWallet, BiWalletAlt } from "react-icons/bi";
-import { HiMiniWallet, HiUser } from "react-icons/hi2";
+import {  Form, Table } from "react-bootstrap";
+import { BiSearch } from "react-icons/bi";
+import {  HiUser } from "react-icons/hi2";
 import "../Components/Styles/CashierWindow.css";
 import Select from "react-select";
 import { FaCashRegister } from "react-icons/fa";
 import ReactMenu from "../Components/ReactMenu";
 
-const CashierWindow = () => {
-	const customerName = [
-		{ value: "olumide", label: "Olumide" },
-		{ value: "olumide", label: "Olumide" },
-		{ value: "olumide", label: "Olumide" },
-		{ value: "olumide", label: "Olumide" },
-		{ value: "olumide", label: "Olumide" },
-	];
+import { useForm, Controller } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { schema } from "../Utils/yup-schema-validator/store-schema";
 
+const customerName = [
+	{ value: "john_doe", label: "John Doe" },
+	{ value: "jane_doe", label: "Jane Doe" },
+	{ value: "mike_smith", label: "Mike Smith" },
+];
+const CashierWindow = () => {
 	const customStyles = {
 		control: (provided, state) => ({
 			...provided,
@@ -41,6 +42,29 @@ const CashierWindow = () => {
 			color: "rgba(0, 123, 255, 0.75)", // customize color of the dropdown arrow
 		}),
 	};
+
+	// React Hook Form setup
+	const {
+		handleSubmit,
+		register,
+		control,
+		formState: { errors },
+	} = useForm({
+		resolver: yupResolver(schema),
+		defaultValues: {
+			paymentModes: [
+				{ mode: "Cash", amount: 0 },
+				{ mode: "Transfer", amount: 0 },
+				{ mode: "POS/ATM", amount: 0 },
+				{ mode: "Wallet", amount: 0 },
+			],
+		},
+	});
+
+	const onSubmit = (data) => {
+		console.log("Form Submitted:", data);
+	};
+
 	return (
 		<>
 			<div className="text-center mt-5">
@@ -159,30 +183,58 @@ const CashierWindow = () => {
 					{/* Payment Section */}
 					<div className="col-12 col-md-5 mb-4">
 						<div className="mb-4">
-							<Select
-								required
-								styles={customStyles}
-								placeholder="Select Customer..."
-								className="shadow-sm"
-								options={customerName}
-								onChange={""}
+							<Controller
+								name="customer"
+								control={control}
+								render={({ field }) => (
+									<Select
+										{...field}
+										styles={customStyles}
+										placeholder="Select Customer..."
+										className={errors.customer ? "is-invalid" : ""}
+										options={customerName}
+									/>
+								)}
 							/>
+							{errors.customer && (
+								<div className="invalid-feedback d-block">
+									{errors.customer.message}
+								</div>
+							)}
 						</div>
+						{/*  */}
 						<h3 className="mb-3">Payment Mode</h3>
 						<div className="row payment-mode-cards mx-auto">
 							{["Cash", "Transfer", "POS/ATM", "Wallet"].map((mode, index) => (
 								<div key={index} className="col-6 p-2">
 									<div className="border p-3 rounded shadow-sm">
-										<Form.Check
-											type="checkbox"
-											label={mode}
-											className="fw-bold"
-										/>
-										<Form.Control type="number" placeholder="Enter Amount" />
+										<>
+											<Form.Check
+												className="py-3"
+												name="paymentMethod"
+												type="checkbox"
+												label={mode}
+												value={mode}
+												{...register("paymentMethod")}
+											/>
+											<Form.Control
+												type="number"
+												placeholder="Enter Amount"
+												className={
+													errors.paymentModes?.[index]?.amount
+														? "is-invalid"
+														: ""
+												}
+											/>
+											{errors.paymentModes?.[index]?.amount && (
+												<div className="invalid-feedback">
+													{errors.paymentModes[index].amount.message}
+												</div>
+											)}
+										</>
 									</div>
 								</div>
 							))}
-							{/* </div> */}
 						</div>
 						<div className="mt-2">
 							<label className="d-flex gap-2" htmlFor="print_receipt">
@@ -208,6 +260,7 @@ const CashierWindow = () => {
 						</button>
 						<button
 							className="btn btn-lg btn-success rounded-3"
+							onClick={handleSubmit(onSubmit)}
 							style={{ width: "270px" }}
 						>
 							OK

@@ -1,21 +1,20 @@
 import React, { useState } from "react";
-import { Offcanvas, Button, Nav, Navbar } from "react-bootstrap";
-import { BiMenu } from "react-icons/bi";
+import { Offcanvas, Button, Nav } from "react-bootstrap";
 import { CgMenuLeft } from "react-icons/cg";
+import { useLocation } from "react-router-dom";
 
-const OffcanvasMenu = ({ handleShowModal, handleCloseModal }) => {
+const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 	const [show, setShow] = useState(false);
 
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
+	const location = useLocation();
 
 	return (
 		<>
-			<Button variant="dark" className="d-md-none m-2" onClick={handleShow}>
+			<Button variant="dark" className="m-2" onClick={handleShow}>
 				<div className="d-flex align-items-center gap-2">
-					{/* <BiLeftIndent /> */}
-					{/* <RxPinLeft /> */}
-					<CgMenuLeft />
+					<CgMenuLeft size={"30px"} />
 				</div>
 			</Button>
 
@@ -33,22 +32,32 @@ const OffcanvasMenu = ({ handleShowModal, handleCloseModal }) => {
 						>
 							Show Popup Form
 						</Button>
-						<Nav.Link href="#home" className="mb-2" onClick={handleClose}>
-							Home
-						</Nav.Link>
-						<Nav.Link href="#about" className="mb-2" onClick={handleClose}>
-							About
-						</Nav.Link>
-						<Nav.Link href="#services" className="mb-2" onClick={handleClose}>
-							Services
-						</Nav.Link>
-						<Nav.Link href="#contact" className="mb-2" onClick={handleClose}>
-							Contact
-						</Nav.Link>
+
+						{menuItems &&
+							menuItems.map(({ label, path }) => (
+								<Nav.Link
+									href={`#${path}`}
+									className="mb-2"
+									onClick={handleClose}
+								>
+									{label}
+								</Nav.Link>
+							))}
+
+						{!menuItems &&
+							["Home", "About", "Services", "Contact"].map((menu) => (
+								<Nav.Link
+									href={`#${menu}`}
+									className="mb-2"
+									onClick={handleClose}
+								>
+									{menu}
+								</Nav.Link>
+							))}
 					</Nav>
 				</Offcanvas.Body>
 			</Offcanvas>
 		</>
 	);
 };
-export default OffcanvasMenu;
+export default MyOffcanvasMenu;

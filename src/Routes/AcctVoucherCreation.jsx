@@ -1,11 +1,14 @@
 import React from "react";
 import { Form, Table } from "react-bootstrap";
-import { BiWindow } from "react-icons/bi";
-import { FaCashRegister, FaReceipt } from "react-icons/fa";
-import { RiReceiptFill } from "react-icons/ri";
-import { TbReceiptTax } from "react-icons/tb";
-import { VscLayoutActivitybarRight } from "react-icons/vsc";
 import Select from "react-select";
+import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
+
+import { yupResolver } from "@hookform/resolvers/yup";
+import { Controller, useForm } from "react-hook-form";
+
+import { schema } from "../Utils/yup-schema-validator/voucher-creation-schema";
+import { FaReceipt } from "react-icons/fa";
+import ErrorMessage from "../Components/ErrorMessage";
 
 const AcctVoucherCreation = () => {
 	const selectOption = [
@@ -16,8 +19,19 @@ const AcctVoucherCreation = () => {
 		{ value: "others", label: "Others" },
 	];
 
+	const {
+		register,
+		handleSubmit,
+		control,
+		formState: { errors },
+	} = useForm({ resolver: yupResolver(schema) });
+
+	const onSubmit = (data) => {
+		console.log(data);
+	};
 	return (
 		<>
+			<MyOffcanvasMenu />
 			<div className="text-center my-5">
 				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
 					<span className="me-4">Voucher</span>
@@ -28,54 +42,72 @@ const AcctVoucherCreation = () => {
 				<div className="row p-3 rounded-2 my-3 py-4 border shadow">
 					<div className="col-12 col-md-4 my-3">
 						<div className="d-flex flex-column gap-3">
-							<Select
-								required
-								placeholder="Select..."
-								className="shadow-sm"
-								options={selectOption}
-								onChange={""}
+							<Controller
+								name="customer_name"
+								control={control}
+								render={({ field: { onChange } }) => (
+									<Select
+										required
+										name="customer_name"
+										placeholder="Select..."
+										className="text-dark "
+										options={selectOption}
+										onChange={(val) => onChange(val.value)}
+									/>
+								)}
 							/>
+
+							<ErrorMessage source={errors.customer_name} />
 							<p>
 								Current Bal:{" "}
 								<span className="text-danger fw-bold fs-5">-68.75</span>
 							</p>
-							<input
+							<Form.Control
+								required
+								id="invoiceInput"
 								type="text"
-								className="form-control"
-								id="invoiceInput"
 								placeholder="Description"
+								{...register("description")}
 							/>
-							<input
-								type="number"
-								className="form-control"
+							<ErrorMessage source={errors.description} />
+							<Form.Control
+								required
 								id="invoiceInput"
+								type="number"
 								placeholder="Amount"
+								{...register("amount")}
 							/>
+							<ErrorMessage source={errors.amount} />
 							<Form.Group className="my-2">
 								<div className="pe-3">
 									<label className="fw-bold mb-2">Mode</label>
 									<div className="d-flex gap-5">
 										<Form.Check
+											className="py-3"
+											name="mode"
 											type="radio"
 											label="Name"
 											value="name"
-											name="search_param"
-											// checked={field.value === "babysitting"}
-											// onChange={(e) => field.onChange(e.target.value)}
+											{...register("mode")}
 										/>
 										<Form.Check
+											className="py-3"
+											name="mode"
 											type="radio"
 											label="Card NO."
 											value="card_no"
-											name="search_param"
-											// checked={field.value === "childminding"}
-											// onChange={(e) => field.onChange(e.target.value)}
+											{...register("mode")}
 										/>
 									</div>
-									{/* <ErrorMessage source={errors.request_service} /> */}
+									<ErrorMessage source={errors.mode} />
 								</div>
 							</Form.Group>
-							<button className="btn btn-success rounded-1">Next</button>
+							<button
+								className="btn btn-success rounded-1"
+								onClick={handleSubmit(onSubmit)}
+							>
+								Next
+							</button>
 						</div>
 					</div>
 					<div className="col-12 col-md-8 border bg-light my-3">
@@ -89,15 +121,15 @@ const AcctVoucherCreation = () => {
 								</tr>
 							</thead>
 							<tbody>
-								<p>No content in table</p>
-								{/* {Array.from({ length: 10 }).map((_, index) => (
+								{/* <p>No content in table</p> */}
+								{Array.from({ length: 10 }).map((_, index) => (
 									<tr key={index}>
 										<td>1</td>
 										<td>Huggies Pant Size 3 and 4 Jumbo</td>
 										<td>2.00</td>
 										<td>1050.00</td>
 									</tr>
-								))} */}
+								))}
 							</tbody>
 						</Table>
 					</div>

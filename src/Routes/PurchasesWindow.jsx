@@ -2,10 +2,13 @@ import React from "react";
 import { Table } from "react-bootstrap";
 import ReactMenu from "../Components/ReactMenu";
 import { FaReceipt } from "react-icons/fa";
+import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
+import { purchasesSubMenu } from "../../data";
 
 const PurchasesWindow = () => {
 	return (
 		<>
+			<MyOffcanvasMenu menuItems={purchasesSubMenu} />
 			<div className="text-center my-5">
 				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
 					<span className="me-4">Purchases</span>

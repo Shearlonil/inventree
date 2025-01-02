@@ -13,8 +13,8 @@ const ReactMenu = () => {
 			}
 			transition
 		>
-			{["Cut", "Copy", "Paste"].map((menuName) => (
-				<MenuItem>{menuName}</MenuItem>
+			{["Cut", "Copy", "Paste"].map((menuName, index) => (
+				<MenuItem key={index}>{menuName}</MenuItem>
 			))}
 			<SubMenu label="Edit">
 				<MenuItem>Cut</MenuItem>

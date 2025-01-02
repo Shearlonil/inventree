@@ -5,6 +5,8 @@ const SVG = {
 	svg_3_yellow: new URL("./Svg/svg_3_yellow.svg", import.meta.url).href,
 	svg_3_red: new URL("./Svg/svg_3_red.svg", import.meta.url).href,
 	svg_4: new URL("./Svg/svg_4.svg", import.meta.url).href,
+	Finance_1: new URL("./Svg/undraw_statistic-chart_6s7z.svg", import.meta.url)
+		.href,
 };
 
 export default SVG;
