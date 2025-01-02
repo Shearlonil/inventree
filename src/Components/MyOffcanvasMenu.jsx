@@ -24,14 +24,16 @@ const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 				</Offcanvas.Header>
 				<Offcanvas.Body>
 					<Nav className="flex-column">
-						<Button
-							onClick={() => {
-								handleShowModal();
-								handleClose();
-							}}
-						>
-							Show Popup Form
-						</Button>
+						{location.pathname === "/store" && (
+							<Button
+								onClick={() => {
+									handleShowModal();
+									handleClose();
+								}}
+							>
+								Show Popup Form
+							</Button>
+						)}
 
 						{menuItems &&
 							menuItems.map(({ label, path }) => (

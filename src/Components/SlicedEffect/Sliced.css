@@ -2,8 +2,8 @@
   box-sizing: border-box;
 }
 :root {
-  --background-color: black;
-  --text-color: hsl(0, 0%, 100%);
+  /* --background-color: black; */
+  --text-color: hsl(0, 0%, 10%);
 }
 body {
   margin: 0;
@@ -11,17 +11,21 @@ body {
 .wrapper {
   display: grid;
   place-content: center;
-  background-color: var(--background-color);
-  min-height: 100vh;
+  /* background-color: var(--background-color); */
+  height: 100%; /* Adjust height based on content */
   font-family: "Oswald", sans-serif;
-  font-size: clamp(1.5rem, 1rem + 18vw, 15rem);
+  font-size: clamp(1.5rem, 5vw, 6rem); /* Reduce font scaling */
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--text-color);
+  color: rgb(90, 90, 90);
+  padding: 1rem; /* Adds spacing inside the wrapper */
+  max-width: 100%; /* Ensures wrapper doesn't overflow screen width */
+  overflow: hidden; /* Prevents any accidental overflow */
 }
 
 .wrapper > div {
   grid-area: 1/1/-1/-1;
+  text-align: center; /* Align text to prevent layout breaking */
 }
 .top {
   clip-path: polygon(0% 0%, 100% 0%, 100% 48%, 0% 58%);

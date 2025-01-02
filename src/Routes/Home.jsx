@@ -7,6 +7,7 @@ import { TbUsersGroup } from "react-icons/tb";
 import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdSell } from "react-icons/md";
+import Sliced from "../Components/SlicedEffect/Sliced";
 
 const Home = () => {
 	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
@@ -16,7 +17,7 @@ const Home = () => {
 			<div className="container-fluid bg-secondary-subtle">
 				<div className="container-md mb-4 p-4 rounded">
 					<h2 className="space-mono-regular mb-2 px-1 d-inline-block rounded display-4">
-						Inventree
+						<Sliced>Inventree</Sliced>
 					</h2>
 					<div className="row">
 						<div className="col-12 col-md-6 my-auto">

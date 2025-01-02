@@ -85,6 +85,14 @@ function NavBar() {
 						>
 							Purchases Window
 						</Nav.Link>
+						<Nav.Link
+							onClick={() => {
+								handleNavSelect();
+								navigate("/finance");
+							}}
+						>
+							Finance
+						</Nav.Link>
 						<NavDropdown title="Dropdown" id="basic-nav-dropdown">
 							<NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
 							<NavDropdown.Item href="#action/3.2">

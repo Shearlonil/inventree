@@ -24,5 +24,22 @@ const storeSubMenu = [
 	{ label: "Link 2", path: "/Edit" },
 	{ label: "Link 3", path: "/file" },
 ];
+const storeOption = [
+	{ value: "pharmarcy", label: "Pharmarcy" },
+	{ value: "hotel", label: "Hotel" },
+	{ value: "superMarket", label: "SuperMarket" },
+];
+const unitOption = [
+	{ value: "kg", label: "KG" },
+	{ value: "ton", label: "TON" },
+	{ value: "gram", label: "Gram(s)" },
+];
 
-export { selectOption, customerName, purchasesSubMenu, storeSubMenu };
+export {
+	selectOption,
+	customerName,
+	purchasesSubMenu,
+	storeSubMenu,
+	storeOption,
+	unitOption,
+};
