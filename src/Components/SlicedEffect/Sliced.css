@@ -3,7 +3,7 @@
 }
 :root {
   /* --background-color: black; */
-  --text-color: hsl(0, 0%, 10%);
+  --text-color: hwb(0 7% 93%);
 }
 body {
   margin: 0;
@@ -14,10 +14,10 @@ body {
   /* background-color: var(--background-color); */
   height: 100%; /* Adjust height based on content */
   font-family: "Oswald", sans-serif;
-  font-size: clamp(1.5rem, 5vw, 6rem); /* Reduce font scaling */
+  font-size: clamp(1.5rem, 6vw, 6rem); /* Reduce font scaling */
   font-weight: 700;
   text-transform: uppercase;
-  color: rgb(90, 90, 90);
+  color: rgb(31, 31, 31);
   padding: 1rem; /* Adds spacing inside the wrapper */
   max-width: 100%; /* Ensures wrapper doesn't overflow screen width */
   overflow: hidden; /* Prevents any accidental overflow */
