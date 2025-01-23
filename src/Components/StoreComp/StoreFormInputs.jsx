@@ -3,10 +3,10 @@ import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import ErrorMessage from "../ErrorMessage";
 
-import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
 import { storeOption, unitOption } from "../../../data";
+import { yupResolver } from '@hookform/resolvers/yup';
 
 const StoreFormInputs = () => {
 	const {
