@@ -1,17 +1,17 @@
 import * as yup from "yup";
-import { unitOption } from "../../../data";
+import { packagingOptions } from "../../../data";
 
 const schema = yup.object().shape({
 	store: yup.string().required("Select a store"),
 	item_name: yup.string().required("Item name required!"),
-	tot_qty: yup
+	total_qty: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
 	package_unit: yup
 		.object()
 		.required("Select an option")
-		.oneOf(unitOption, "Invalid method selected"),
+		.oneOf(packagingOptions, "Invalid selection"),
 	qty_package: yup
 		.number()
 		.positive("Amount must be positive")

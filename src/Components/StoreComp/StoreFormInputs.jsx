@@ -5,7 +5,7 @@ import ErrorMessage from "../ErrorMessage";
 
 import { Controller, useForm } from "react-hook-form";
 import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
-import { storeOption, unitOption } from "../../../data";
+import { storeOption, packagingOptions, purchasesOptions } from "../../../data";
 import { yupResolver } from '@hookform/resolvers/yup';
 
 const StoreFormInputs = () => {
@@ -42,7 +42,7 @@ const StoreFormInputs = () => {
 
 				<ErrorMessage source={errors.store} />
 
-				<h3 className="mt-3">Item Properties</h3>
+				<h5 className="mt-3">Item Properties</h5>
 
 				<Form.Group className="mb-3" controlId="item_name">
 					<Row>
@@ -68,12 +68,12 @@ const StoreFormInputs = () => {
 							<div className="col-6">
 								<Form.Control
 									type="number"
-									placeholder="Item Name"
-									{...register("tot_qty")}
+									placeholder="0"
+									{...register("total_qty")}
 								/>
-								<ErrorMessage source={errors.tot_qty} />
+								<ErrorMessage source={errors.total_qty} />
 							</div>
-							<div className="col-6">
+							<div className="col-6 p-0">
 								<Controller
 									name="package_unit"
 									control={control}
@@ -81,9 +81,9 @@ const StoreFormInputs = () => {
 										<Select
 											required
 											name="package_unit"
-											placeholder="Package Unit..."
+											placeholder="Unit..."
 											className="text-dark col-12"
-											options={unitOption}
+											options={packagingOptions}
 											onChange={(val) => onChange(val)}
 										/>
 									)}
@@ -181,6 +181,50 @@ const StoreFormInputs = () => {
 							/>
 							<ErrorMessage source={errors.package_sales} />
 						</Col>
+					</Row>
+				</Form.Group>
+
+				<h5 className="mt-3">Vendor</h5>
+
+				<Controller
+					name="vendor"
+					control={control}
+					render={({ field: { onChange } }) => (
+						<Select
+							required
+							name="vendor"
+							placeholder="Choose Vendor..."
+							className="text-dark col-12"
+							options={storeOption}
+							onChange={(val) => onChange(val.value)}
+						/>
+					)}
+				/>
+				<Form.Group className="mb-3 mt-3" controlId="purchases_mode">
+					<Row>
+						<div className="row">
+							<div className="col-6">
+								<Form.Label>Purchases Mode</Form.Label>
+							</div>
+							<div className="col-6 p-0">
+								<Controller
+									name="purchases_mode"
+									control={control}
+									render={({ field: { onChange } }) => (
+										<Select
+											required
+											name="purchases_mode"
+											placeholder="Unit..."
+											className="text-dark col-12"
+											options={purchasesOptions}
+											onChange={(val) => onChange(val)}
+										/>
+									)}
+								/>
+
+								<ErrorMessage source={errors.purchases_mode} />
+							</div>
+						</div>
 					</Row>
 				</Form.Group>
 

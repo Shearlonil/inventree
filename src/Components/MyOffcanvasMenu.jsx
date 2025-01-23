@@ -38,6 +38,7 @@ const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 						{menuItems &&
 							menuItems.map(({ label, path }) => (
 								<Nav.Link
+									key={label}
 									href={`#${path}`}
 									className="mb-2"
 									onClick={handleClose}

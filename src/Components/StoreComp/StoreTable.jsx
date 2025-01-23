@@ -4,7 +4,6 @@ import { Table } from "react-bootstrap";
 const StoreTable = () => {
 	return (
 		<>
-			<h5>Table Data</h5>
 			<Table id="myTable" striped bordered hover responsive>
 				<thead>
 					<tr>
@@ -20,8 +19,8 @@ const StoreTable = () => {
 						<th className="text-nowrap">Exp. Date</th>
 						<th className="text-nowrap">Department</th>
 						<th className="text-nowrap">Total</th>
-						<th className="text-nowrap">Vendor</th>
 						<th className="text-nowrap">Cash</th>
+						<th className="text-nowrap">Vendor</th>
 						<th className="text-nowrap">Cr.</th>
 					</tr>
 				</thead>
@@ -29,8 +28,8 @@ const StoreTable = () => {
 					{Array.from({ length: 10 }).map((_, index) => (
 						<tr key={index}>
 							<td>{index + 1}</td>
-							<td>1</td>
 							<td>Item A</td>
+							<td>1</td>
 							<td>4500</td>
 							<td>Unit</td>
 							<td>34</td>

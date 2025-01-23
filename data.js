@@ -29,10 +29,14 @@ const storeOption = [
 	{ value: "hotel", label: "Hotel" },
 	{ value: "superMarket", label: "SuperMarket" },
 ];
-const unitOption = [
-	{ value: "kg", label: "KG" },
-	{ value: "ton", label: "TON" },
+const packagingOptions = [
+	{ value: "unit", label: "Unit" },
+	{ value: "package", label: "Pakage" },
 	{ value: "gram", label: "Gram(s)" },
+];
+const purchasesOptions = [
+	{ value: "cash", label: "Cash" },
+	{ value: "credit", label: "Credit" },
 ];
 
 export {
@@ -41,5 +45,6 @@ export {
 	purchasesSubMenu,
 	storeSubMenu,
 	storeOption,
-	unitOption,
+	packagingOptions,
+	purchasesOptions,
 };
