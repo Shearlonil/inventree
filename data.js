@@ -24,7 +24,7 @@ const storeSubMenu = [
 	{ label: "Link 2", path: "/Edit" },
 	{ label: "Link 3", path: "/file" },
 ];
-const storeOption = [
+const sectionOption = [
 	{ value: "pharmarcy", label: "Pharmarcy" },
 	{ value: "hotel", label: "Hotel" },
 	{ value: "superMarket", label: "SuperMarket" },
@@ -35,8 +35,8 @@ const packagingOptions = [
 	{ value: "gram", label: "Gram(s)" },
 ];
 const purchasesOptions = [
-	{ value: "cash", label: "Cash" },
-	{ value: "credit", label: "Credit" },
+	{ value: true, label: "Cash" },
+	{ value: false, label: "Credit" },
 ];
 
 export {
@@ -44,7 +44,7 @@ export {
 	customerName,
 	purchasesSubMenu,
 	storeSubMenu,
-	storeOption,
+	sectionOption,
 	packagingOptions,
 	purchasesOptions,
 };

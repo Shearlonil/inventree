@@ -1,22 +1,16 @@
 import * as yup from "yup";
-import { packagingOptions } from "../../../data";
 
 const schema = yup.object().shape({
-	store: yup.string().required("Select a store"),
+	section: yup.string().required("Select a section"),
 	item_name: yup.string().required("Item name required!"),
 	total_qty: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
 	package_unit: yup
-		.object()
-		.required("Select an option")
-		.oneOf(packagingOptions, "Invalid selection"),
-	qty_package: yup
-		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
-	tot_qty: yup
+		.string()
+		.required("Select a packaging option"),
+	qty_per_pkg: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
@@ -36,6 +30,15 @@ const schema = yup.object().shape({
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
+	vendor: yup
+		.string()
+		.required("Vendor is required"),
+	purchase_mode: yup
+		.string()
+		.required("Purchase Mode is required"),
+	amount_paid: yup
+		.number()
+		.required("Amount Paid is required"),
 });
 
 export { schema };
