@@ -3,7 +3,7 @@ import { Table } from "react-bootstrap";
 import ReactMenu from "../Components/ReactMenu";
 import { FaReceipt } from "react-icons/fa";
 import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
-import { purchasesSubMenu } from "../../data";
+import { purchasesSubMenu, reactMenuItems } from "../../data";
 
 const PurchasesWindow = () => {
 	return (
@@ -56,7 +56,7 @@ const PurchasesWindow = () => {
 								<td className="text-nowrap">4500000.00</td>
 								<td className="text-nowrap">4500000.00</td>
 								<td>
-									<ReactMenu />
+									<ReactMenu menuItems={reactMenuItems} />
 								</td>
 							</tr>
 						))}

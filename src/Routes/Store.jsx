@@ -14,12 +14,13 @@ const Store = () => {
 	// const [show, setShow] = useState(false);
 	const [showModal, setShowModal] = useState(false);
 
-    const tableProps = {
-        //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", "Vendor", "Cash", "Credit", 'Options'],
-        //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'packStockPrice', 'packSalesPrice', 'sectionName', "totalAmount", "vendor", "cashAmount", "creditAmount"],
-    };
+    //	menus for the ellipse menu-button
+    const menuItems = [
+        { name: 'Delete', onClickParams: {evtName: 'delete'} },
+        {
+            name: 'Edit', onClickParams: {evtName: 'edit' }
+        },
+    ];
 
 	const tableData = [
 		{itemName: 'PREGMOM PLUS TABLETS (DARAVIT)', qty: 100, qtyType: "unit", qtyPerPkg: 1, expData: null, unitStockPrice: 2, unitSalesPrice: 4, packStockPrice: 7, pakcSalesPrice: 4, sectionName: "Pharmacy", totalAmount: 9788800, vendor: "", cashAmount: 6, creditAmount: 0},
@@ -41,6 +42,30 @@ const Store = () => {
 	};
 
 	const handleShowModal = () => setShowModal(true);
+
+    const handleReactMenuItemClick = async (onclickParams, entity, e) => {
+        switch (onclickParams.evtName) {
+            case 'delete':
+				console.log('deleting..', entity);
+                break;
+            case 'edit':
+				console.log('editing..', entity);
+                break;
+        }
+    };
+
+    const tableProps = {
+        //	table header
+        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", "Vendor", "Cash", "Credit", 'Options'],
+        //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
+        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'packStockPrice', 'packSalesPrice', 'sectionName', "totalAmount", "vendor", "cashAmount", "creditAmount"],
+		//	React Menu
+		menus: {
+			ReactMenu,
+			menuItems,
+			menuItemClick: handleReactMenuItemClick,
+		}
+    };
 
 	return (
 		<>
@@ -64,26 +89,26 @@ const Store = () => {
 			</div>
 			<div className="container-fluid row">
 				{/* Sidebar for large screens */}
-				<aside className="col-3 p-3 d-none d-md-block bg-light shadow-sm">
+				<aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
 					<h3>Add New Item</h3>
 					<StoreFormInputs />
 				</aside>
 
 				{/* Main Content */}
 				<main className="p-3 col-md-9 col-12">
-					<TableMain tableProps={tableProps} tableData={tableData} ReactMenu={ReactMenu} />
+					<TableMain tableProps={tableProps} tableData={tableData} />
 				</main>
-
-				<Modal show={showModal} onHide={handleCloseModal}>
-					<Modal.Header closeButton>
-						<Modal.Title>Add Item</Modal.Title>
-					</Modal.Header>
-					<Modal.Body>
-						<StoreFormInputs />
-					</Modal.Body>
-					<Modal.Footer></Modal.Footer>
-				</Modal>
 			</div>
+
+			<Modal show={showModal} onHide={handleCloseModal}>
+				<Modal.Header closeButton>
+					<Modal.Title>Add Item</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<StoreFormInputs />
+				</Modal.Body>
+				<Modal.Footer></Modal.Footer>
+			</Modal>
 		</>
 	);
 };

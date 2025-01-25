@@ -4,8 +4,8 @@ import { Table } from 'react-bootstrap';
 import TableBody from './TableBody';
 
 const TableMain = (props) => {
-    const { tableProps, tableData, ReactMenu } = props;
-    const { headers, objectProps } = tableProps;
+    const { tableProps, tableData } = props;
+    const { headers, objectProps, menus } = tableProps;
 
     // useEffect(() => {
     // }, [headers]);
@@ -18,9 +18,9 @@ const TableMain = (props) => {
     };
 
     return (
-        <Table striped hover responsive size=' d' style={rowSpacing} >
+        <Table striped hover responsive size='md' style={rowSpacing} >
             <TableHeader headers={headers} />
-            <TableBody data={tableData} objectProps={objectProps} ReactMenu={ReactMenu} />
+            <TableBody data={tableData} objectProps={objectProps} menus={menus} />
         </Table>
     )
 }

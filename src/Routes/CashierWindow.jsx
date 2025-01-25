@@ -10,12 +10,8 @@ import ReactMenu from "../Components/ReactMenu";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { schema } from "../Utils/yup-schema-validator/store-schema";
+import { customerName, reactMenuItems } from "../../data";
 
-const customerName = [
-	{ value: "john_doe", label: "John Doe" },
-	{ value: "jane_doe", label: "Jane Doe" },
-	{ value: "mike_smith", label: "Mike Smith" },
-];
 const CashierWindow = () => {
 	const customStyles = {
 		control: (provided, state) => ({
@@ -121,7 +117,7 @@ const CashierWindow = () => {
 									<td>2.00</td>
 									<td>1050.00</td>
 									<td>
-										<ReactMenu />
+										<ReactMenu menuItems={reactMenuItems} />
 									</td>
 								</tr>
 							))}

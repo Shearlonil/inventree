@@ -39,6 +39,28 @@ const purchasesOptions = [
 	{ value: false, label: "Credit" },
 ];
 
+//	menus for the ellipse menu-button
+const reactMenuItems = [
+	{ name: 'Cut', onClickParams: {evtName: 'cut'} },
+	{ name: 'Copy', onClickParams: {evtName: 'copy'} },
+	{ name: 'Paste', onClickParams: {evtName: 'paste'} },
+	{
+		name: 'Edit',
+		subMenuList: [
+			{ name: 'Cut', onClickParams: {evtName: 'cut'} },
+			{ name: 'Copy', onClickParams: {evtName: 'copy'} },
+			{ name: 'Paste', onClickParams: {evtName: 'paste'} },
+			{ name: 'Edit',
+				subMenuList: [
+					{ name: 'Find', onClickParams: {evtName: 'find'} },
+					{ name: 'Find Next', onClickParams: {evtName: 'findNext'} },
+					{ name: 'Previous', onClickParams: {evtName: 'previous'} },
+				]
+				},
+		]
+	},
+];
+
 export {
 	selectOption,
 	customerName,
@@ -47,4 +69,5 @@ export {
 	sectionOption,
 	packagingOptions,
 	purchasesOptions,
+	reactMenuItems,
 };
