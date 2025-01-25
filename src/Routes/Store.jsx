@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { FaStoreAlt } from "react-icons/fa";
+import { format } from "date-fns";
 
-//
-import StoreTable from "../Components/StoreComp/StoreTable";
 import StoreFormInputs from "../Components/StoreComp/StoreFormInputs";
 import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
 import { storeSubMenu } from "../../data";
 import TableMain from "../Components/TableView/TableMain";
 import ReactMenu from "../Components/ReactMenu";
+import { ItemRegDTO } from "../Entities/ItemRegDTO";
 
 const Store = () => {
-	// const [show, setShow] = useState(false);
+	const [items, setItems] = useState([]);
 	const [showModal, setShowModal] = useState(false);
 
     //	menus for the ellipse menu-button
@@ -54,11 +54,30 @@ const Store = () => {
         }
     };
 
+	const submitData = (data) => {
+		const item = new ItemRegDTO();
+		item.itemName = data.item_name;
+		item.qty = data.total_qty;
+		item.qtyType = data.qty_type;
+		item.expDate = format(data.expDate, "yyyy-MM-dd");
+		item.qtyPerPkg = data.qty_per_pkg;
+		item.unitStockPrice = data.unit_stock;
+		item.unitSalesPrice = data.unit_sales;
+		item.pkgStockPrice = data.pkg_stock_price;
+		item.pkgSalesPrice = data.pkg_sales_price;
+		item.sectionName = data.section;
+		item.vendorName = data.vendor;
+		item.cashPurchaseAmount = data.amount_paid;
+		setItems([...items, item]);
+		
+		console.log(data);
+	};
+
     const tableProps = {
         //	table header
         headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", "Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'packStockPrice', 'packSalesPrice', 'sectionName', "totalAmount", "vendor", "cashAmount", "creditAmount"],
+        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'sectionName', "purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
 		//	React Menu
 		menus: {
 			ReactMenu,
@@ -91,12 +110,12 @@ const Store = () => {
 				{/* Sidebar for large screens */}
 				<aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
 					<h3>Add New Item</h3>
-					<StoreFormInputs />
+					<StoreFormInputs submitData={submitData} />
 				</aside>
 
 				{/* Main Content */}
 				<main className="p-3 col-md-9 col-12">
-					<TableMain tableProps={tableProps} tableData={tableData} />
+					<TableMain tableProps={tableProps} tableData={items} />
 				</main>
 			</div>
 
@@ -105,7 +124,7 @@ const Store = () => {
 					<Modal.Title>Add Item</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<StoreFormInputs />
+					<StoreFormInputs submitData={submitData} />
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>

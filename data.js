@@ -31,7 +31,7 @@ const sectionOption = [
 ];
 const packagingOptions = [
 	{ value: "unit", label: "Unit" },
-	{ value: "package", label: "Pakage" },
+	{ value: "pack", label: "Packs" },
 	{ value: "gram", label: "Gram(s)" },
 ];
 const purchasesOptions = [

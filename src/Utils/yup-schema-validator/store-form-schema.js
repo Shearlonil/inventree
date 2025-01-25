@@ -7,7 +7,7 @@ const schema = yup.object().shape({
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
-	package_unit: yup
+	qty_type: yup
 		.string()
 		.required("Select a packaging option"),
 	qty_per_pkg: yup
@@ -22,11 +22,11 @@ const schema = yup.object().shape({
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
-	package_stock: yup
+	pkg_stock_price: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
-	package_sales: yup
+	pkg_sales_price: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),

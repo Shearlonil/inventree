@@ -1,14 +1,18 @@
 import React from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
-import ErrorMessage from "../ErrorMessage";
-
+import Datetime from "react-datetime";
+import "react-datetime/css/react-datetime.css";
 import { Controller, useForm } from "react-hook-form";
-import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
-import { sectionOption, packagingOptions, purchasesOptions } from "../../../data";
 import { yupResolver } from '@hookform/resolvers/yup';
 
-const StoreFormInputs = () => {
+import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
+import { sectionOption, packagingOptions, purchasesOptions } from "../../../data";
+import ErrorMessage from "../ErrorMessage";
+
+const StoreFormInputs = (props) => {
+	const { submitData }  = props;
+
 	const {
 		register,
 		handleSubmit,
@@ -21,14 +25,14 @@ const StoreFormInputs = () => {
 			qty_per_pkg: 0,
 			unit_stock: 0,
 			unit_sales: 0,
-			package_stock: 0,
-			package_sales: 0,
+			pkg_stock_price: 0,
+			pkg_sales_price: 0,
 			amount_paid: 0,
 		},
 	});
 
 	const onSubmit = (data) => {
-		console.log(data);
+		submitData(data);
 	};
 
 	return (
@@ -83,12 +87,12 @@ const StoreFormInputs = () => {
 							</div>
 							<div className="col-6 p-0">
 								<Controller
-									name="package_unit"
+									name="qty_type"
 									control={control}
 									render={({ field: { onChange } }) => (
 										<Select
 											required
-											name="package_unit"
+											name="qty_type"
 											placeholder="Unit..."
 											className="text-dark col-12"
 											options={packagingOptions}
@@ -97,7 +101,7 @@ const StoreFormInputs = () => {
 									)}
 								/>
 
-								<ErrorMessage source={errors.package_unit} />
+								<ErrorMessage source={errors.qty_type} />
 							</div>
 						</div>
 					</Row>
@@ -124,7 +128,24 @@ const StoreFormInputs = () => {
 							<Form.Label>Exp Date:</Form.Label>
 						</Col>
 						<Col sm={"12"} md="8">
-							<Form.Control type="date" placeholder="0" />
+							<Controller
+								name="expDate"
+								control={control}
+								render={({ field }) => (
+									<Datetime
+										{...field}
+										timeFormat={false}
+										closeOnSelect={true}
+										dateFormat="DD/MM/YYYY"
+										inputProps={{
+											placeholder: "Choose start date",
+											className: "form-control",
+											readOnly: true, // Optional: makes input read-only
+										}}
+										onChange={(date) => field.onChange(date ? date.toDate() : null)}
+									/>
+								)}
+							/>
 						</Col>
 					</Row>
 				</Form.Group>
@@ -160,7 +181,7 @@ const StoreFormInputs = () => {
 					</Row>
 				</Form.Group>
 
-				<Form.Group className="mb-3" controlId="package_stock">
+				<Form.Group className="mb-3" controlId="pkg_stock_price">
 					<Row>
 						<Col sm={"12"} md="4">
 							<Form.Label>Package Stock</Form.Label>
@@ -169,14 +190,14 @@ const StoreFormInputs = () => {
 							<Form.Control
 								type="number"
 								placeholder="0"
-								{...register("package_stock")}
+								{...register("pkg_stock_price")}
 							/>
-							<ErrorMessage source={errors.package_stock} />
+							<ErrorMessage source={errors.pkg_stock_price} />
 						</Col>
 					</Row>
 				</Form.Group>
 
-				<Form.Group className="mb-3" controlId="package_sales">
+				<Form.Group className="mb-3" controlId="pkg_sales_price">
 					<Row>
 						<Col sm={"12"} md="4">
 							<Form.Label>Package Sales</Form.Label>
@@ -185,9 +206,9 @@ const StoreFormInputs = () => {
 							<Form.Control
 								type="number"
 								placeholder="0"
-								{...register("package_sales")}
+								{...register("pkg_sales_price")}
 							/>
-							<ErrorMessage source={errors.package_sales} />
+							<ErrorMessage source={errors.pkg_sales_price} />
 						</Col>
 					</Row>
 				</Form.Group>

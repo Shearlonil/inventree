@@ -7,9 +7,6 @@ const TableMain = (props) => {
     const { tableProps, tableData } = props;
     const { headers, objectProps, menus } = tableProps;
 
-    // useEffect(() => {
-    // }, [headers]);
-
     const rowSpacing = {
         /*source code: https://www.w3docs.com/snippets/css/how-to-create-space-between-rows-in-the-table.html*/
         borderCollapse: 'separate',
