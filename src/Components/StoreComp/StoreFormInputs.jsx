@@ -1,17 +1,96 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import Datetime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
-import { sectionOption, packagingOptions, purchasesOptions } from "../../../data";
 import ErrorMessage from "../ErrorMessage";
+import { useAuth } from "../../app-context/auth-user-context";
+import genericController from "../../Controllers/generic-controller";
+import handleErrMsg from '../../Utils/error-handler';
+import { ItemRegDTO } from "../../Entities/ItemRegDTO";
+import { format } from "date-fns";
 
 const StoreFormInputs = (props) => {
-	const { submitData }  = props;
+	const { submitData, data }  = props;
+	const navigate = useNavigate();
+
+	// for tracts
+	const [tractOptions, setTractOptions] = useState([]);
+	const [tractsLoading, setTractsLoading] = useState(true);
+
+	// for pkg
+	const [pkgOptions, setPkgOptions] = useState([]);
+	const [pkgLoading, setPkgLoading] = useState(true);
+
+	// for vendors
+	const [vendorOptions, setVendorOptions] = useState([]);
+	const [vendorsLoading, setVendorsLoading] = useState(true);
+
+	const { handleRefresh, logout } = useAuth();
+
+    useEffect( () => {
+		initialize();
+    }, []);
+
+	const initialize = async () => {
+		try {
+			if(data){
+				setValue("item_name", data.itemName);
+				setValue("total_qty", data.qty);
+				setValue("qty_per_pkg", data.qtyPerPkg);
+				setValue("unit_stock", data.unitStockPrice);
+				setValue("unit_sales", data.unitSalesPrice);
+				setValue("pkg_stock_price", data.pkgStockPrice);
+				setValue("pkg_sales_price", data.pkgSalesPrice);
+				setValue("amount_paid", data.cashPurchaseAmount);
+			}
+            const urls = [ '/test' ];	//'/api/pkg/all', '/api/vendors/active', '/api/tracts/all'
+            const response = await genericController.performGetRequests(urls);
+            const { 0: pkgRequest, 1: vendorRequest, 2: tractRequest } = response;
+
+            //	check if the request to fetch pkg doesn't fail before setting values to display
+            // if(pkgRequest){
+            //     setPkgLoading(false);
+			// 	setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg.id})));
+            // }
+
+            //	check if the request to fetch vendors doesn't fail before setting values to display
+            // if(vendorRequest){
+			// 	setVendorsLoading(false);
+            //     setVendorOptions(vendorRequest.data.map( vendor => ({label: vendor.name, value: vendor.id})));
+            // }
+
+            //	check if the request to fetch tracts doesn't fail before setting values to display
+            // if(tractRequest){
+			// 	setTractsLoading(false);
+            //     setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract.id})));
+            // }
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					// await handleRefresh();
+					// return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					// navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				// logout();
+				console.log(error);
+			}
+		}
+	};
 
 	const {
 		register,
@@ -32,7 +111,21 @@ const StoreFormInputs = (props) => {
 	});
 
 	const onSubmit = (data) => {
-		submitData(data);
+		const item = new ItemRegDTO();
+		item.itemName = data.item_name;
+		item.qty = data.total_qty;
+		item.qtyType = data.qty_type;
+		item.expDate = data.expDate ? format(data.expDate, "yyyy-MM-dd") : null;
+		item.qtyPerPkg = data.qty_per_pkg;
+		item.unitStockPrice = data.unit_stock;
+		item.unitSalesPrice = data.unit_sales;
+		item.pkgStockPrice = data.pkg_stock_price;
+		item.pkgSalesPrice = data.pkg_sales_price;
+		item.sectionName = data.section;
+		item.vendorName = data.vendor;
+		item.cashPurchaseAmount = data.amount_paid;
+
+		submitData(item);
 	};
 
 	return (
@@ -47,7 +140,8 @@ const StoreFormInputs = (props) => {
 							name="section"
 							placeholder="Choose Section..."
 							className="text-dark col-12"
-							options={sectionOption}
+							options={tractOptions}
+							isLoading={tractsLoading}
 							onChange={(val) => onChange(val.value)}
 						/>
 					)}
@@ -95,7 +189,8 @@ const StoreFormInputs = (props) => {
 											name="qty_type"
 											placeholder="Unit..."
 											className="text-dark col-12"
-											options={packagingOptions}
+											options={pkgOptions}
+											isLoading={pkgLoading}
 											onChange={(val) => onChange(val.value)}
 										/>
 									)}
@@ -138,7 +233,7 @@ const StoreFormInputs = (props) => {
 										closeOnSelect={true}
 										dateFormat="DD/MM/YYYY"
 										inputProps={{
-											placeholder: "Choose start date",
+											placeholder: "Choose exp. date",
 											className: "form-control",
 											readOnly: true, // Optional: makes input read-only
 										}}
@@ -224,18 +319,19 @@ const StoreFormInputs = (props) => {
 							name="vendor"
 							placeholder="Choose Vendor..."
 							className="text-dark col-12"
-							options={sectionOption}
+							options={vendorOptions}
+							isLoading={vendorsLoading}
 							onChange={(val) => onChange(val.value)}
 						/>
 					)}
 				/>
 				<ErrorMessage source={errors.vendor} />
 
-				<Form.Group className="mb-3 mt-3" controlId="purchase_mode">
+				{/* <Form.Group className="mb-3 mt-3" controlId="purchase_mode">
 					<Row>
 						<div className="row">
 							<div className="col-6">
-								<Form.Label>Purchases Mode</Form.Label>
+								<Form.Label>Purchase Mode</Form.Label>
 							</div>
 							<div className="col-6 p-0">
 								<Controller
@@ -257,9 +353,9 @@ const StoreFormInputs = (props) => {
 							</div>
 						</div>
 					</Row>
-				</Form.Group>
+				</Form.Group> */}
 
-				<Form.Group className="mb-3" controlId="amount_paid">
+				<Form.Group className="mb-3 mt-3" controlId="amount_paid">
 					<Row>
 						<Col sm={"12"} md="4">
 							<Form.Label>Amount Paid</Form.Label>

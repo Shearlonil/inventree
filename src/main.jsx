@@ -6,12 +6,15 @@ import "./index.css";
 import App from "./App.jsx";
 import "bootstrap/dist/css/bootstrap.min.css";
 import NavBar from "./Components/Navbar.jsx";
+import { AuthProvider } from './app-context/auth-user-context.js';
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<BrowserRouter>
-			<NavBar />
-			<App />
+			<AuthProvider>
+				<NavBar />
+				<App />
+			</AuthProvider>
 		</BrowserRouter>
 	</StrictMode>
 );

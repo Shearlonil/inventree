@@ -9,7 +9,7 @@ export class ItemRegDTO {
             qty: 0,
             unitStockPrice: 0,
             qtyType: 'unit', // defaults to unit
-            creditAmount: 0,
+            creditPurchaseAmount: 0,
         });
     }
 
@@ -75,14 +75,13 @@ export class ItemRegDTO {
 
     get purchaseAmount() {
         // calculate purchase amount from qty, qtyType, qtyPerPkg, unitStockPrice
-        return _itemProps.get(this).qtyType.toLowerCase() === "unit" ? 
-            numeral(_itemProps.get(this).qty).multiply(_itemProps.get(this).unitStockPrice).format('₦0,0.00') :
-            numeral(_itemProps.get(this).qty).multiply(_itemProps.get(this).qtyPerPkg).multiply(_itemProps.get(this).unitStockPrice).format('₦0,0.00'); 
+        return calcPurchaseAmount(_itemProps.get(this));
     }
 
     get creditPurchaseAmount() {
         // calculate credit purchase amount from cash amount and purchase amount
-        return numeral(_itemProps.get(this).purchaseAmount).subtract(_itemProps.get(this).cashPurchaseAmount).format('₦0,0.00'); 
+        const purchaseAmount = calcPurchaseAmount(_itemProps.get(this));
+        return numeral(purchaseAmount).subtract(_itemProps.get(this).cashPurchaseAmount).format('₦0,0.00'); 
     }
 
     toJSON(){
@@ -90,13 +89,12 @@ export class ItemRegDTO {
             id: this.id,
             itemDetailId: this.itemDetailId,
             itemName: this.itemName,
-            pkgId: this.pkgId,
             qty: this.qty,
             qtyType: this.qtyType,
-            purchaseMode: this.purchaseMode,
+            qtyPerPkg: this.qtyPerPkg,
+            pkgId: this.pkgId,
             vendorId: this.vendorId,
             tractId: this.tractId,
-            qtyPerPkg: this.qtyPerPkg,
             status: this.status,
             cashPurchaseAmount: this.cashPurchaseAmount,
             expDate: this.expDate,
@@ -106,4 +104,11 @@ export class ItemRegDTO {
             unitStockPrice: this.unitStockPrice,
         }
     }
+}
+
+//  private helper function to calculate purchase amount
+const calcPurchaseAmount = (itemProps) => {
+    return itemProps.qtyType.toLowerCase() === "unit" ? 
+        numeral(itemProps.qty).multiply(itemProps.unitStockPrice).format('₦0,0.00') :
+        numeral(itemProps.qty).multiply(itemProps.qtyPerPkg).multiply(itemProps.unitStockPrice).format('₦0,0.00'); 
 }

@@ -33,9 +33,9 @@ const schema = yup.object().shape({
 	vendor: yup
 		.string()
 		.required("Vendor is required"),
-	purchase_mode: yup
-		.string()
-		.required("Purchase Mode is required"),
+	// purchase_mode: yup
+	// 	.string()
+	// 	.required("Purchase Mode is required"),
 	amount_paid: yup
 		.number()
 		.required("Amount Paid is required"),
