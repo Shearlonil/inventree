@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
 
     // call this function when you want to authenticate the user
     const handleRefresh = async () => {
-        const response = await httpService.get("/test");
+        const response = await httpService.get("/refresh");
         //  remove the token prefix from the token for jwtDecode to decode the token
         const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
         setJwtToken(jwt);

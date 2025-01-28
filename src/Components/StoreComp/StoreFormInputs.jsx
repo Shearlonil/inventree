@@ -15,10 +15,18 @@ import genericController from "../../Controllers/generic-controller";
 import handleErrMsg from '../../Utils/error-handler';
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { format } from "date-fns";
+import { Packaging } from "../../Entities/Packaging";
+import { Vendor } from '../../Entities/Vendor';
+import { Tract } from '../../Entities/Tract';
+import storeController from "../../Controllers/store-controller";
+import { OribitalLoading } from "../react-loading-indicators/Indicator";
 
 const StoreFormInputs = (props) => {
-	const { submitData, data }  = props;
+	const { submitData, data, stockRecId }  = props;
+
 	const navigate = useNavigate();
+
+	const [networkRequest, setNetworkRequest] = useState(false);
 
 	// for tracts
 	const [tractOptions, setTractOptions] = useState([]);
@@ -34,68 +42,11 @@ const StoreFormInputs = (props) => {
 
 	const { handleRefresh, logout } = useAuth();
 
-    useEffect( () => {
-		initialize();
-    }, []);
-
-	const initialize = async () => {
-		try {
-			if(data){
-				setValue("item_name", data.itemName);
-				setValue("total_qty", data.qty);
-				setValue("qty_per_pkg", data.qtyPerPkg);
-				setValue("unit_stock", data.unitStockPrice);
-				setValue("unit_sales", data.unitSalesPrice);
-				setValue("pkg_stock_price", data.pkgStockPrice);
-				setValue("pkg_sales_price", data.pkgSalesPrice);
-				setValue("amount_paid", data.cashPurchaseAmount);
-			}
-            const urls = [ '/test' ];	//'/api/pkg/all', '/api/vendors/active', '/api/tracts/all'
-            const response = await genericController.performGetRequests(urls);
-            const { 0: pkgRequest, 1: vendorRequest, 2: tractRequest } = response;
-
-            //	check if the request to fetch pkg doesn't fail before setting values to display
-            // if(pkgRequest){
-            //     setPkgLoading(false);
-			// 	setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg.id})));
-            // }
-
-            //	check if the request to fetch vendors doesn't fail before setting values to display
-            // if(vendorRequest){
-			// 	setVendorsLoading(false);
-            //     setVendorOptions(vendorRequest.data.map( vendor => ({label: vendor.name, value: vendor.id})));
-            // }
-
-            //	check if the request to fetch tracts doesn't fail before setting values to display
-            // if(tractRequest){
-			// 	setTractsLoading(false);
-            //     setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract.id})));
-            // }
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					// await handleRefresh();
-					// return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					// navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				// logout();
-				console.log(error);
-			}
-		}
-	};
-
 	const {
 		register,
 		handleSubmit,
 		control,
+		setValue,
 		formState: { errors },
 	} = useForm({
 		resolver: yupResolver(schema),
@@ -110,23 +61,144 @@ const StoreFormInputs = (props) => {
 		},
 	});
 
-	const onSubmit = (data) => {
-		const item = new ItemRegDTO();
-		item.itemName = data.item_name;
-		item.qty = data.total_qty;
-		item.qtyType = data.qty_type;
-		item.expDate = data.expDate ? format(data.expDate, "yyyy-MM-dd") : null;
-		item.qtyPerPkg = data.qty_per_pkg;
-		item.unitStockPrice = data.unit_stock;
-		item.unitSalesPrice = data.unit_sales;
-		item.pkgStockPrice = data.pkg_stock_price;
-		item.pkgSalesPrice = data.pkg_sales_price;
-		item.sectionName = data.section;
-		item.vendorName = data.vendor;
-		item.cashPurchaseAmount = data.amount_paid;
+    useEffect( () => {
+		initialize();
+    }, []);
 
-		submitData(item);
+	const initialize = async () => {
+		try {
+            const urls = [ '/api/pkg/all', '/api/vendors/active', '/api/tracts/all' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: pkgRequest, 1: vendorRequest, 2: tractRequest } = response;
+
+            //	check if the request to fetch pkg doesn't fail before setting values to display
+            if(pkgRequest){
+                setPkgLoading(false);
+				setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg.id})));
+            }
+
+            //	check if the request to fetch vendors doesn't fail before setting values to display
+            if(vendorRequest){
+				setVendorsLoading(false);
+                setVendorOptions(vendorRequest.data.map( vendor => ({label: vendor.name, value: vendor.id})));
+            }
+
+            //	check if the request to fetch tracts doesn't fail before setting values to display
+            if(tractRequest){
+				setTractsLoading(false);
+                setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract.id})));
+            }
+
+			if(data){
+				setValue("item_name", data.itemName);
+				setValue("total_qty", data.qty);
+				setValue("qty_per_pkg", data.qtyPerPkg);
+				setValue("unit_stock", data.unitStockPrice);
+				setValue("unit_sales", data.unitSalesPrice);
+				setValue("pkg_stock_price", data.pkgStockPrice);
+				setValue("pkg_sales_price", data.pkgSalesPrice);
+				setValue("amount_paid", data.cashPurchaseAmount);
+				setValue("section", {value: data.tract.id, label: data.tract.name});
+				setValue("qty_type", {value: data.pkg.id, label: data.pkg.name});
+				setValue("vendor", {value: data.vendor.id, label: data.vendor.name});
+				setValue("expDate", data.expDate);
+			}
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+				console.log(error);
+			}
+		}
 	};
+
+	const onSubmit = async (formData) => {
+		try {
+			if(props.data?.id){
+				//	if data has id, then update mode
+				setItem(props.data, formData);
+				const stock_rec_id = await save(props.data);
+				submitData(stock_rec_id, props.data);
+			}else {
+				// 	else, create new item
+				const item = new ItemRegDTO();
+				setItem(item, formData);
+				const stock_rec_id = await save(item);
+				submitData(stock_rec_id, item);
+			}
+		} catch (error) {
+			toast.error(handleErrMsg(error).msg);
+		}
+	};
+
+	const setItem = (item, formData) => {
+		item.itemName = formData.item_name;
+		item.qty = formData.total_qty;
+		item.expDate = formData.expDate ? format(formData.expDate, "yyyy-MM-dd") : null;
+		item.qtyPerPkg = formData.qty_per_pkg;
+		item.unitStockPrice = formData.unit_stock;
+		item.unitSalesPrice = formData.unit_sales;
+		item.pkgStockPrice = formData.pkg_stock_price;
+		item.pkgSalesPrice = formData.pkg_sales_price;
+		item.sectionName = formData.section;
+		item.cashPurchaseAmount = formData.amount_paid;
+
+		const pkg = new Packaging();
+		pkg.id = formData.qty_type.value;
+		pkg.name = formData.qty_type.label;
+		item.pkg = pkg;
+
+		const vendor = new Vendor();
+		vendor.id = formData.vendor.value;
+		vendor.name = formData.vendor.label;
+		item.vendor = vendor;
+
+		const tract = new Tract();
+		tract.id = formData.section.value;
+		tract.name = formData.section.label;
+		item.tract = tract;
+	}
+
+	const save = async (item) => {
+		try {
+			const response = await storeController.persistStockRecItem(stockRecId, item);
+			if(response && response.status === 200){
+				item.id = response.data.items[0].id;
+				item.itemDetailId = response.data.items[0].itemDetailId;
+				return response.data.id;
+			}
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return save(item);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
 
 	return (
 		<>
@@ -134,15 +206,15 @@ const StoreFormInputs = (props) => {
 				<Controller
 					name="section"
 					control={control}
-					render={({ field: { onChange } }) => (
+					render={({ field: { onChange, value } }) => (
 						<Select
 							required
-							name="section"
 							placeholder="Choose Section..."
 							className="text-dark col-12"
 							options={tractOptions}
 							isLoading={tractsLoading}
-							onChange={(val) => onChange(val.value)}
+							onChange={(val) => onChange(val)}
+							value={value}
 						/>
 					)}
 				/>
@@ -183,7 +255,7 @@ const StoreFormInputs = (props) => {
 								<Controller
 									name="qty_type"
 									control={control}
-									render={({ field: { onChange } }) => (
+									render={({ field: { onChange, value } }) => (
 										<Select
 											required
 											name="qty_type"
@@ -191,7 +263,8 @@ const StoreFormInputs = (props) => {
 											className="text-dark col-12"
 											options={pkgOptions}
 											isLoading={pkgLoading}
-											onChange={(val) => onChange(val.value)}
+											onChange={(val) => onChange(val)}
+											value={value}
 										/>
 									)}
 								/>
@@ -237,6 +310,7 @@ const StoreFormInputs = (props) => {
 											className: "form-control",
 											readOnly: true, // Optional: makes input read-only
 										}}
+										value={field.value ? new Date(field.value) : null}
 										onChange={(date) => field.onChange(date ? date.toDate() : null)}
 									/>
 								)}
@@ -313,7 +387,7 @@ const StoreFormInputs = (props) => {
 				<Controller
 					name="vendor"
 					control={control}
-					render={({ field: { onChange } }) => (
+					render={({ field: { onChange, value } }) => (
 						<Select
 							required
 							name="vendor"
@@ -321,7 +395,8 @@ const StoreFormInputs = (props) => {
 							className="text-dark col-12"
 							options={vendorOptions}
 							isLoading={vendorsLoading}
-							onChange={(val) => onChange(val.value)}
+							onChange={(val) => onChange(val)}
+							value={value}
 						/>
 					)}
 				/>
@@ -374,9 +449,11 @@ const StoreFormInputs = (props) => {
 				<Button
 					className="w-75 mx-auto"
 					variant="primary"
+					disabled={networkRequest}
 					onClick={handleSubmit(onSubmit)}
 				>
-					Save
+					{ networkRequest && <OribitalLoading color="#ffffff" size="medium" variant="spokes" /> }
+					{ !networkRequest && `Save` }
 				</Button>
 			</Form>
 		</>

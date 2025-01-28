@@ -1,15 +1,13 @@
 import * as yup from "yup";
 
 const schema = yup.object().shape({
-	section: yup.string().required("Select a section"),
+	section: yup.object().required("Select a section"),
 	item_name: yup.string().required("Item name required!"),
 	total_qty: yup
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
-	qty_type: yup
-		.string()
-		.required("Select a packaging option"),
+	qty_type: yup.object().required("Select a packaging option"),
 	qty_per_pkg: yup
 		.number()
 		.positive("Amount must be positive")
@@ -30,12 +28,7 @@ const schema = yup.object().shape({
 		.number()
 		.positive("Amount must be positive")
 		.required("Amount is required"),
-	vendor: yup
-		.string()
-		.required("Vendor is required"),
-	// purchase_mode: yup
-	// 	.string()
-	// 	.required("Purchase Mode is required"),
+	vendor: yup.object().required("Vendor is required"),
 	amount_paid: yup
 		.number()
 		.required("Amount Paid is required"),

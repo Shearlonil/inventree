@@ -1,7 +1,24 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
-axios.defaults.baseURL = "http://inventree.localhost:8082";
+/*
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        params: {
+            isAccepted: true
+        }
+    }
+
+    const data = {
+        data: 'whatever'
+    }
+
+    axios.post(url, data, config)
+*/
+
+axios.defaults.baseURL = "http://localhost:8082";
 
 // ref: https://stackoverflow.com/questions/43002444/make-axios-send-cookies-in-its-requests-automatically
 axios.defaults.withCredentials = true;
@@ -25,6 +42,7 @@ axios.interceptors.response.use(null, (error) => {
 axios.interceptors.request.use((config) => {
     const token = Cookies.get("authorization");
     config.headers.authorization = token ? `Bearer ${token}` : "";
+    config.headers['X-TENANT-ID'] = 'inventree';
     return config;
 });
 

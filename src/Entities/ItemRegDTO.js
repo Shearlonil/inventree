@@ -67,11 +67,33 @@ export class ItemRegDTO {
     get pkgName() { return _itemProps.get(this).pkgName }
     set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName }
     
+    get pkg() { return _itemProps.get(this).pkg }
+    set pkg(pkg) { 
+        _itemProps.get(this).pkg = pkg;
+        _itemProps.get(this).pkgId = pkg.id;
+        _itemProps.get(this).pkgName = pkg.name;
+        _itemProps.get(this).qtyType = pkg.name;
+    }
+    
     get vendorName() { return _itemProps.get(this).vendorName }
     set vendorName(vendorName) { _itemProps.get(this).vendorName = vendorName }
     
-    get sectionName() { return _itemProps.get(this).sectionName }
-    set sectionName(sectionName) { _itemProps.get(this).sectionName = sectionName }
+    get vendor() { return _itemProps.get(this).vendor }
+    set vendor(vendor) { 
+        _itemProps.get(this).vendor = vendor;
+        _itemProps.get(this).vendorId = vendor.id;
+        _itemProps.get(this).vendorName = vendor.name;
+    }
+    
+    get tractName() { return _itemProps.get(this).tractName }
+    set tractName(tractName) { _itemProps.get(this).tractName = tractName }
+    
+    get tract() { return _itemProps.get(this).tract }
+    set tract(tract) { 
+        _itemProps.get(this).tract = tract;
+        _itemProps.get(this).tractId = tract.id;
+        _itemProps.get(this).tractName = tract.name;
+    }
 
     get purchaseAmount() {
         // calculate purchase amount from qty, qtyType, qtyPerPkg, unitStockPrice

@@ -9,7 +9,9 @@ import TableMain from "../Components/TableView/TableMain";
 import ReactMenu from "../Components/ReactMenu";
 
 const Store = () => {
+	const [stockRecId, setStockRecId] = useState(0);
 	const [items, setItems] = useState([]);
+	const [entityToEdit, setEntityToEdit] = useState(null);
 	const [showModal, setShowModal] = useState(false);
 
     //	menus for the ellipse menu-button
@@ -24,7 +26,10 @@ const Store = () => {
 		setShowModal(false);
 	};
 
-	const handleShowModal = () => setShowModal(true);
+	const handleShowModal = () => {
+		setEntityToEdit(null);
+		setShowModal(true);
+	};
 
     const handleReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
@@ -33,11 +38,14 @@ const Store = () => {
                 break;
             case 'edit':
 				console.log('editing..', entity);
+				setEntityToEdit(entity);
+				setShowModal(true);
                 break;
         }
     };
 
-	const submitData = (item) => {
+	const submitData = (stock_rec_id, item) => {
+		setStockRecId(stock_rec_id);
 		setItems([...items, item]);
 	};
 
@@ -45,7 +53,7 @@ const Store = () => {
         //	table header
         headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", "Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'sectionName', "purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
+        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', "purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
 		//	React Menu
 		menus: {
 			ReactMenu,
@@ -79,7 +87,7 @@ const Store = () => {
 					{/* Sidebar for large screens */}
 					<aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
 						<h3>Add New Item</h3>
-						<StoreFormInputs submitData={submitData} />
+						<StoreFormInputs submitData={submitData} setStockRecId={setStockRecId} />
 					</aside>
 
 					{/* Main Content */}
@@ -91,10 +99,10 @@ const Store = () => {
 
 			<Modal show={showModal} onHide={handleCloseModal}>
 				<Modal.Header closeButton>
-					<Modal.Title>Add Item</Modal.Title>
+					<Modal.Title>Add Itemm</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<StoreFormInputs submitData={submitData} />
+					<StoreFormInputs submitData={submitData} setStockRecId={setStockRecId} data={entityToEdit} />
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>
