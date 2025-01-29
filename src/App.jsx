@@ -11,6 +11,7 @@ import Test from "./Routes/Test";
 import PurchasesWindow from "./Routes/PurchasesWindow";
 import Finance from "./Routes/Finance";
 import Login from "./Routes/Login";
+import Dashboard from "./Routes/Dashboard";
 
 function App() {
 	return (
@@ -27,6 +28,7 @@ function App() {
 				<Route path={"/store"} element={<Store />} />
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
 				<Route path={"/finance"} element={<Finance />} />
+				<Route path={"/dashboard"} element={<Dashboard />} />
 				<Route path={"/test"} element={<Test />} />
 			</Routes>
 			<ToastContainer />

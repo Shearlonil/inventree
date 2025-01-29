@@ -173,11 +173,15 @@ const StoreFormInputs = (props) => {
 
 	const save = async (item) => {
 		try {
-			const response = await storeController.persistStockRecItem(stockRecId, item);
-			if(response && response.status === 200){
-				item.id = response.data.items[0].id;
-				item.itemDetailId = response.data.items[0].itemDetailId;
-				return response.data.id;
+			if(item.id){
+				await storeController.updateStockRecItem(item);
+			}else {
+				let response = await storeController.persistStockRecItem(stockRecId, item);
+				if(response && response.status === 200){
+					item.id = response.data.items[0].id;
+					item.itemDetailId = response.data.items[0].itemDetailId;
+					return response.data.id;
+				}
 			}
 			setNetworkRequest(false);
 		} catch (error) {
@@ -197,6 +201,7 @@ const StoreFormInputs = (props) => {
 				// if error while refreshing, logout and delete all cookies
 				logout();
 			}
+			throw error;
 		}
 	}
 

@@ -14,7 +14,15 @@ const Store = () => {
 	const [entityToEdit, setEntityToEdit] = useState(null);
 	const [showModal, setShowModal] = useState(false);
 
-    //	menus for the ellipse menu-button
+	// for pagination
+	const [pageSize] = useState(10);
+	const [currentPage, setCurrentPage] = useState(1);
+	const [totalItemsCount, setTotalItemsCount] = useState(0);
+  
+	//  data returned from DataPagination
+	const [pagedData, setPagedData] = useState([]);
+
+    //	menus for the table menu-button
     const menuItems = [
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         {
@@ -46,6 +54,10 @@ const Store = () => {
 
 	const submitData = (stock_rec_id, item) => {
 		setStockRecId(stock_rec_id);
+		setItems([...items, item]);
+	};
+
+	const updateTableData = (item) => {
 		setItems([...items, item]);
 	};
 
@@ -87,7 +99,7 @@ const Store = () => {
 					{/* Sidebar for large screens */}
 					<aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
 						<h3>Add New Item</h3>
-						<StoreFormInputs submitData={submitData} setStockRecId={setStockRecId} />
+						<StoreFormInputs submitData={submitData} stockRecId={stockRecId} />
 					</aside>
 
 					{/* Main Content */}
@@ -102,7 +114,7 @@ const Store = () => {
 					<Modal.Title>Add Itemm</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<StoreFormInputs submitData={submitData} setStockRecId={setStockRecId} data={entityToEdit} />
+					<StoreFormInputs submitData={submitData} stockRecId={stockRecId} data={entityToEdit} />
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>

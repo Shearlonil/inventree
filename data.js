@@ -22,6 +22,7 @@ const purchasesSubMenu = [
 const storeSubMenu = [
 	{ label: "Save Record", path: "/file" },
 	{ label: "Delete Record", path: "/Edit" },
+	{ label: "Search", path: "/Search" },
 	{ label: "Link 3", path: "/file" },
 ];
 const sectionOption = [

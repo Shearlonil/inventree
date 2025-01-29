@@ -8,6 +8,15 @@ const persistStockRecItem = async (stock_rec_id, item) => {
     });
 }
 
+const updateStockRecItem = async (item) => {
+    return await httpService.put(`/api/store/update/stock-rec-item`, item, {
+        params: {
+            stockRecItemDetailId: item.itemDetailId,
+        }
+    });
+}
+
 export default {
     persistStockRecItem,
+    updateStockRecItem,
 }

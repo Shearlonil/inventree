@@ -3,19 +3,17 @@ const _userProps = new WeakMap();
 export default class User {
     constructor(decodedToken) {
         if (decodedToken) {
-            const { claims, sub } = decodedToken;
-            //split roles into arrays of authorities first
-            const auths = claims.roles.split(',');
+            const { owner, sub, authorities } = decodedToken;
+            //  split roles into arrays of authorities first
+            const auths = authorities.split(',');
             _userProps.set(this, {
-                id: claims.id,
+                id: owner.id,
                 userName: sub,
-                firstName: claims.firstName,
-                lastName: claims.lastName,
-                status: claims.status,
-                accCreatorId: claims.accCreatorId,
-                sex: claims.sex,
-                regDate: claims.regDate,
-                level:claims.level,
+                firstName: owner.firstName,
+                lastName: owner.lastName,
+                status: owner.status,
+                sex: owner.sex,
+                regDate: owner.regDate,
                 authorities: auths
             });
         }

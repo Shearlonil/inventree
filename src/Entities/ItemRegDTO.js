@@ -7,6 +7,7 @@ export class ItemRegDTO {
         _itemProps.set(this, {
             itemDetailId: 0,
             qty: 0,
+            status: false,
             unitStockPrice: 0,
             qtyType: 'unit', // defaults to unit
             creditPurchaseAmount: 0,
