@@ -2,13 +2,13 @@ import React, { useState } from "react";
 import { Modal } from "react-bootstrap";
 import { FaStoreAlt } from "react-icons/fa";
 
-import StoreFormInputs from "../Components/StoreComp/StoreFormInputs";
-import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
-import { storeSubMenu } from "../../data";
-import TableMain from "../Components/TableView/TableMain";
-import ReactMenu from "../Components/ReactMenu";
+import StoreFormInputs from "../../Components/StoreComp/StoreFormInputs";
+import MyOffcanvasMenu from "../../Components/MyOffcanvasMenu";
+import { storeSubMenu } from "../../../data";
+import TableMain from "../../Components/TableView/TableMain";
+import ReactMenu from "../../Components/ReactMenu";
 
-const Store = () => {
+const StoreItemReg = () => {
 	const [stockRecId, setStockRecId] = useState(0);
 	const [items, setItems] = useState([]);
 	const [entityToEdit, setEntityToEdit] = useState(null);
@@ -122,4 +122,4 @@ const Store = () => {
 	);
 };
 
-export default Store;
+export default StoreItemReg;

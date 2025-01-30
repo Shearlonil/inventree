@@ -16,7 +16,43 @@ const updateStockRecItem = async (item) => {
     });
 }
 
+const deleteStockRecItem = async (itemDetailId) => {
+    return await httpService.delete(`/api/store/delete/stock-rec-item`, {
+        params: {
+            stockRecItemDetailId: itemDetailId,
+        }
+    });
+}
+
+const deleteStockRec = async (stockRecId) => {
+    return await httpService.delete(`/api/store/delete/stock-rec`, {
+        params: {
+            stockRecId,
+        }
+    });
+}
+
+const unverifiedStockRec = async (type) => {
+    return await httpService.get(`/api/store/sales/unverified`, {
+        params: {
+            type,
+        }
+    });
+}
+
+const ongoingDispensary = async () => {
+    return await httpService.get(`/api/store/update/stock-rec-item`, item, {
+        params: {
+            stockRecItemDetailId: item.itemDetailId,
+        }
+    });
+}
+
 export default {
     persistStockRecItem,
     updateStockRecItem,
+    deleteStockRecItem,
+    deleteStockRec,
+    unverifiedStockRec,
+    ongoingDispensary,
 }

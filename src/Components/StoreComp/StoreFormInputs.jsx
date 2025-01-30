@@ -119,7 +119,6 @@ const StoreFormInputs = (props) => {
 			} catch (error) {
 				// if error while refreshing, logout and delete all cookies
 				logout();
-				console.log(error);
 			}
 		}
 	};

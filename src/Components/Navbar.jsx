@@ -72,14 +72,6 @@ function NavBar() {
 						<Nav.Link
 							onClick={() => {
 								handleNavSelect();
-								navigate("/store");
-							}}
-						>
-							Store
-						</Nav.Link>
-						<Nav.Link
-							onClick={() => {
-								handleNavSelect();
 								navigate("/purchases");
 							}}
 						>
@@ -101,15 +93,31 @@ function NavBar() {
 						>
 							Dashboard
 						</Nav.Link>
-						<NavDropdown title="Dropdown" id="basic-nav-dropdown">
-							<NavDropdown.Item href="#action/3.1">Action</NavDropdown.Item>
-							<NavDropdown.Item href="#action/3.2">
-								Another action
+						<NavDropdown title="Store" id="basic-nav-dropdown">
+							<NavDropdown.Item 
+								onClick={() => {
+									handleNavSelect();
+									navigate("/store/item/reg");
+								}}
+							>
+								New Entry
 							</NavDropdown.Item>
-							<NavDropdown.Item href="#action/3.3">Something</NavDropdown.Item>
+							<NavDropdown.Item 
+								onClick={() => {
+									handleNavSelect();
+									navigate("/store/item/restock");
+								}}
+							>
+								Restock
+							</NavDropdown.Item>
 							<NavDropdown.Divider />
-							<NavDropdown.Item href="#action/3.4">
-								Separated link
+							<NavDropdown.Item 
+								onClick={() => {
+									handleNavSelect();
+									navigate("/store/item/dispensary");
+								}}
+							>
+								Dispensary
 							</NavDropdown.Item>
 						</NavDropdown>
 					</Nav>

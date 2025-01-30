@@ -27,7 +27,7 @@ const Dashboard = () => {
 
                 <div className="container mt-4 mb-4">
                     <div className="row g-2">
-                        {user.hasAuth('RECEIPT_WINDOW') && <div class="col-md-4 col-sm-12">
+                        {user.hasAuth('RECEIPT_WINDOW') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-danger-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -45,7 +45,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        {user.hasAuth('INVOICE_WINDOW') && <div class="col-md-4 col-sm-12">
+                        {user.hasAuth('INVOICE_WINDOW') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -63,7 +63,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        {user.hasAuth('REPORT_WINDOW') && <div class="col-md-4 col-sm-12">
+                        {user.hasAuth('REPORT_WINDOW') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -81,7 +81,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        <div class="col-md-4 col-sm-12">
+                        <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-danger-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -99,8 +99,8 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        <div class="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
+                        <div className="col-md-4 col-sm-12">
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/ongoing/new')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
@@ -110,14 +110,14 @@ const Dashboard = () => {
                                         />
                                     </div>
                                     <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">Ongoing Stock Record Entries</span>
-                                        <span className="text-muted">View ongoing stock records.</span>
+                                        <span className="fs-6 noto-sans-font fw-bold">Unverified Stock Record Entries</span>
+                                        <span className="text-muted">View ongoing/unverified stock records.</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {user.hasAuth('CREATE_ACCOUNT') && <div class="col-md-4 col-sm-12">
+                        {user.hasAuth('CREATE_ACCOUNT') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -135,7 +135,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        {user.hasAuth('USERS_WINDOW') && <div class="col-md-4 col-sm-12">
+                        {user.hasAuth('USERS_WINDOW') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-danger-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -153,7 +153,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        <div class="col-md-4 col-sm-12">
+                        <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -171,8 +171,8 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        <div class="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
+                        <div className="col-md-4 col-sm-12">
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/ongoing/restock')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
@@ -182,8 +182,8 @@ const Dashboard = () => {
                                         />
                                     </div>
                                     <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">Ongoing Restock Entries</span>
-                                        <span className="text-muted">View ongoing restock records.</span>
+                                        <span className="fs-6 noto-sans-font fw-bold">Unverified Restock Entries</span>
+                                        <span className="text-muted">View ongoing/unverified restock records.</span>
                                     </div>
                                 </div>
                             </div>
