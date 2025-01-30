@@ -178,7 +178,7 @@ const UnverifiedStockRec = () => {
             <div className="d-none d-md-block mt-4">
                 <div className="row mb-2">
                     <div className="col-md-6 col-12 fw-bold">User</div>
-                    <div className="col-md-2 col-4">ID</div>
+                    <div className="col-md-2 col-4 fw-bold">ID</div>
                     <div className="col-md-2 col-4 fw-bold">No. of Items</div>
                     <div className="col-md-2 col-4 fw-bold">Date</div>
                 </div>
