@@ -1,3 +1,9 @@
+const clientDetails = { 
+	storeName: "Mr. Farouk", 
+	address: "Mr. Farouk",
+	phone: "",
+}
+
 const selectOption = [
 	{ value: "Mr. Farouk", label: "Mr. Farouk" },
 	{ value: "mrs", label: "Mrs" },
@@ -17,14 +23,6 @@ const purchasesSubMenu = [
 	{ label: "File", path: "/file" },
 	{ label: "Edit", path: "/Edit" },
 	{ label: "File", path: "/file" },
-];
-
-const storeSubMenu = [
-	{ label: "Show Input form", path: "/showForm" },
-	{ label: "Save Record", path: "/file" },
-	{ label: "Delete Record", path: "/Edit" },
-	{ label: "Search", path: "/Search" },
-	{ label: "Save to PDF", path: "/pdfSave" },
 ];
 const sectionOption = [
 	{ value: "pharmarcy", label: "Pharmarcy" },
@@ -79,10 +77,10 @@ const tableData = [
 ];
 
 export {
+	clientDetails,
 	selectOption,
 	customerName,
 	purchasesSubMenu,
-	storeSubMenu,
 	sectionOption,
 	packagingOptions,
 	purchasesOptions,

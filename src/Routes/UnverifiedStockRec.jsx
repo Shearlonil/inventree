@@ -5,10 +5,9 @@ import { format } from 'date-fns';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useAuth } from '../app-context/auth-user-context';
-import PaginationLite from '../Components/PaginationLite';
 import handleErrMsg from '../Utils/error-handler';
 import storeController from '../Controllers/store-controller';
-import ConfirmDialogComp from '../Components/ConfirmDialogComp';
+import ConfirmDialog from '../Components/DialogBoxes/ConfirmDialog';
 
 const UnverifiedStockRec = () => {
     const { mode } = useParams();
@@ -187,7 +186,7 @@ const UnverifiedStockRec = () => {
             {!networkRequest && data.length > 0 && buildSummaryCards()}
             {networkRequest && buildSkeleton()}
 
-            <ConfirmDialogComp
+            <ConfirmDialog
               show={showConfirmModal}
               handleClose={closeConfirmModal}
               handleConfirm={handleConfirmAction}

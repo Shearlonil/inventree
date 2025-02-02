@@ -18,7 +18,6 @@ import { format } from "date-fns";
 import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
-import storeController from "../../Controllers/store-controller";
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 
 const StoreFormInputs = (props) => {
@@ -45,10 +44,12 @@ const StoreFormInputs = (props) => {
 		handleSubmit,
 		control,
 		setValue,
+		reset,
 		formState: { errors },
 	} = useForm({
 		resolver: yupResolver(schema),
 		defaultValues: {
+			item_name: null,
 			total_qty: 0,
 			qty_per_pkg: 0,
 			unit_stock: 0,
@@ -56,6 +57,10 @@ const StoreFormInputs = (props) => {
 			pkg_stock_price: 0,
 			pkg_sales_price: 0,
 			amount_paid: 0,
+			section: null,
+			qty_type: null,
+			vendor: null,
+			expDate: null,
 		},
 	});
 
@@ -131,6 +136,8 @@ const StoreFormInputs = (props) => {
 			const item = new ItemRegDTO();
 			setItem(item, formData);
 			await fnSave(item);
+			//	only reset when new item is added and not edited
+			reset();
 		}
 	};
 
@@ -274,6 +281,16 @@ const StoreFormInputs = (props) => {
 										}}
 										value={field.value ? new Date(field.value) : null}
 										onChange={(date) => field.onChange(date ? date.toDate() : null)}
+										/*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
+											refs:
+												*	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
+												*	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
+											there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
+											the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
+											or field.value is null : I've been able to "patch" it with the renderInput prop :*/
+										renderInput={(props) => {
+											return <input {...props} value={field.value ? props.value : ''} />
+										}}
 									/>
 								)}
 							/>

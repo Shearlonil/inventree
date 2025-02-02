@@ -1,7 +1,7 @@
 import React from "react";
 import { Form, Table } from "react-bootstrap";
 import Select from "react-select";
-import MyOffcanvasMenu from "../Components/MyOffcanvasMenu";
+import OffcanvasMenu from "../Components/OffcanvasMenu";
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
@@ -31,7 +31,7 @@ const AcctVoucherCreation = () => {
 	};
 	return (
 		<>
-			<MyOffcanvasMenu />
+			<OffcanvasMenu />
 			<div className="text-center my-5">
 				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
 					<span className="me-4">Voucher</span>

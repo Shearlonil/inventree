@@ -2,7 +2,7 @@
 import React from "react";
 import { Modal, Button } from "react-bootstrap";
 
-const ConfirmDialogComp = ({ show, handleClose, handleConfirm, message }) => {
+const ConfirmDialog = ({ show, handleClose, handleConfirm, message }) => {
     return (
         <Modal show={show} onHide={handleClose}>
             <Modal.Header closeButton>
@@ -10,7 +10,7 @@ const ConfirmDialogComp = ({ show, handleClose, handleConfirm, message }) => {
             </Modal.Header>
             <Modal.Body>{message}</Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={handleClose}>
+                <Button variant="danger" onClick={handleClose}>
                     Cancel
                 </Button>
                 <Button variant="primary" onClick={handleConfirm}>
@@ -21,4 +21,4 @@ const ConfirmDialogComp = ({ show, handleClose, handleConfirm, message }) => {
     );
 };
 
-export default ConfirmDialogComp;
+export default ConfirmDialog;

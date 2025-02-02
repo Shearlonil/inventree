@@ -5,8 +5,7 @@ import { toast } from "react-toastify";
 import { FaStoreAlt } from "react-icons/fa";
 
 import StoreFormInputs from "../../Components/StoreComp/StoreFormInputs";
-import MyOffcanvasMenu from "../../Components/MyOffcanvasMenu";
-import { storeSubMenu } from "../../../data";
+import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
 import storeController from "../../Controllers/store-controller";
@@ -17,6 +16,9 @@ import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from "../../Entities/Vendor";
 import { Tract } from "../../Entities/Tract";
 import PaginationLite from "../../Components/PaginationLite";
+import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
+import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
+import outpostController from "../../Controllers/outpost-controller";
 
 const StoreItemReg = () => {
 	const navigate = useNavigate();
@@ -31,9 +33,17 @@ const StoreItemReg = () => {
 	const [stockRecId, setStockRecId] = useState(stock_rec_id);
 	const [items, setItems] = useState([]);
 	const [entityToEdit, setEntityToEdit] = useState(null);
-	const [showModal, setShowModal] = useState(false);
+	const [showFormModal, setShowFormModal] = useState(false);
+	const [outpostOptions, setOutpostOptions] = useState([]);
+	const [destination, setDestination] = useState(null);	//	1 => commit to store	| 2 => commit to outpost's sales/shelf
+	//	for confirmation dialog
+	const [displayMsg, setDisplayMsg] = useState("");
+	const [dropDownMsg, setDropDownMsg] = useState("");
+	const [showConfirmModal, setShowConfirmModal] = useState(false);
+	const [showDropDownModal, setShowDropDownModal] = useState(false);
+	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
-	// for pagination
+	//	for pagination
 	const [pageSize] = useState(3);
 	const [totalItemsCount, setTotalItemsCount] = useState(0);
 	const [currentPage, setCurrentPage] = useState(1);
@@ -41,35 +51,44 @@ const StoreItemReg = () => {
 	//  data returned from DataPagination
 	const [pagedData, setPagedData] = useState([]);
 
-    //	menus for the table menu-button
+    //	menus for the react-menu in table
     const menuItems = [
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         {
             name: 'Edit', onClickParams: {evtName: 'edit' }
         },
     ];
+
+	const storeItemRegOffCanvasMenu = [
+		{ label: "Show Input form", onClickParams: {evtName: 'showFormInput'} },
+		{ label: "Save To Sales/Shelf", onClickParams: {evtName: 'saveRecToSales'} },
+		{ label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
+		{ label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
+		{ label: "Search", onClickParams: {evtName: 'search'} },
+		{ label: "Save to PDF", onClickParams: {evtName: 'saveToPDF'} },
+	];
 	
 	useEffect( () => {
 		if(stock_rec_id > 0){
-			initialize();
+			initializeWithStockRec();
 		}else {
-			setItems([]);
-			setPagedData([]);
-			setTotalItemsCount(0);
-			setCurrentPage(1);
+			initialize();
 		}
 	}, [stock_rec_id]);
+	
 
 	const initialize = async () => {
 		try {
 			setNetworkRequest(true);
-	
-			const response = await storeController.findUnverifiedStockRecById(stock_rec_id);
+			setItems([]);
+			setPagedData([]);
+			setTotalItemsCount(0);
+			setCurrentPage(1);
+			const response = await outpostController.findAll();
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
 			if (response && response.data) {
-				setItems(buildTableData(response.data.items));
-				setTotalItemsCount(response.data.items.length);
+                setOutpostOptions(response.data.map( outpost => ({label: outpost.name, value: outpost.id})));
 			}
 	
 			setNetworkRequest(false);
@@ -79,6 +98,45 @@ const StoreItemReg = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+
+	const initializeWithStockRec = async () => {
+		try {
+			setNetworkRequest(true);
+	
+			const response = await storeController.findUnverifiedStockRecById(stock_rec_id);
+			const outpostResponse = await outpostController.findAll();
+	
+			//	check if the request to fetch item doesn't fail before setting values to display
+			if (response && response.data) {
+				setItems(buildTableData(response.data.items));
+				setTotalItemsCount(response.data.items.length);
+			}
+	
+			//	check if the request to fetch outposts doesn't fail before setting values to display
+			if (outpostResponse && outpostResponse.data) {
+                setOutpostOptions(outpostResponse.data.map( outpost => ({label: outpost.name, value: outpost.id})));
+			}
+	
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initializeWithStockRec();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -137,12 +195,42 @@ const StoreItemReg = () => {
 	};
 
 	const handleCloseModal = () => {
-		setShowModal(false);
+		setShowFormModal(false);
+		setShowConfirmModal(false);
+		setShowDropDownModal(false);
 	};
 
-	const handleShowModal = () => {
-		setEntityToEdit(null);
-		setShowModal(true);
+	const commitStockRecord = async (outpostId) => {
+		try {
+			setNetworkRequest(true);
+			await storeController.commitStockRecById(stockRecId, outpostId, destination);
+			//	reset all variables
+			setItems([]);
+			setPagedData([])
+			setCurrentPage(1);
+			setTotalItemsCount(0);
+			setEntityToEdit(null);
+			setDestination(null);
+
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return commitStockRecord(outpostId);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
 	};
 
     const setPageChanged = async (pageNumber) => {
@@ -151,18 +239,47 @@ const StoreItemReg = () => {
       	setPagedData(items.slice(startIndex, startIndex + pageSize));
     };
 
-    const handleReactMenuItemClick = async (onclickParams, entity, e) => {
+    const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'delete':
-				console.log('deleting..', entity);
+				//	ask if sure to delete
+				setEntityToEdit(entity);
+				setDisplayMsg(`Delete item ${entity.itemName}?`);
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setShowConfirmModal(true);
                 break;
             case 'edit':
-				console.log('editing..', entity);
 				setEntityToEdit(entity);
-				setShowModal(true);
+				setShowFormModal(true);
                 break;
         }
     };
+
+	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+		switch (onclickParams.evtName) {
+            case 'showFormInput':
+				setShowFormModal(true);
+                break;
+            case 'saveRecToSales':
+				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''}? to Sales/Shelf. Action cannot be undone`);
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setDestination(2);
+				setShowConfirmModal(true);
+                break;
+            case 'saveRecToStore':
+				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''}? to store. Action cannot be undone`);
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setDestination(1);
+				setShowConfirmModal(true);
+                break;
+            case 'deleteStockRec':
+                break;
+            case 'search':
+                break;
+            case 'saveToPDF':
+                break;
+        }
+	}
 	
 	const fnSave = async (item) => {
 		try {
@@ -172,12 +289,13 @@ const StoreItemReg = () => {
 				await storeController.updateStockRecItem(item);
 				//	find index position of edited item in items arr
 				const indexPos = items.findIndex(i => i.id === item.id);
-				if(indexPos){
-					//	reaplace old item found at index position in items array with edited one
+				if(indexPos > -1){
+					//	replace old item found at index position in items array with edited one
 					items.splice(indexPos, 1, item);
 					setItems([...items]);
 					const startIndex = (currentPage - 1) * pageSize;
 					setPagedData(items.slice(startIndex, startIndex + pageSize));
+					toast.success('Update successful');
 				}
 			}else {
 				// 	else, create new item
@@ -187,8 +305,10 @@ const StoreItemReg = () => {
 					item.itemDetailId = response.data.items[0].itemDetailId;
 					setStockRecId(response.data.id);
 					setItems([...items, item]);
+					//	maintain current page
+					setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
+					//	update total items count
 					setTotalItemsCount(totalItemsCount + 1);
-					setCurrentPage(Math.ceil(totalItemsCount / pageSize));
 				}
 			}
 			setNetworkRequest(false);
@@ -209,20 +329,70 @@ const StoreItemReg = () => {
 				// if error while refreshing, logout and delete all cookies
 				logout();
 			}
-			// throw error;
+		}
+	}
+	
+	const handleConfirmOK = async () => {
+		setShowConfirmModal(false);
+		try {
+			setNetworkRequest(true);
+			switch (confirmDialogEvtName) {
+				case 'delete':
+					await storeController.deleteStockRecItem(entityToEdit.itemDetailId);
+					//	find index position of deleted item in items arr
+					const indexPos = items.findIndex(i => i.id == entityToEdit.id);
+					if(indexPos > -1){
+						//	replace old item found at index position in items array with edited one
+						items.splice(indexPos, 1);
+						setItems([...items]);
+						/*  MAINTAIN CURRENT PAGE.
+						normally, we would call setPagedData(response.data.products) here but that isn't necessary because calling setCurrentPage(pageNumber)
+						would cause PaginationLite to re-render as currentPage is part of it's useEffect dependencies. This re-render triggers setPageChanged to be
+						called with currentPage number.	*/
+						setCurrentPage(Math.ceil((totalItemsCount - 1) / pageSize));
+						setTotalItemsCount(totalItemsCount - 1);
+						toast.success('Delete successful');
+					}
+					break;
+				case 'saveRecToSales':
+				case 'saveRecToStore':
+					setDropDownMsg("Please select Outpost")
+					setShowDropDownModal(true);
+					break;
+			}
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return handleConfirmOK();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
 		}
 	}
 
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", "Vendor", "Cash", "Credit", 'Options'],
+        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", 
+			"Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', "purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
+        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', 
+			"purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
 		//	React Menu
 		menus: {
 			ReactMenu,
 			menuItems,
-			menuItemClick: handleReactMenuItemClick,
+			menuItemClick: handleTableReactMenuItemClick,
 		}
     };
 
@@ -231,15 +401,11 @@ const StoreItemReg = () => {
 			{/* Offcanvas Sidebar for small screens */}
 			<div className="d-flex justify-content-between mt-2">
 				<div>
-					<MyOffcanvasMenu
-						menuItems={storeSubMenu}
-						handleShowModal={handleShowModal}
-						handleCloseModal={handleCloseModal}
-					/>
+					<OffcanvasMenu menuItems={storeItemRegOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} />
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-						<span className="me-4">Store</span>
+						<span className="me-4">Store Item Registration</span>
 						<FaStoreAlt className="text-warning" size={"30px"} />
 					</h2>
 				</div>
@@ -268,8 +434,21 @@ const StoreItemReg = () => {
 					</main>
 				</div>
 			</div>
+			<ConfirmDialog
+				show={showConfirmModal}
+				handleClose={handleCloseModal}
+				handleConfirm={handleConfirmOK}
+				message={displayMsg}
+			/>
+			<DropDownDialog
+				show={showDropDownModal}
+				handleClose={handleCloseModal}
+				handleConfirm={commitStockRecord}
+				message={dropDownMsg}
+				options={outpostOptions}
+			/>
 
-			<Modal show={showModal} onHide={handleCloseModal}>
+			<Modal show={showFormModal} onHide={handleCloseModal}>
 				<Modal.Header closeButton>
 					<Modal.Title>Add Item</Modal.Title>
 				</Modal.Header>

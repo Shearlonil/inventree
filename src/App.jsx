@@ -15,6 +15,7 @@ import UnverifiedStockRec from "./Routes/UnverifiedStockRec";
 import Restock from './Routes/Store/Restock';
 import Dispensary from './Routes/Store/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
+import { ProtectedRoute } from './Routes/ProtectedRoute';
 
 function App() {
 	return (
@@ -22,19 +23,22 @@ function App() {
 			<Routes>
 				<Route index path={"/"} element={<Home />} />
 				<Route index path={"/login"} element={<Login />} />
-				<Route path={"/cashier-window"} element={<CashierWindow />} />
-				<Route
-					path={"/acct-voucher-creation"}
-					element={<AcctVoucherCreation />}
-				/>
-				<Route path={"/mono-transaction"} element={<MonoTransaction />} />
-				<Route path={"/store/item/reg/:stock_rec_id"} element={<StoreItemReg />} />
-				<Route path={"/store/item/restock/:stock_rec_id"} element={<Restock />} />
-				<Route path={"/store/item/dispensary/:dispensary_id"} element={<Dispensary />} />
-				<Route path={"/store/item/ongoing/:mode"} element={<UnverifiedStockRec />} />
+				<Route path="/transaction" element={<ProtectedRoute />}>
+					<Route path="cashier" element={<CashierWindow />} />
+					<Route path={"mono"} element={<MonoTransaction />} />
+          		</Route>
+				<Route path={"/acct-voucher-creation"} element={<AcctVoucherCreation />} />
+				<Route path="/store/item" element={<ProtectedRoute />}>
+					<Route path={"reg/:stock_rec_id"} element={<StoreItemReg />} />
+					<Route path={"restock/:stock_rec_id"} element={<Restock />} />
+					<Route path={"dispensary/:dispensary_id"} element={<Dispensary />} />
+					<Route path={"unverified/:mode"} element={<UnverifiedStockRec />} />
+          		</Route>
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
 				<Route path={"/finance"} element={<Finance />} />
-				<Route path={"/dashboard"} element={<Dashboard />} />
+				<Route path="/dashboard" element={<ProtectedRoute />}>
+					<Route path={""} element={<Dashboard />} />
+          		</Route>
 				<Route path={"/test"} element={<Test />} />
 				<Route path="*" element={<PageNotFound />} />
 			</Routes>
