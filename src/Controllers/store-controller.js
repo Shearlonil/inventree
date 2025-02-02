@@ -52,6 +52,14 @@ const deleteStockRec = async (stockRecId) => {
     });
 }
 
+const exportToPDF = async (stockRecId) => {
+    return await httpService.get(`/api/store/stock-record/pdf`, {
+        params: {
+            stockRecId,
+        }
+    });
+}
+
 const unverifiedStockRec = async (type) => {
     return await httpService.get(`/api/store/sales/unverified`, {
         params: {
@@ -75,6 +83,7 @@ export default {
     updateStockRecItem,
     deleteStockRecItem,
     deleteStockRec,
+    exportToPDF,
     unverifiedStockRec,
     unverifiedDispensary,
 }

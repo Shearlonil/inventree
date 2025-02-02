@@ -64,11 +64,12 @@ const StoreItemReg = () => {
 		{ label: "Save To Sales/Shelf", onClickParams: {evtName: 'saveRecToSales'} },
 		{ label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
 		{ label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
-		{ label: "Search", onClickParams: {evtName: 'search'} },
-		{ label: "Save to PDF", onClickParams: {evtName: 'saveToPDF'} },
+		// { label: "Search", onClickParams: {evtName: 'search'} },
+		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
 	
 	useEffect( () => {
+		console.log("stock rec id", stockRecId);
 		if(stock_rec_id > 0){
 			initializeWithStockRec();
 		}else {
@@ -80,10 +81,8 @@ const StoreItemReg = () => {
 	const initialize = async () => {
 		try {
 			setNetworkRequest(true);
-			setItems([]);
-			setPagedData([]);
-			setTotalItemsCount(0);
-			setCurrentPage(1);
+			resetPageStates();
+
 			const response = await outpostController.findAll();
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
@@ -115,6 +114,7 @@ const StoreItemReg = () => {
 	const initializeWithStockRec = async () => {
 		try {
 			setNetworkRequest(true);
+			resetPageStates();
 	
 			const response = await storeController.findUnverifiedStockRecById(stock_rec_id);
 			const outpostResponse = await outpostController.findAll();
@@ -144,12 +144,23 @@ const StoreItemReg = () => {
 				}
 				// display error message
 				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
 			} catch (error) {
 				// if error while refreshing, logout and delete all cookies
 				logout();
 			}
 		}
 	};
+
+	const resetPageStates = () => {
+		setItems([]);
+		setPagedData([]);
+		setTotalItemsCount(0);
+		setCurrentPage(1);
+		setStockRecId(stock_rec_id);
+		setEntityToEdit(null);
+		setDestination(null);
+	}
 
 	//	setup table data from fetched stock record
 	const buildTableData = (arr = []) => {
@@ -204,13 +215,8 @@ const StoreItemReg = () => {
 		try {
 			setNetworkRequest(true);
 			await storeController.commitStockRecById(stockRecId, outpostId, destination);
-			//	reset all variables
-			setItems([]);
-			setPagedData([])
-			setCurrentPage(1);
-			setTotalItemsCount(0);
-			setEntityToEdit(null);
-			setDestination(null);
+			//	navigate back to this page which will cause reset of page states
+			navigate("/store/item/reg/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
@@ -226,6 +232,7 @@ const StoreItemReg = () => {
 				}
 				// display error message
 				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
 			} catch (error) {
 				// if error while refreshing, logout and delete all cookies
 				logout();
@@ -261,22 +268,28 @@ const StoreItemReg = () => {
 				setShowFormModal(true);
                 break;
             case 'saveRecToSales':
-				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''}? to Sales/Shelf. Action cannot be undone`);
+				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''} to Sales/Shelf? Action cannot be undone`);
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setDestination(2);
 				setShowConfirmModal(true);
                 break;
             case 'saveRecToStore':
-				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''}? to store. Action cannot be undone`);
+				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''} to store? Action cannot be undone`);
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setDestination(1);
 				setShowConfirmModal(true);
                 break;
             case 'deleteStockRec':
+				setDisplayMsg(`Delete record with ${items.length} item${items.length > 1 ? 's' : ''}? Action cannot be undone`);
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setShowConfirmModal(true);
+                break;
+            case 'exportToPDF':
+				setDisplayMsg(`Export record to PDF?`);
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setShowConfirmModal(true);
                 break;
             case 'search':
-                break;
-            case 'saveToPDF':
                 break;
         }
 	}
@@ -325,6 +338,7 @@ const StoreItemReg = () => {
 				}
 				// display error message
 				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
 			} catch (error) {
 				// if error while refreshing, logout and delete all cookies
 				logout();
@@ -359,6 +373,14 @@ const StoreItemReg = () => {
 					setDropDownMsg("Please select Outpost")
 					setShowDropDownModal(true);
 					break;
+				case "deleteStockRec":
+					await storeController.deleteStockRec(stockRecId);
+					//	navigate back to this page which will cause reset of page states
+					navigate("/store/item/reg/0");
+					break;
+				case "exportToPDF":
+					await storeController.exportToPDF(stockRecId);
+					break;
 			}
 			setNetworkRequest(false);
 		} catch (error) {
@@ -374,6 +396,7 @@ const StoreItemReg = () => {
 				}
 				// display error message
 				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
 			} catch (error) {
 				// if error while refreshing, logout and delete all cookies
 				logout();

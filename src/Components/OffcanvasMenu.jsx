@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Offcanvas, Nav } from "react-bootstrap";
 import { CgMenuLeft } from "react-icons/cg";
 import { useLocation } from "react-router-dom";
+import IMAGES from "../assets/Images";
 
 const OffcanvasMenu = ({ menuItems, menuItemClick = () => {} }) => {
 	const [show, setShow] = useState(false);
@@ -20,7 +21,9 @@ const OffcanvasMenu = ({ menuItems, menuItemClick = () => {} }) => {
 
 			<Offcanvas show={show} onHide={handleClose} placement="start">
 				<Offcanvas.Header closeButton>
-					<Offcanvas.Title>Menu</Offcanvas.Title>
+					<Offcanvas.Title>
+						<img src={IMAGES.logo} width={"120px"} />
+					</Offcanvas.Title>
 				</Offcanvas.Header>
 				<Offcanvas.Body>
 					<Nav className="flex-column">
