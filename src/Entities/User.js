@@ -8,7 +8,7 @@ export default class User {
             const auths = authorities.split(',');
             _userProps.set(this, {
                 id: owner.id,
-                userName: sub,
+                username: sub,
                 firstName: owner.firstName,
                 lastName: owner.lastName,
                 status: owner.status,
@@ -23,9 +23,9 @@ export default class User {
     
     set id(id) { _userProps.get(this).id = id }
 
-    get userName() { return _userProps.get(this).userName }
+    get username() { return _userProps.get(this).username }
     
-    set userName(userName) { _userProps.get(this).userName = userName }
+    set username(username) { _userProps.get(this).username = username }
 
     get firstName() { return _userProps.get(this).firstName }
     

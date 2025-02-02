@@ -1,5 +1,13 @@
 import httpService from "../axios/http-service";
 
+const findUnverifiedStockRecById = async (stockRecId) => {
+    return await httpService.get(`/api/store/stock-record`, {
+        params: {
+            stockRecId,
+        }
+    });
+}
+
 const persistStockRecItem = async (stock_rec_id, item) => {
     return await httpService.post(`/api/store/new/sales`, [item], {
         params: {
@@ -49,6 +57,7 @@ const ongoingDispensary = async () => {
 }
 
 export default {
+    findUnverifiedStockRecById,
     persistStockRecItem,
     updateStockRecItem,
     deleteStockRecItem,

@@ -1,6 +1,6 @@
 import * as yup from "yup";
 import React, { useEffect, useState } from "react";
-import logo from "../assets/logo.png";
+import logo from "../assets/Img/logo.png";
 import { Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -68,7 +68,7 @@ const Login = () => {
                         <div className="col-12 col-md-6 my-auto">
                             <main className="form-signin m-auto" style={{ minWidth: "320px", maxWidth: "350px" }} >
                                 <Form className="text-center text-dark">
-                                    <img className="mb-4" src={logo} alt="" height="100" />
+                                    <img className="mb-4" src={logo} alt="" height="200" width={'100%'} />
                                     <h1 className="h3 mb-3 fw-normal">Sign In Page</h1>
 
                                     <div className="form-floating mb-3">

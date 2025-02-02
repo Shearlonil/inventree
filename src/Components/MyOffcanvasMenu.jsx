@@ -24,7 +24,7 @@ const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 				</Offcanvas.Header>
 				<Offcanvas.Body>
 					<Nav className="flex-column">
-						{location.pathname === "/store" && (
+						{location.pathname === "/store/item/reg/:stock_rec_id" && (
 							<Button
 								onClick={() => {
 									handleShowModal();
@@ -41,11 +41,17 @@ const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 									key={label}
 									href={`#${path}`}
 									className="mb-2"
-									onClick={handleClose}
+									onClick={() => {
+										if(path === "/showForm"){
+											handleShowModal();
+										}
+										handleClose();
+									}}
 								>
 									{label}
 								</Nav.Link>
-							))}
+							))
+						}
 
 						{!menuItems &&
 							["Home", "About", "Services", "Contact"].map((menu) => (
@@ -56,7 +62,8 @@ const MyOffcanvasMenu = ({ menuItems, handleShowModal, handleCloseModal }) => {
 								>
 									{menu}
 								</Nav.Link>
-							))}
+							))
+						}
 					</Nav>
 				</Offcanvas.Body>
 			</Offcanvas>

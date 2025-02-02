@@ -24,12 +24,12 @@ function NavBar() {
 			expanded={expanded}
 			onToggle={handleToggle}
 			expand="lg"
-			className="bg-dark py-3 shadow-sm navbar-dark"
+			className="bg-light py-3 shadow-sm navbar-light"
 		>
 			<Container>
 				<Navbar.Brand>
 					<Link onClick={handleNavSelect} to={"/"}>
-						<img src={IMAGES.logo} alt="" width={"120px"} />
+						<img src={IMAGES.logo} alt="" width={"100px"} />
 					</Link>
 				</Navbar.Brand>
 				<Navbar.Toggle aria-controls="basic-navbar-nav" />
@@ -97,7 +97,7 @@ function NavBar() {
 							<NavDropdown.Item 
 								onClick={() => {
 									handleNavSelect();
-									navigate("/store/item/reg");
+									navigate("/store/item/reg/0");
 								}}
 							>
 								New Entry
@@ -105,7 +105,7 @@ function NavBar() {
 							<NavDropdown.Item 
 								onClick={() => {
 									handleNavSelect();
-									navigate("/store/item/restock");
+									navigate("/store/item/restock/0");
 								}}
 							>
 								Restock

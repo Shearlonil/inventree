@@ -20,7 +20,7 @@ import {
 
 const OribitalLoading = ({
     color = "#000000",
-    size = "medium",
+    size = "small",
     variant = "track-disc",
     textColor = "#000000",
     text,

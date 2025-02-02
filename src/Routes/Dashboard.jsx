@@ -1,8 +1,6 @@
 import React from "react";
 import SVG from "../assets/Svg";
 import { Link, useNavigate } from "react-router-dom";
-import { BiMoney } from "react-icons/bi";
-import { CgAddR } from "react-icons/cg";
 import { useAuth } from "../app-context/auth-user-context";
 
 const Dashboard = () => {
@@ -11,13 +9,12 @@ const Dashboard = () => {
     const { authUser, handleRefresh, logout } = useAuth();
     const user = authUser();
 
-	const { Finance_1 } = SVG;
 	return (
 		<div className="py-2 py-md-4">
             <div className="container-md">
                 <h1 className="fw-bold mt-4">
                     Hello{" "}
-                    <span className="bungee-regular text-primary"> {user.userName} </span>
+                    <span className="bungee-regular text-primary"> {user.username} </span>
                 </h1>
                 <hr />
 

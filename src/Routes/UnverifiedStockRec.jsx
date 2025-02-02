@@ -15,19 +15,14 @@ const UnverifiedStockRec = () => {
     const navigate = useNavigate();
 
     const [networkRequest, setNetworkRequest] = useState(true);
+    const [selectedEntry, setSelectedEntry] = useState(null);
 
     //  for Confirmation Dialog
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-    //  for pagination
-    const [pageSize] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [idOffset, setIdOffset] = useState(0);
-    const [totalItemsCount, setTotalItemsCount] = useState(0);
   
-    //  data returned from DataPagination
-    const [pagedData, setPagedData] = useState([]);
+    //  data returned from network fetch
+    const [data, setData] = useState([]);
 
     const { authUser, handleRefresh, logout } = useAuth();
     const user = authUser();
@@ -42,11 +37,10 @@ const UnverifiedStockRec = () => {
     
             const response = await storeController.unverifiedStockRec(mode);
     
-            //check if the request to fetch item doesn't fail before setting values to display
+            //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
-                // setProducts(response.data);
-                setPagedData(response.data);
-                setTotalItemsCount(response.data.length);
+                //  setProducts(response.data);
+                setData(response.data);
             }
     
             setNetworkRequest(false);
@@ -57,39 +51,44 @@ const UnverifiedStockRec = () => {
                     await handleRefresh();
                     return initialize();
                 }
-                // Incase of 401 Unauthorized, navigate to 404
+                //  Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
                     navigate('/404');
                 }
-                // display error message
+                //  display error message
                 toast.error(handleErrMsg(error).msg);
             } catch (error) {
-                // if error while refreshing, logout and delete all cookies
+                //  if error while refreshing, logout and delete all cookies
                 logout();
             }
         }
     };
 
     //  show modal for updating item details
-    const openContinueModal = (id) => {
-        setDisplayMsg(`Continue modifying entry point ${id}?`);
-        setShowConfirmModal(true);
+    const openContinueModal = (item) => {
+        if(item.user_name !== user.username){
+            setDisplayMsg(`Continue modifying entry by ${item.user_name}?. Warning, This will set the user to your account`);
+            setShowConfirmModal(true);
+            setSelectedEntry(item);
+            return;
+        }
+        navigate(`/store/item/reg/${item.id}`);
     };
 
     //  confirmation for updating item details and updating item imgs
     const handleConfirmAction = async () => {
+        navigate(`/store/item/reg/${selectedEntry.id}`);
+        setSelectedEntry(null);
         setShowConfirmModal(false);
     };
   
     const closeConfirmModal = () => {
+        setSelectedEntry(null);
         setShowConfirmModal(false);
     };
 
-    const setPageChanged = async (pageNumber) => {
-    };
-
     const buildSummaryCards = () => {
-        return pagedData.map((item) => {
+        return data.map((item) => {
             const { id, user_name, item_count, f_name, l_name, date } = item;
             return (
                 <div key={id}>
@@ -101,7 +100,7 @@ const UnverifiedStockRec = () => {
                                     <p className="mb-2">{f_name} {l_name}</p>
                                     <button
                                         className={`btn btn-sm btn-outline-danger px-3 rounded-pill`}
-                                        onClick={() => openContinueModal(id)}
+                                        onClick={() => openContinueModal(item)}
                                     >
                                         continue
                                     </button>
@@ -185,14 +184,8 @@ const UnverifiedStockRec = () => {
             </div>
             <hr />
 
-            {!networkRequest && pagedData.length > 0 && buildSummaryCards()}
+            {!networkRequest && data.length > 0 && buildSummaryCards()}
             {networkRequest && buildSkeleton()}
-            <PaginationLite
-                itemCount={totalItemsCount}
-                pageSize={pageSize}
-                setPageChanged={setPageChanged}
-                pageNumber={currentPage}
-            />
 
             <ConfirmDialogComp
               show={showConfirmModal}

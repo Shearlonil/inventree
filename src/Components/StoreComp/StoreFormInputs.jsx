@@ -19,14 +19,12 @@ import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import storeController from "../../Controllers/store-controller";
-import { OribitalLoading } from "../react-loading-indicators/Indicator";
+import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 
 const StoreFormInputs = (props) => {
-	const { submitData, data, stockRecId }  = props;
+	const { data, fnSave, networkRequest }  = props;
 
 	const navigate = useNavigate();
-
-	const [networkRequest, setNetworkRequest] = useState(false);
 
 	// for tracts
 	const [tractOptions, setTractOptions] = useState([]);
@@ -124,21 +122,15 @@ const StoreFormInputs = (props) => {
 	};
 
 	const onSubmit = async (formData) => {
-		try {
-			if(props.data?.id){
-				//	if data has id, then update mode
-				setItem(props.data, formData);
-				const stock_rec_id = await save(props.data);
-				submitData(stock_rec_id, props.data);
-			}else {
-				// 	else, create new item
-				const item = new ItemRegDTO();
-				setItem(item, formData);
-				const stock_rec_id = await save(item);
-				submitData(stock_rec_id, item);
-			}
-		} catch (error) {
-			toast.error(handleErrMsg(error).msg);
+		if(props.data?.id){
+			//	if data has id, then update mode
+			setItem(props.data, formData);
+			await fnSave(props.data);
+		}else {
+			// 	else, create new item
+			const item = new ItemRegDTO();
+			setItem(item, formData);
+			await fnSave(item);
 		}
 	};
 
@@ -168,40 +160,6 @@ const StoreFormInputs = (props) => {
 		tract.id = formData.section.value;
 		tract.name = formData.section.label;
 		item.tract = tract;
-	}
-
-	const save = async (item) => {
-		try {
-			if(item.id){
-				await storeController.updateStockRecItem(item);
-			}else {
-				let response = await storeController.persistStockRecItem(stockRecId, item);
-				if(response && response.status === 200){
-					item.id = response.data.items[0].id;
-					item.itemDetailId = response.data.items[0].itemDetailId;
-					return response.data.id;
-				}
-			}
-			setNetworkRequest(false);
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return save(item);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-			throw error;
-		}
 	}
 
 	return (
@@ -456,8 +414,8 @@ const StoreFormInputs = (props) => {
 					disabled={networkRequest}
 					onClick={handleSubmit(onSubmit)}
 				>
-					{ networkRequest && <OribitalLoading color="#ffffff" size="medium" variant="spokes" /> }
-					{ !networkRequest && `Save` }
+					{ (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+					{ (!networkRequest) && `Save` }
 				</Button>
 			</Form>
 		</>

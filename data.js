@@ -20,10 +20,11 @@ const purchasesSubMenu = [
 ];
 
 const storeSubMenu = [
+	{ label: "Show Input form", path: "/showForm" },
 	{ label: "Save Record", path: "/file" },
 	{ label: "Delete Record", path: "/Edit" },
 	{ label: "Search", path: "/Search" },
-	{ label: "Link 3", path: "/file" },
+	{ label: "Save to PDF", path: "/pdfSave" },
 ];
 const sectionOption = [
 	{ value: "pharmarcy", label: "Pharmarcy" },
