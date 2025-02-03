@@ -20,7 +20,7 @@ import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 
-const StoreFormInputs = (props) => {
+const RestockForm = (props) => {
 	const { data, fnSave, networkRequest }  = props;
 
 	const navigate = useNavigate();
@@ -439,4 +439,4 @@ const StoreFormInputs = (props) => {
 	);
 };
 
-export default StoreFormInputs;
+export default RestockForm;

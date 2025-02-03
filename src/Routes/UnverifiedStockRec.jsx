@@ -71,14 +71,30 @@ const UnverifiedStockRec = () => {
             setSelectedEntry(item);
             return;
         }
-        navigate(`/store/item/reg/${item.id}`);
+        switch(mode){
+            case 'restock':
+                navigate(`/store/item/restock/${item.id}`);
+                break;
+            case 'new':
+                navigate(`/store/item/reg/${item.id}`);
+                break
+        }
     };
 
     //  confirmation for updating item details and updating item imgs
     const handleConfirmAction = async () => {
-        navigate(`/store/item/reg/${selectedEntry.id}`);
-        setSelectedEntry(null);
-        setShowConfirmModal(false);
+        switch(mode){
+            case 'restock':
+                navigate(`/store/item/restock/${selectedEntry.id}`);
+                setSelectedEntry(null);
+                setShowConfirmModal(false);
+                break;
+            case 'new':
+                navigate(`/store/item/reg/${selectedEntry.id}`);
+                setSelectedEntry(null);
+                setShowConfirmModal(false);
+                break
+        }
     };
   
     const closeConfirmModal = () => {
@@ -170,7 +186,7 @@ const UnverifiedStockRec = () => {
 
     return (
         <div className="container my-5">
-            <h2 className="paytone-one text-success mt-4">Unverified Entries</h2>
+            <h2 className="paytone-one text-success mt-4">Unverified {mode === 'restock' ? "Restock" : "New"} Entries</h2>
 
             {/* only display in md. Never display in mobile view */}
             <div className="d-none d-md-block mt-4">

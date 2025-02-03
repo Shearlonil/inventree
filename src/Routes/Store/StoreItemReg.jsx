@@ -4,21 +4,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaStoreAlt } from "react-icons/fa";
 
-import StoreFormInputs from "../../Components/StoreComp/StoreFormInputs";
+import StoreItemRegForm from "../../Components/StoreComp/StoreItemRegForm";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
 import storeController from "../../Controllers/store-controller";
-import { useAuth } from "../../app-context/auth-user-context";
 import handleErrMsg from "../../Utils/error-handler";
-import { ItemRegDTO } from "../../Entities/ItemRegDTO";
-import { Packaging } from "../../Entities/Packaging";
-import { Vendor } from "../../Entities/Vendor";
-import { Tract } from "../../Entities/Tract";
 import PaginationLite from "../../Components/PaginationLite";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
 import outpostController from "../../Controllers/outpost-controller";
+import { useAuth } from "../../app-context/auth-user-context";
+import { ItemRegDTO } from "../../Entities/ItemRegDTO";
+import { Packaging } from "../../Entities/Packaging";
+import { Vendor } from "../../Entities/Vendor";
+import { Tract } from "../../Entities/Tract";
 
 const StoreItemReg = () => {
 	const navigate = useNavigate();
@@ -44,7 +44,7 @@ const StoreItemReg = () => {
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
 	//	for pagination
-	const [pageSize] = useState(3);
+	const [pageSize] = useState(10);
 	const [totalItemsCount, setTotalItemsCount] = useState(0);
 	const [currentPage, setCurrentPage] = useState(1);
   
@@ -60,7 +60,7 @@ const StoreItemReg = () => {
     ];
 
 	const storeItemRegOffCanvasMenu = [
-		{ label: "Show Input form", onClickParams: {evtName: 'showFormInput'} },
+		{ label: "Input form", onClickParams: {evtName: 'showFormInput'} },
 		{ label: "Save To Sales/Shelf", onClickParams: {evtName: 'saveRecToSales'} },
 		{ label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
 		{ label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
@@ -69,14 +69,12 @@ const StoreItemReg = () => {
 	];
 	
 	useEffect( () => {
-		console.log("stock rec id", stockRecId);
 		if(stock_rec_id > 0){
 			initializeWithStockRec();
 		}else {
 			initialize();
 		}
 	}, [stock_rec_id]);
-	
 
 	const initialize = async () => {
 		try {
@@ -440,7 +438,7 @@ const StoreItemReg = () => {
 					{/* Sidebar for large screens */}
 					<aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
 						<h3>Add New Item</h3>
-						<StoreFormInputs fnSave={fnSave} networkRequest={networkRequest} />
+						<StoreItemRegForm fnSave={fnSave} networkRequest={networkRequest} />
 					</aside>
 
 					{/* Main Content */}
@@ -476,7 +474,7 @@ const StoreItemReg = () => {
 					<Modal.Title>Add Item</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<StoreFormInputs fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
+					<StoreItemRegForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>

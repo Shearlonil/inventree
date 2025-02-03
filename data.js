@@ -2,6 +2,9 @@ const clientDetails = {
 	storeName: "Mr. Farouk", 
 	address: "Mr. Farouk",
 	phone: "",
+	invoiceWarning: 'GOODS SOLD IN GOOD CONDITION ARE NOT RETURNABLE',
+	poweredBy: 'Genius Computer Technologies',
+	gctContact: '08034262759'
 }
 
 const selectOption = [
