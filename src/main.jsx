@@ -11,6 +11,7 @@ import "bootstrap/dist/js/bootstrap.bundle.js";
 import App from "./App.jsx";
 import NavBar from "./Components/Navbar.jsx";
 import { AuthProvider } from './app-context/auth-user-context.js';
+import Footer from './Components/Footer.jsx';
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")).render(
 			<AuthProvider>
 				<NavBar />
 				<App />
+				<Footer />
 			</AuthProvider>
 		</BrowserRouter>
 	</StrictMode>

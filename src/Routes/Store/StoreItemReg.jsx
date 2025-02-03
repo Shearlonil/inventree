@@ -404,7 +404,7 @@ const StoreItemReg = () => {
 
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", 
+        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pkg Stock', 'Pkg Sales', 'Dept.', "Total", 
 			"Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
         objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', 
@@ -419,7 +419,6 @@ const StoreItemReg = () => {
 
 	return (
 		<>
-			{/* Offcanvas Sidebar for small screens */}
 			<div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center ">
 				<div>
 					<OffcanvasMenu menuItems={storeItemRegOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />

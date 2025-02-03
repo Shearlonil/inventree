@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
     // call this function to sign out logged in user
     const logout = async (route) => {
         setJwtToken(null);
-        // TODO: clear all cookies and session storage
+        await httpService.get("/signout");
         if (route) {
             navigate(route, { replace: true });
         } else {

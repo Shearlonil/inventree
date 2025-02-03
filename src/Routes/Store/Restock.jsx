@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
 
-import outpostController from '../../Controllers/outpost-controller';
 import storeController from '../../Controllers/store-controller';
 import genericController from '../../Controllers/generic-controller';
 import handleErrMsg from '../../Utils/error-handler';
@@ -372,7 +371,7 @@ const Restock = () => {
 
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', "Total", 
+        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pkg Stock', 'Pkg Sales', "Total", 
 			"Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
         objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 

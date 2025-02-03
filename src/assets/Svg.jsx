@@ -1,4 +1,9 @@
 const SVG = {
+	purchases_one_outline_black: new URL("./Svg/purchases_one_outline_black.svg", import.meta.url).href,
+	purchases_one_filled_white: new URL("./Svg/purchases_one_filled_white.svg", import.meta.url).href,
+	purchases_one_outline_white: new URL("./Svg/purchases_one_outline_white.svg", import.meta.url).href,
+	purchases_two_filled_white: new URL("./Svg/purchases_two_filled_white.svg", import.meta.url).href,
+	purchases_two_outline_black: new URL("./Svg/purchases_two_outline_black.svg", import.meta.url).href,
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,
 	svg_2: new URL("./Svg/svg_2.svg", import.meta.url).href,

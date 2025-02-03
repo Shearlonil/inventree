@@ -22,11 +22,7 @@ const customerName = [
 	{ value: "olumide", label: "Olumide" },
 	{ value: "olumide", label: "Olumide" },
 ];
-const purchasesSubMenu = [
-	{ label: "File", path: "/file" },
-	{ label: "Edit", path: "/Edit" },
-	{ label: "File", path: "/file" },
-];
+
 const sectionOption = [
 	{ value: "pharmarcy", label: "Pharmarcy" },
 	{ value: "hotel", label: "Hotel" },
@@ -83,7 +79,6 @@ export {
 	clientDetails,
 	selectOption,
 	customerName,
-	purchasesSubMenu,
 	sectionOption,
 	packagingOptions,
 	purchasesOptions,

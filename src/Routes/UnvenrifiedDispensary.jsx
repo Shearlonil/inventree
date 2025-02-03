@@ -70,30 +70,12 @@ const UnvenrifiedDispensary = () => {
             setSelectedEntry(item);
             return;
         }
-        switch(mode){
-            case 'restock':
-                navigate(`/store/item/restock/${item.id}`);
-                break;
-            case 'new':
-                navigate(`/store/item/reg/${item.id}`);
-                break
-        }
+        navigate(`/store/item/dispensary/${item.id}`);
     };
 
     //  confirmation for updating item details and updating item imgs
     const handleConfirmAction = async () => {
-        switch(mode){
-            case 'restock':
-                navigate(`/store/item/restock/${selectedEntry.id}`);
-                setSelectedEntry(null);
-                setShowConfirmModal(false);
-                break;
-            case 'new':
-                navigate(`/store/item/reg/${selectedEntry.id}`);
-                setSelectedEntry(null);
-                setShowConfirmModal(false);
-                break
-        }
+        navigate(`/store/item/dispensary/${selectedEntry.id}`);
     };
   
     const closeConfirmModal = () => {

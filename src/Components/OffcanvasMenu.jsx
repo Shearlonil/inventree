@@ -5,6 +5,7 @@ import { useLocation } from "react-router-dom";
 import IMAGES from "../assets/Images";
 
 const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" }) => {
+	/*	to look at later: https://w3collective.com/react-sidebar-navigation-component/	*/
 	const [show, setShow] = useState(false);
 
 	const handleClose = () => setShow(false);
@@ -13,7 +14,7 @@ const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" 
 
 	const style = {
 		position: 'fixed',
-		bottom: "20px",
+		bottom: "100px",
 		right: '30px',
 		cursor: 'pointer',
 		zIndex: 999,
