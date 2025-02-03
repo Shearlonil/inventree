@@ -16,6 +16,7 @@ import Restock from './Routes/Store/Restock';
 import Dispensary from './Routes/Store/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
 import { ProtectedRoute } from './Routes/ProtectedRoute';
+import UnvenrifiedDispensary from "./Routes/UnvenrifiedDispensary";
 
 function App() {
 	return (
@@ -33,6 +34,7 @@ function App() {
 					<Route path={"restock/:stock_rec_id"} element={<Restock />} />
 					<Route path={"dispensary/:dispensary_id"} element={<Dispensary />} />
 					<Route path={"unverified/:mode"} element={<UnverifiedStockRec />} />
+					<Route path={"unverified/dispensary"} element={<UnvenrifiedDispensary />} />
           		</Route>
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
 				<Route path={"/finance"} element={<Finance />} />

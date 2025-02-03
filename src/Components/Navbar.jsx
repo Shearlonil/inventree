@@ -134,7 +134,7 @@ function NavBar() {
 							{user.hasAuth('DISPENSE') && <NavDropdown.Item 
 								onClick={() => {
 									handleNavSelect();
-									navigate("/store/item/dispensary");
+									navigate("/store/item/dispensary/0");
 								}}
 								className={`nav-item ${
 									location.pathname === "/login" &&

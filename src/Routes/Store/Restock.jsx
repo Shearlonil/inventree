@@ -4,8 +4,9 @@ import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
 
 import outpostController from '../../Controllers/outpost-controller';
-import handleErrMsg from '../../Utils/error-handler';
 import storeController from '../../Controllers/store-controller';
+import genericController from '../../Controllers/generic-controller';
+import handleErrMsg from '../../Utils/error-handler';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import RestockForm from '../../Components/StoreComp/RestockForm';
 import TableMain from '../../Components/TableView/TableMain';
@@ -42,7 +43,7 @@ const Restock = () => {
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showDropDownModal, setShowDropDownModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
-
+    
     //	for pagination
     const [pageSize] = useState(10);
     const [totalItemsCount, setTotalItemsCount] = useState(0);
@@ -50,6 +51,8 @@ const Restock = () => {
     
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
+    //  data fetched from database to fill in Select
+    const [dbItemOptions, setDbItemOptions] = useState([]);
 
     //	menus for the react-menu in table
     const menuItems = [
@@ -80,13 +83,19 @@ const Restock = () => {
 		try {
 			setNetworkRequest(true);
 			resetPageStates();
+            const urls = [ '/api/items/transaction/mono', '/api/outposts/all' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: dbItemRequest, 1: outpostRequest } = response;
 
-			const response = await outpostController.findAll();
-	
-			//	check if the request to fetch item doesn't fail before setting values to display
-			if (response && response.data) {
-                setOutpostOptions(response.data.map( outpost => ({label: outpost.name, value: outpost.id})));
-			}
+            //	check if the request to fetch db items doesn't fail before setting values to display
+            if(dbItemRequest){
+				setDbItemOptions(dbItemRequest.data.map( item => ({label: item.itemName, value: item.id})));
+            }
+
+            //	check if the request to fetch outposts doesn't fail before setting values to display
+            if(outpostRequest){
+                setOutpostOptions(outpostRequest.data.map( outpost => ({label: outpost.name, value: outpost.id}) ));
+            }
 	
 			setNetworkRequest(false);
 		} catch (error) {
@@ -114,18 +123,26 @@ const Restock = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const response = await storeController.findUnverifiedStockRecById(stock_rec_id);
-			const outpostResponse = await outpostController.findAll();
+			const unverifiedStockRequest = await storeController.findUnverifiedStockRecById(stock_rec_id);
+            
+            const urls = [ '/api/items/transaction/mono', '/api/outposts/all' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: dbItemRequest, 1: outpostRequest } = response;
+
+            //	check if the request to fetch db items doesn't fail before setting values to display
+            if(dbItemRequest){
+				setDbItemOptions(dbItemRequest.data.map( item => ({label: item.itemName, value: item.id})));
+            }
+
+            //	check if the request to fetch outposts doesn't fail before setting values to display
+            if(outpostRequest){
+                setOutpostOptions(outpostRequest.data.map( outpost => ({label: outpost.name, value: outpost.id}) ));
+            }
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
-			if (response && response.data) {
-				setItems(buildTableData(response.data.items));
-				setTotalItemsCount(response.data.items.length);
-			}
-	
-			//	check if the request to fetch outposts doesn't fail before setting values to display
-			if (outpostResponse && outpostResponse.data) {
-                setOutpostOptions(outpostResponse.data.map( outpost => ({label: outpost.name, value: outpost.id})));
+			if (unverifiedStockRequest && unverifiedStockRequest.data) {
+				setItems(buildTableData(unverifiedStockRequest.data.items));
+				setTotalItemsCount(unverifiedStockRequest.data.items.length);
 			}
 	
 			setNetworkRequest(false);
@@ -165,7 +182,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			await storeController.commitStockRecById(stockRecId, outpostId, destination);
 			//	navigate back to this page which will cause reset of page states
-			navigate("/store/item/reg/0");
+			navigate("/store/item/restock/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
@@ -246,8 +263,8 @@ const Restock = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
-			if(item.id){
-				//	if data has id, then update mode
+			if(item.itemDetailId){
+				//	if data has itemDetailId, then update mode
 				await storeController.updateStockRecItem(item);
 				//	find index position of edited item in items arr
 				const indexPos = items.findIndex(i => i.id === item.id);
@@ -261,7 +278,7 @@ const Restock = () => {
 				}
 			}else {
 				// 	else, create new item
-				let response = await storeController.persistStockRecItem(stockRecId, item);
+				let response = await storeController.restock(stockRecId, item);
 				if(response && response.status === 200){
 					item.id = response.data.items[0].id;
 					item.itemDetailId = response.data.items[0].itemDetailId;
@@ -355,10 +372,10 @@ const Restock = () => {
 
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', 'Dept.', "Total", 
+        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pack Stock', 'Pack Sales', "Total", 
 			"Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', 
+        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 
 			"purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
 		//	React Menu
 		menus: {
@@ -395,7 +412,7 @@ const Restock = () => {
             vendor.id = item.vendorId;
             vendor.name = item.vendorName;
             dtoItem.vendor = vendor;
-    
+            
             const tract = new Tract();
             tract.id = item.tractId;
             tract.name = item.tractName;
@@ -420,25 +437,24 @@ const Restock = () => {
     return (
 		<>
             {/* Offcanvas Sidebar for small screens */}
-            <div className="d-flex justify-content-between mt-2">
+            <div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center ">
                 <div>
-                    <OffcanvasMenu menuItems={storeItemRegOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} />
+                    <OffcanvasMenu menuItems={storeItemRegOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 </div>
                 <div className="text-center d-flex">
-                    <h2 className="text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-                        <span className="me-4">Restock</span>
-                        <FaStoreAlt className="text-warning" size={"30px"} />
+                    <h2 className="display-6 p-3 mb-0">
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}} >Restock</span>
+                        <FaStoreAlt className="text-white" size={"30px"} />
                     </h2>
                 </div>
-                {/* here for the purpose of justify-content-between to make the Store word appear in the middle of the screen */}
-                <h1></h1>
+                <p className='text-center m-2'>Please note, sales prices set here will reflect on old stock!</p>
             </div>
             <div className="container-fluid">
                 <div className="row">
                     {/* Sidebar for large screens */}
                     <aside className="col-3 p-3 d-none d-md-block bg-light shadow-lg">
-                        <h3>Add New Item</h3>
-                        <RestockForm fnSave={fnSave} networkRequest={networkRequest} />
+                        <h3>Item Details</h3>
+                        <RestockForm fnSave={fnSave} networkRequest={networkRequest} dbItemOptions={dbItemOptions} />
                     </aside>
 
                     {/* Main Content */}
@@ -471,10 +487,10 @@ const Restock = () => {
 
             <Modal show={showFormModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
-                    <Modal.Title>Add Item</Modal.Title>
+                    <Modal.Title>Restock Item</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <RestockForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
+                    <RestockForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} dbItemOptions={dbItemOptions} />
                 </Modal.Body>
                 <Modal.Footer></Modal.Footer>
             </Modal>

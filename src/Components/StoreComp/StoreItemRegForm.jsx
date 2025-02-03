@@ -8,7 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
+import { storeItemRegSchema } from "../../Utils/yup-schema-validator/store-form-schema";
 import ErrorMessage from "../ErrorMessage";
 import { useAuth } from "../../app-context/auth-user-context";
 import genericController from "../../Controllers/generic-controller";
@@ -47,7 +47,7 @@ const StoreItemRegForm = (props) => {
 		reset,
 		formState: { errors },
 	} = useForm({
-		resolver: yupResolver(schema),
+		resolver: yupResolver(storeItemRegSchema),
 		defaultValues: {
 			item_name: null,
 			total_qty: 0,
@@ -206,7 +206,7 @@ const StoreItemRegForm = (props) => {
 						</Col>
 					</Row>
 				</Form.Group>
-				<Form.Group className="mb-3" controlId="item_name">
+				<Form.Group className="mb-3" controlId="total_qty">
 					<Row>
 						<Col sm={"12"} md="4">
 							<Form.Label>Total Qty</Form.Label>
@@ -228,7 +228,7 @@ const StoreItemRegForm = (props) => {
 										<Select
 											required
 											name="qty_type"
-											placeholder="Unit..."
+											placeholder="Packaging..."
 											className="text-dark col-12"
 											options={pkgOptions}
 											isLoading={pkgLoading}

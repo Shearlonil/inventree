@@ -28,6 +28,14 @@ const persistStockRecItem = async (stock_rec_id, item) => {
     });
 }
 
+const restock = async (stock_rec_id, item) => {
+    return await httpService.post(`/api/store/restock/sales`, [item], {
+        params: {
+            stock_rec_id,
+        }
+    });
+}
+
 const updateStockRecItem = async (item) => {
     return await httpService.put(`/api/store/update/stock-rec-item`, item, {
         params: {
@@ -69,17 +77,14 @@ const unverifiedStockRec = async (type) => {
 }
 
 const unverifiedDispensary = async () => {
-    return await httpService.get(`/api/store/update/stock-rec-item`, item, {
-        params: {
-            stockRecItemDetailId: item.itemDetailId,
-        }
-    });
+    return await httpService.get(`/api/store/dispensary/unverified`);
 }
 
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
     persistStockRecItem,
+    restock,
     updateStockRecItem,
     deleteStockRecItem,
     deleteStockRec,

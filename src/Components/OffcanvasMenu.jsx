@@ -4,18 +4,26 @@ import { CgMenuLeft } from "react-icons/cg";
 import { useLocation } from "react-router-dom";
 import IMAGES from "../assets/Images";
 
-const OffcanvasMenu = ({ menuItems, menuItemClick = () => {} }) => {
+const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" }) => {
 	const [show, setShow] = useState(false);
 
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
 	const location = useLocation();
 
+	const style = {
+		position: 'fixed',
+		bottom: "20px",
+		right: '30px',
+		cursor: 'pointer',
+		zIndex: 999,
+		boxShadow: '4px 4px 4px #9E9E9E',
+		maxWidth: '50px'
+	}
+
 	return (
 		<>
-			<div variant="dark" 
-				style={{boxShadow: '4px 4px 4px #9E9E9E', maxWidth: '50px'}}
-				className="m-2 p-2 rounded bg-success text-white rounded-5 d-flex justify-content-center" onClick={handleShow}>
+			<div style={style} className={`m-2 p-2 rounded bg-${variant} text-white rounded-5 d-flex justify-content-center`} onClick={handleShow}>
 				<CgMenuLeft size={"30px"} />
 			</div>
 

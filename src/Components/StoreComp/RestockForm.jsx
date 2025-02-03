@@ -8,7 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-import { schema } from "../../Utils/yup-schema-validator/store-form-schema";
+import { restockSchema } from "../../Utils/yup-schema-validator/store-form-schema";
 import ErrorMessage from "../ErrorMessage";
 import { useAuth } from "../../app-context/auth-user-context";
 import genericController from "../../Controllers/generic-controller";
@@ -21,13 +21,9 @@ import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 
 const RestockForm = (props) => {
-	const { data, fnSave, networkRequest }  = props;
+	const { data, fnSave, dbItemOptions, networkRequest }  = props;
 
 	const navigate = useNavigate();
-
-	// for tracts
-	const [tractOptions, setTractOptions] = useState([]);
-	const [tractsLoading, setTractsLoading] = useState(true);
 
 	// for pkg
 	const [pkgOptions, setPkgOptions] = useState([]);
@@ -47,9 +43,9 @@ const RestockForm = (props) => {
 		reset,
 		formState: { errors },
 	} = useForm({
-		resolver: yupResolver(schema),
+		resolver: yupResolver(restockSchema),
 		defaultValues: {
-			item_name: null,
+			item: null,
 			total_qty: 0,
 			qty_per_pkg: 0,
 			unit_stock: 0,
@@ -57,7 +53,6 @@ const RestockForm = (props) => {
 			pkg_stock_price: 0,
 			pkg_sales_price: 0,
 			amount_paid: 0,
-			section: null,
 			qty_type: null,
 			vendor: null,
 			expDate: null,
@@ -70,9 +65,9 @@ const RestockForm = (props) => {
 
 	const initialize = async () => {
 		try {
-            const urls = [ '/api/pkg/all', '/api/vendors/active', '/api/tracts/all' ];
+            const urls = [ '/api/pkg/all', '/api/vendors/active' ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: pkgRequest, 1: vendorRequest, 2: tractRequest } = response;
+            const { 0: pkgRequest, 1: vendorRequest } = response;
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
             if(pkgRequest){
@@ -86,14 +81,7 @@ const RestockForm = (props) => {
                 setVendorOptions(vendorRequest.data.map( vendor => ({label: vendor.name, value: vendor.id})));
             }
 
-            //	check if the request to fetch tracts doesn't fail before setting values to display
-            if(tractRequest){
-				setTractsLoading(false);
-                setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract.id})));
-            }
-
 			if(data){
-				setValue("item_name", data.itemName);
 				setValue("total_qty", data.qty);
 				setValue("qty_per_pkg", data.qtyPerPkg);
 				setValue("unit_stock", data.unitStockPrice);
@@ -101,7 +89,7 @@ const RestockForm = (props) => {
 				setValue("pkg_stock_price", data.pkgStockPrice);
 				setValue("pkg_sales_price", data.pkgSalesPrice);
 				setValue("amount_paid", data.cashPurchaseAmount);
-				setValue("section", {value: data.tract.id, label: data.tract.name});
+				setValue("item", {value: data.id, label: data.itemName});
 				setValue("qty_type", {value: data.pkg.id, label: data.pkg.name});
 				setValue("vendor", {value: data.vendor.id, label: data.vendor.name});
 				setValue("expDate", data.expDate);
@@ -127,8 +115,8 @@ const RestockForm = (props) => {
 	};
 
 	const onSubmit = async (formData) => {
-		if(props.data?.id){
-			//	if data has id, then update mode
+		if(props.data?.itemDetailId){
+			//	if data has itemDetailId, then update mode
 			setItem(props.data, formData);
 			await fnSave(props.data);
 		}else {
@@ -142,7 +130,8 @@ const RestockForm = (props) => {
 	};
 
 	const setItem = (item, formData) => {
-		item.itemName = formData.item_name;
+		item.itemName = formData.item.label;
+        item.id = formData.item.value;
 		item.qty = formData.total_qty;
 		item.expDate = formData.expDate ? format(formData.expDate, "yyyy-MM-dd") : null;
 		item.qtyPerPkg = formData.qty_per_pkg;
@@ -150,7 +139,6 @@ const RestockForm = (props) => {
 		item.unitSalesPrice = formData.unit_sales;
 		item.pkgStockPrice = formData.pkg_stock_price;
 		item.pkgSalesPrice = formData.pkg_sales_price;
-		item.sectionName = formData.section;
 		item.cashPurchaseAmount = formData.amount_paid;
 
 		const pkg = new Packaging();
@@ -162,47 +150,36 @@ const RestockForm = (props) => {
 		vendor.id = formData.vendor.value;
 		vendor.name = formData.vendor.label;
 		item.vendor = vendor;
-
-		const tract = new Tract();
-		tract.id = formData.section.value;
-		tract.name = formData.section.label;
-		item.tract = tract;
+        
+        //  setting a dummy tract to bypass backend ItemRegDTO as it's not needed for restock
+        const tract = new Tract();
+        tract.id = 1;
+        tract.name = "";
+        item.tract = tract;
 	}
 
 	return (
 		<>
 			<Form className="d-flex flex-column gap-2">
-				<Controller
-					name="section"
-					control={control}
-					render={({ field: { onChange, value } }) => (
-						<Select
-							required
-							placeholder="Choose Section..."
-							className="text-dark col-12"
-							options={tractOptions}
-							isLoading={tractsLoading}
-							onChange={(val) => onChange(val)}
-							value={value}
-						/>
-					)}
-				/>
-				<ErrorMessage source={errors.section} />
-
-				<h5 className="mt-3">Item Properties</h5>
 
 				<Form.Group className="mb-3" controlId="item_name">
 					<Row>
-						<Col sm={"12"} md="4">
-							<Form.Label>Name</Form.Label>
-						</Col>
-						<Col sm={"12"} md="8">
-							<Form.Control
-								type="text"
-								placeholder="Item Name"
-								{...register("item_name")}
-							/>
-							<ErrorMessage source={errors.item_name} />
+						<Col sm={"12"} md="12">
+                            <Controller
+                                name="item"
+                                control={control}
+                                render={({ field: { onChange, value } }) => (
+                                    <Select
+                                        required
+                                        placeholder="Select Item..."
+                                        className="text-dark col-12"
+                                        options={dbItemOptions}
+                                        onChange={(val) => onChange(val)}
+                                        value={value}
+                                    />
+                                )}
+                            />
+                            <ErrorMessage source={errors.item} />
 						</Col>
 					</Row>
 				</Form.Group>
@@ -228,7 +205,7 @@ const RestockForm = (props) => {
 										<Select
 											required
 											name="qty_type"
-											placeholder="Unit..."
+											placeholder="Packaging..."
 											className="text-dark col-12"
 											options={pkgOptions}
 											isLoading={pkgLoading}
@@ -380,34 +357,6 @@ const RestockForm = (props) => {
 					)}
 				/>
 				<ErrorMessage source={errors.vendor} />
-
-				{/* <Form.Group className="mb-3 mt-3" controlId="purchase_mode">
-					<Row>
-						<div className="row">
-							<div className="col-6">
-								<Form.Label>Purchase Mode</Form.Label>
-							</div>
-							<div className="col-6 p-0">
-								<Controller
-									name="purchase_mode"
-									control={control}
-									render={({ field: { onChange } }) => (
-										<Select
-											required
-											name="purchase_mode"
-											placeholder="Unit..."
-											className="text-dark col-12"
-											options={purchasesOptions}
-											onChange={(val) => onChange(val.value)}
-										/>
-									)}
-								/>
-
-								<ErrorMessage source={errors.purchase_mode} />
-							</div>
-						</div>
-					</Row>
-				</Form.Group> */}
 
 				<Form.Group className="mb-3 mt-3" controlId="amount_paid">
 					<Row>

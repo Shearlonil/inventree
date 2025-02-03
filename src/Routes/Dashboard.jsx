@@ -2,6 +2,7 @@ import React from "react";
 import SVG from "../assets/Svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../app-context/auth-user-context";
+import { Button } from "react-bootstrap";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -151,18 +152,18 @@ const Dashboard = () => {
                         </div>}
 
                         <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/dispensary')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
                                             style={{ width: "50px", height: "40px" }}
-                                            src={SVG.profile_blue}
+                                            src={SVG.dispensary}
                                             alt=""
                                         />
                                     </div>
                                     <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">Profile</span>
-                                        <span className="text-muted">View and edit your profile.</span>
+                                        <span className="fs-6 noto-sans-font fw-bold">Unverified Dispensary</span>
+                                        <span className="text-muted">View ongoing/unverified dispensary records.</span>
                                     </div>
                                 </div>
                             </div>
@@ -186,6 +187,34 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
+                    <div className="row mt-5">
+						<div className="col-12 col-sm-6 my-2">
+							<img
+								src={SVG.profile_blue}
+								style={{ width: "100%", maxHeight: "250px" }}
+								alt=""
+							/>
+						</div>
+						<div className="col-12 col-sm-6 my-2" id="branch">
+							<h4 className="fw-normal text-center">Profile</h4>
+							<div className="d-flex flex-column gap-2 list-group">
+								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
+									View your profile to see what's missing
+								</p>
+								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
+									Update your profile
+								</p>
+								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
+									Outpost are like branches & with{" "}
+									<span className="bg-info-subtle px-1 rounded space-mono-regular small">
+										Inventree
+									</span>{" "}
+									you can create.
+								</p>
+							</div>
+                            <Button variant="success" className="mt-3 w-50">View</Button>
+						</div>
+					</div>
                 </div>
             </div>
 		</div>
