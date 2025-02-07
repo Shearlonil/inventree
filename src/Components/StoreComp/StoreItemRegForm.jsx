@@ -70,7 +70,7 @@ const StoreItemRegForm = (props) => {
 
 	const initialize = async () => {
 		try {
-            const urls = [ '/api/pkg/all', '/api/vendors/active', '/api/tracts/all' ];
+            const urls = [ '/api/pkg/active', '/api/vendors/active', '/api/tracts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: pkgRequest, 1: vendorRequest, 2: tractRequest } = response;
 

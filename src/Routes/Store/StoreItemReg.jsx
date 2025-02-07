@@ -81,7 +81,7 @@ const StoreItemReg = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 
-			const response = await outpostController.findAll();
+			const response = await outpostController.findAllActive();
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
 			if (response && response.data) {
@@ -115,7 +115,7 @@ const StoreItemReg = () => {
 			resetPageStates();
 	
 			const response = await storeController.findUnverifiedStockRecById(stock_rec_id);
-			const outpostResponse = await outpostController.findAll();
+			const outpostResponse = await outpostController.findAllActive();
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
 			if (response && response.data) {
@@ -199,7 +199,7 @@ const StoreItemReg = () => {
 			when working with pagination.
 			At first, when the pagination number is first clicked, the unexpected behaviour is, the 
 			elements in the items array are rearranged from the order the were initially	*/
-		tableArr.sort((a , b) => a.id - b.id);
+		tableArr.sort((a , b) => a.itemDetailId - b.itemDetailId);
 		return tableArr;
 	};
 

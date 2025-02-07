@@ -5,61 +5,62 @@ const storeItemRegSchema = yup.object().shape({
 	item_name: yup.string().required("Item name required!"),
 	total_qty: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Quantity must be positive")
+		.required("Quantity is required"),
 	qty_type: yup.object().required("Select a packaging option"),
 	qty_per_pkg: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Qty/Pkg must be positive")
+		.required("Qty/Pkg is required"),
 	unit_stock: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Unit Stock Price must be positive")
+		.required("Unit Stock Price is required"),
 	unit_sales: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Unit Sales Price must be positive")
+		.required("Unit Sales Price is required"),
 	pkg_stock_price: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Pkg Stock Price must be positive")
+		.required("Pkg Stock Price is required"),
 	pkg_sales_price: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Pkg Sales Price must be positive")
+		.required("Pkg Sales Price is required"),
 	vendor: yup.object().required("Vendor is required"),
 	amount_paid: yup
 		.number()
 		.required("Amount Paid is required"),
 });
+
 const restockSchema = yup.object().shape({
 	item: yup.object().required("Select an item"),
 	total_qty: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Quantity must be positive")
+		.required("Quantity is required"),
 	qty_type: yup.object().required("Select a packaging option"),
 	qty_per_pkg: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Qty/Pkg must be positive")
+		.required("Qty/Pkg is required"),
 	unit_stock: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Unit Stock Price must be positive")
+		.required("Unit Stock Price is required"),
 	unit_sales: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Unit Sales Price must be positive")
+		.required("Unit Sales Price is required"),
 	pkg_stock_price: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Pkg Stock Price must be positive")
+		.required("Pkg Stock Price is required"),
 	pkg_sales_price: yup
 		.number()
-		.positive("Amount must be positive")
-		.required("Amount is required"),
+		.positive("Pkg Sales Price must be positive")
+		.required("Pkg Sales Price is required"),
 	vendor: yup.object().required("Vendor is required"),
 	amount_paid: yup
 		.number()

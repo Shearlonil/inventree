@@ -1,9 +1,9 @@
 import httpService from "../axios/http-service";
 
-const fetchAll = async () => {
-    return await httpService.get(`/api/pkg/all`);
+const fetchAllActive = async () => {
+    return await httpService.get(`/api/pkg/active`);
 }
 
 export default {
-    fetchAll,
+    fetchAllActive,
 }

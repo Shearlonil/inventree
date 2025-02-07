@@ -10,6 +10,7 @@ import IMAGES from "../assets/Images";
 import { useAuth } from "../app-context/auth-user-context";
 import handleErrMsg from "../Utils/error-handler";
 import ConfirmDialog from "./DialogBoxes/ConfirmDialog";
+import { ThreeDotLoading } from "./react-loading-indicators/Indicator";
 
 function NavBar() {
 	const navigate = useNavigate();
@@ -85,7 +86,7 @@ function NavBar() {
 							</Nav.Link>
 
 							{user && <NavDropdown title="View" id="basic-nav-dropdown">
-								<NavDropdown title="Items">
+								<NavDropdown title="Items" drop="end">
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
@@ -324,13 +325,7 @@ function NavBar() {
 								eventKey={8}
 								onClick={() => confirmLogout()}
 							>
-								{isLoggingOut && (
-								<ThreeDotLoading
-									variant="windmill"
-									color="#0000ff"
-									size="small"
-								/>
-								)}
+								{isLoggingOut && ( <ThreeDotLoading color="#0000ff" size="small" /> )}
 								{!isLoggingOut && `Logout`}
 							</Nav.Link>
 						)}

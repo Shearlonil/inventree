@@ -65,7 +65,7 @@ const RestockForm = (props) => {
 
 	const initialize = async () => {
 		try {
-            const urls = [ '/api/pkg/all', '/api/vendors/active' ];
+            const urls = [ '/api/pkg/active', '/api/vendors/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: pkgRequest, 1: vendorRequest } = response;
 

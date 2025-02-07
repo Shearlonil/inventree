@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Offcanvas, Nav } from "react-bootstrap";
 import { CgMenuLeft } from "react-icons/cg";
-import { useLocation } from "react-router-dom";
 import IMAGES from "../assets/Images";
 
 const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" }) => {
@@ -10,7 +9,6 @@ const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" 
 
 	const handleClose = () => setShow(false);
 	const handleShow = () => setShow(true);
-	const location = useLocation();
 
 	const style = {
 		position: 'fixed',

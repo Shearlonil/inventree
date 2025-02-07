@@ -12,7 +12,7 @@ export const useCookieStorage = (keyName, defaultValue) => {
             if (value) {
                 return value;
             } else {
-                Cookies.set(keyName, defaultValue, { secure: true, sameSite: 'strict' });
+                Cookies.set(keyName, defaultValue, { secure: true, sameSite: 'strict', expires: 7 });
                 return defaultValue;
             }
         } catch (err) {
@@ -21,7 +21,7 @@ export const useCookieStorage = (keyName, defaultValue) => {
     });
     const setValue = (newValue) => {
         try {
-            Cookies.set(keyName, newValue, { secure: true, sameSite: 'strict' });
+            Cookies.set(keyName, newValue, { secure: true, sameSite: 'strict', expires: 7 });
         } catch (err) { }
         setStoredValue(newValue);
     };

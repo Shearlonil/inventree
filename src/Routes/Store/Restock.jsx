@@ -82,7 +82,7 @@ const Restock = () => {
 		try {
 			setNetworkRequest(true);
 			resetPageStates();
-            const urls = [ '/api/items/transaction/mono', '/api/outposts/all' ];
+            const urls = [ '/api/items/transaction/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: dbItemRequest, 1: outpostRequest } = response;
 
@@ -124,7 +124,7 @@ const Restock = () => {
 	
 			const unverifiedStockRequest = await storeController.findUnverifiedStockRecById(stock_rec_id);
             
-            const urls = [ '/api/items/transaction/mono', '/api/outposts/all' ];
+            const urls = [ '/api/items/transaction/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: dbItemRequest, 1: outpostRequest } = response;
 
@@ -423,7 +423,7 @@ const Restock = () => {
             when working with pagination.
             At first, when the pagination number is first clicked, the unexpected behaviour is, the 
             elements in the items array are rearranged from the order the were initially	*/
-        tableArr.sort((a , b) => a.id - b.id);
+        tableArr.sort((a , b) => a.itemDetailId - b.itemDetailId);
         return tableArr;
     };
 

@@ -8,6 +8,14 @@ const findUnverifiedStockRecById = async (stockRecId) => {
     });
 }
 
+const findUnverifiedDispensaryById = async (dispensaryId) => {
+    return await httpService.get(`/api/store/id/dispensary`, {
+        params: {
+            dispensaryId,
+        }
+    });
+}
+
 const commitStockRecById = async (stockRecId, outpostId, destination) => {
     return await httpService.post(`/api/store/commit`, {
         id: stockRecId,
@@ -76,12 +84,30 @@ const unverifiedStockRec = async (type) => {
     });
 }
 
+const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {
+    return await httpService.post(`/api/store/purchases`,  { startDate, endDate }, {
+        params: {
+            offset, pageSize
+        }
+    });
+}
+
+const paginatePurchasesIdSearch = async (id, offset, pageSize) => {
+    return await httpService.post(`/api/store/purchases/${id}`, null, {
+        params: {
+            offset, pageSize
+        }
+    });
+}
+
+
 const unverifiedDispensary = async () => {
     return await httpService.get(`/api/store/dispensary/unverified`);
 }
 
 export default {
     findUnverifiedStockRecById,
+    findUnverifiedDispensaryById,
     commitStockRecById,
     persistStockRecItem,
     restock,
@@ -90,5 +116,7 @@ export default {
     deleteStockRec,
     exportToPDF,
     unverifiedStockRec,
+    paginatePurchasesDateSearch,
+    paginatePurchasesIdSearch,
     unverifiedDispensary,
 }

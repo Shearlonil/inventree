@@ -1,9 +1,9 @@
 import httpService from "../axios/http-service";
 
-const fetchAll = async () => {
-    return await httpService.get(`/api/tracts/all`);
+const fetchAllActive = async () => {
+    return await httpService.get(`/api/tracts/active`);
 }
 
 export default {
-    fetchAll,
+    fetchAllActive,
 }

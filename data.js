@@ -28,15 +28,6 @@ const sectionOption = [
 	{ value: "hotel", label: "Hotel" },
 	{ value: "superMarket", label: "SuperMarket" },
 ];
-const packagingOptions = [
-	{ value: "unit", label: "Unit" },
-	{ value: "pack", label: "Packs" },
-	{ value: "gram", label: "Gram(s)" },
-];
-const purchasesOptions = [
-	{ value: true, label: "Cash" },
-	{ value: false, label: "Credit" },
-];
 
 //	menus for the ellipse menu-button
 const reactMenuItems = [
@@ -80,7 +71,5 @@ export {
 	selectOption,
 	customerName,
 	sectionOption,
-	packagingOptions,
-	purchasesOptions,
 	reactMenuItems,
 };

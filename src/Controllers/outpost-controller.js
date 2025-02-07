@@ -1,11 +1,11 @@
 import httpService from "../axios/http-service";
 
-const findAll = async () => {
-    return await httpService.get(`/api/outposts/all`);
+const findAllActive = async () => {
+    return await httpService.get(`/api/outposts/active`);
 }
 
 const findById = async (id) => {
-    return await httpService.get(`/api/outposts/all`, {
+    return await httpService.get(`/api/outposts/find`, {
         params: {
             id,
         }
@@ -13,6 +13,6 @@ const findById = async (id) => {
 }
 
 export default {
-    findAll,
+    findAllActive,
     findById,
 }

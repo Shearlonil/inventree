@@ -35,38 +35,38 @@ export class ItemRegDTO {
     get status() { return _itemProps.get(this).status }
     set status(status) { _itemProps.get(this).status = status }
 
-    get unitSalesPrice() { return _itemProps.get(this).unitSalesPrice; }
-    set unitSalesPrice(unitSalesPrice) { _itemProps.get(this).unitSalesPrice = unitSalesPrice }
+    get unitSalesPrice() { return numeral(_itemProps.get(this).unitSalesPrice).format('₦0,0.00'); }
+    set unitSalesPrice(unitSalesPrice) { _itemProps.get(this).unitSalesPrice = unitSalesPrice; }
     
     get unitStockPrice() { return _itemProps.get(this).unitStockPrice }
     set unitStockPrice(unitStockPrice) { _itemProps.get(this).unitStockPrice = unitStockPrice }
 
-    get pkgSalesPrice() { return _itemProps.get(this).pkgSalesPrice; }
+    get pkgSalesPrice() { return numeral(_itemProps.get(this).pkgSalesPrice).format('₦0,0.00'); }
     set pkgSalesPrice(pkgSalesPrice) { _itemProps.get(this).pkgSalesPrice = pkgSalesPrice }
     
-    get pkgStockPrice() { return _itemProps.get(this).pkgStockPrice }
-    set pkgStockPrice(pkgStockPrice) { _itemProps.get(this).pkgStockPrice = pkgStockPrice }
+    get pkgStockPrice() { return numeral(_itemProps.get(this).pkgStockPrice).format('₦0,0.00'); }
+    set pkgStockPrice(pkgStockPrice) { _itemProps.get(this).pkgStockPrice = pkgStockPrice; }
 
     get pkgId() { return _itemProps.get(this).pkgId; }
-    set pkgId(pkgId) { _itemProps.get(this).pkgId = pkgId }
+    set pkgId(pkgId) { _itemProps.get(this).pkgId = pkgId; }
     
-    get tractId() { return _itemProps.get(this).tractId }
-    set tractId(tractId) { _itemProps.get(this).tractId = tractId }
+    get tractId() { return _itemProps.get(this).tractId; }
+    set tractId(tractId) { _itemProps.get(this).tractId = tractId; }
 
-    get vendorId() { return _itemProps.get(this).vendorId }
-    set vendorId(vendorId) { _itemProps.get(this).vendorId = vendorId }
+    get vendorId() { return _itemProps.get(this).vendorId; }
+    set vendorId(vendorId) { _itemProps.get(this).vendorId = vendorId; }
 
     get purchaseMode() { return _itemProps.get(this).purchaseMode; }
-    set purchaseMode(purchaseMode) { _itemProps.get(this).purchaseMode = purchaseMode }
+    set purchaseMode(purchaseMode) { _itemProps.get(this).purchaseMode = purchaseMode; }
     
-    get expDate() { return _itemProps.get(this).expDate }
-    set expDate(expDate) { _itemProps.get(this).expDate = expDate }
+    get expDate() { return _itemProps.get(this).expDate; }
+    set expDate(expDate) { _itemProps.get(this).expDate = expDate; }
 
-    get cashPurchaseAmount() { return _itemProps.get(this).cashPurchaseAmount; }
-    set cashPurchaseAmount(cashPurchaseAmount) { _itemProps.get(this).cashPurchaseAmount = cashPurchaseAmount }
+    get cashPurchaseAmount() { return numeral(_itemProps.get(this).cashPurchaseAmount).format('₦0,0.00'); }
+    set cashPurchaseAmount(cashPurchaseAmount) { _itemProps.get(this).cashPurchaseAmount = cashPurchaseAmount; }
     
-    get pkgName() { return _itemProps.get(this).pkgName }
-    set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName }
+    get pkgName() { return _itemProps.get(this).pkgName; }
+    set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName; }
     
     get pkg() { return _itemProps.get(this).pkg }
     set pkg(pkg) { 

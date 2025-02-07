@@ -166,7 +166,7 @@ const UnvenrifiedDispensary = () => {
     };
 
     return (
-        <div className="container my-5">
+        <div className="container my-5" style={{minHeight: '70vh'}}>
             <h2 className="paytone-one text-success mt-4">Unverified Dispensary Entries</h2>
 
             {/* only display in md. Never display in mobile view */}
