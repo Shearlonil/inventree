@@ -17,6 +17,9 @@ import Dispensary from './Routes/Store/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
 import { ProtectedRoute } from './Routes/ProtectedRoute';
 import UnvenrifiedDispensary from "./Routes/UnvenrifiedDispensary";
+import UserWindow from "./Routes/UserWindow";
+import CustomerWindows from './Routes/CustomerWindow';
+import SalesReceiptWindow from './Routes/SalesReceiptWindow';
 
 function App() {
 	return (
@@ -29,6 +32,9 @@ function App() {
 					<Route path={"mono"} element={<MonoTransaction />} />
           		</Route>
 				<Route path={"/acct-voucher-creation"} element={<AcctVoucherCreation />} />
+				<Route path="/contacts" element={<ProtectedRoute />}>
+					<Route path={"customers"} element={<CustomerWindows />} />
+          		</Route>
 				<Route path="/store/item" element={<ProtectedRoute />}>
 					<Route path={"reg/:stock_rec_id"} element={<StoreItemReg />} />
 					<Route path={"restock/:stock_rec_id"} element={<Restock />} />
@@ -39,6 +45,8 @@ function App() {
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
 				<Route path={"/finance"} element={<Finance />} />
 				<Route path="/dashboard" element={<ProtectedRoute />}>
+					<Route path={"users"} element={<UserWindow />} />
+					<Route path={"receipts"} element={<SalesReceiptWindow />} />
 					<Route path={""} element={<Dashboard />} />
           		</Route>
 				<Route path={"/test"} element={<Test />} />

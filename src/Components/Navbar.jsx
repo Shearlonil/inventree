@@ -86,7 +86,7 @@ function NavBar() {
 							</Nav.Link>
 
 							{user && <NavDropdown title="View" id="basic-nav-dropdown">
-								<NavDropdown title="Items" drop="end">
+								<NavDropdown title="Items" className="ms-2" drop="end">
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();

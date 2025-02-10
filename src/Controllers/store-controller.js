@@ -1,5 +1,6 @@
 import httpService from "../axios/http-service";
 
+//  Stock Record (New and Restock)
 const findUnverifiedStockRecById = async (stockRecId) => {
     return await httpService.get(`/api/store/stock-record`, {
         params: {
@@ -8,10 +9,18 @@ const findUnverifiedStockRecById = async (stockRecId) => {
     });
 }
 
-const findUnverifiedDispensaryById = async (dispensaryId) => {
-    return await httpService.get(`/api/store/id/dispensary`, {
+const unverifiedStockRec = async (type) => {
+    return await httpService.get(`/api/store/sales/unverified`, {
         params: {
-            dispensaryId,
+            type,
+        }
+    });
+}
+
+const deleteStockRec = async (stockRecId) => {
+    return await httpService.delete(`/api/store/delete/stock-rec`, {
+        params: {
+            stockRecId,
         }
     });
 }
@@ -60,14 +69,6 @@ const deleteStockRecItem = async (itemDetailId) => {
     });
 }
 
-const deleteStockRec = async (stockRecId) => {
-    return await httpService.delete(`/api/store/delete/stock-rec`, {
-        params: {
-            stockRecId,
-        }
-    });
-}
-
 const exportToPDF = async (stockRecId) => {
     return await httpService.get(`/api/store/stock-record/pdf`, {
         params: {
@@ -76,14 +77,56 @@ const exportToPDF = async (stockRecId) => {
     });
 }
 
-const unverifiedStockRec = async (type) => {
-    return await httpService.get(`/api/store/sales/unverified`, {
+//  DISPENSARY
+const findUnverifiedDispensaryById = async (dispensaryId) => {
+    return await httpService.get(`/api/store/id/dispensary`, {
         params: {
-            type,
+            dispensaryId,
         }
     });
 }
 
+const unverifiedDispensary = async () => {
+    return await httpService.get(`/api/store/dispensary/unverified`);
+}
+
+const dispense = async (dispensaryId, outpostId) => {
+    return await httpService.post(`/api/store/dispensary/dispense/${dispensaryId}`, null, {
+        params: {
+            outpostId,
+        }
+    });
+}
+
+const dispensary = async (dispensaryId, item) => {
+    return await httpService.post(`/api/store/dispensary`, [item], {
+        params: {
+            dispensaryId,
+        }
+    });
+}
+
+const updateDispensedItem = async (item) => {
+    return await httpService.put(`/api/store/dispensary/update/item`, item);
+}
+
+const deleteDispensedItemDetail = async (itemDetailId) => {
+    return await httpService.delete(`/api/store/dispensary/delete/item`, {
+        params: {
+            dispensedItemDetailId: itemDetailId,
+        }
+    });
+}
+
+const deleteDispensary = async (dispensaryId) => {
+    return await httpService.delete(`/api/store/delete/dispensary`, {
+        params: {
+            dispensaryId,
+        }
+    });
+}
+
+//  PURCHASES
 const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {
     return await httpService.post(`/api/store/purchases`,  { startDate, endDate }, {
         params: {
@@ -100,23 +143,23 @@ const paginatePurchasesIdSearch = async (id, offset, pageSize) => {
     });
 }
 
-
-const unverifiedDispensary = async () => {
-    return await httpService.get(`/api/store/dispensary/unverified`);
-}
-
 export default {
     findUnverifiedStockRecById,
-    findUnverifiedDispensaryById,
     commitStockRecById,
     persistStockRecItem,
     restock,
     updateStockRecItem,
     deleteStockRecItem,
-    deleteStockRec,
-    exportToPDF,
     unverifiedStockRec,
+    deleteStockRec,
+    findUnverifiedDispensaryById,
+    unverifiedDispensary,
+    dispensary,
+    dispense,
+    updateDispensedItem,
+    deleteDispensedItemDetail,
+    deleteDispensary,
+    exportToPDF,
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
-    unverifiedDispensary,
 }

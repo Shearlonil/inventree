@@ -10,6 +10,7 @@ const PageNotFound = () => {
                     <main className="form-signin m-auto" style={{ minWidth: "320px" }}>
                         <div className="text-center text-dark">
                             <img className="mb-4" src={logo} alt="" width="100%" />
+                            <h1>PAGE NOT FOUND</h1>
                         </div>
                     </main>
                 </div>

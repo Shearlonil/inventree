@@ -1,63 +1,176 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Table } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
-import { GrTransaction } from "react-icons/gr";
+import { MdAdd, MdRemove } from "react-icons/md";
 import {  HiUser } from "react-icons/hi2";
 import { IoAddSharp } from "react-icons/io5";
 import Select from "react-select";
-import { customerName, selectOption } from "../../data";
-
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
-import { schema } from "../Utils/yup-schema-validator/mono-transaction-schema";
+import { toast } from "react-toastify";
+import numeral from "numeral";
+
+import { product_selection_schema } from "../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../Components/ErrorMessage";
+import SVG from "../assets/Svg";
+import genericController from "../Controllers/generic-controller";
+import { useAuth } from "../app-context/auth-user-context";
+import handleErrMsg from "../Utils/error-handler";
+import { TransactionItem } from "../Entities/TransactionItem";
 
 const MonoTransaction = () => {
+		
+	const { handleRefresh, logout } = useAuth();
+
 	const {
-		register,
-		handleSubmit,
+		register: productSelectionRegister,
+		handleSubmit: handleProductSelectionSubmit,
 		control,
-		formState: { errors },
+		formState: { errors: productSelectionErrors },
 	} = useForm({
-		resolver: yupResolver(schema),
+		resolver: yupResolver(product_selection_schema),
 		defaultValues: {
-			discount_amount: 0,
+			qty: 0,
+			item_disc: 0,
+            qty_type: "unit", 
+            item_disc_type: 'n'
 		},
 	});
+	
+	const [networkRequest, setNetworkRequest] = useState(false);
+		
+	const [displayMsg, setDisplayMsg] = useState("");
+	const [dropDownMsg, setDropDownMsg] = useState("");
+	const [showConfirmModal, setShowConfirmModal] = useState("");
+	const [showDropDownModal, setShowDropDownModal] = useState(false);
+	//  for items
+	const [items, setItems] = useState([]);
+	const [transactionItems, setTransactionItems] = useState([]);
+	const [itemOptions, setItemOptions] = useState([]);
+	const [itemsLoading, setItemsLoading] = useState(true);
+
+	//  for customers
+	const [customerOptions, setCustomerOptions] = useState([]);
+	const [customersLoading, setCustomersLoading] = useState(true);
+
+	//	for controlling the increment and decrement buttons while updating cart
+	const [updating, setUpdating] = useState(false);
+	const [unitPrice, setUnitPrice] = useState(0);
+	const [pkgPrice, setPkgPrice] = useState(0);
+	const [invoiceDisc, setInvoiceDisc] = useState(0);
+	const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
+				
+	useEffect( () => {
+		initialize();
+	}, []);
+
+	const initialize = async () => {
+		try {
+            //  find active customers and items with sales prices
+            const urls = [ '/api/items/dispensary/active', '/api/customers/active' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: itemsRequest, 1: customersRequest } = response;
+
+            //	check if the request to fetch items doesn't fail before setting values to display
+            if(itemsRequest){
+				setItems(itemsRequest.data)
+				setItemOptions(itemsRequest.data.map(item => ({label: item.itemName, value: item})));
+                setItemsLoading(false);
+            }
+
+            //	check if the request to fetch customers doesn't fail before setting values to display
+            if(customersRequest){
+				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.customerName, value: customer.id})));
+				setCustomersLoading(false);
+            }
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	};
 
 	const onSubmit = (data) => {
+		const item = new TransactionItem(data);
+		setTransactionItems([...transactionItems, item]);
 		console.log(data);
 	};
-	const customStyles = {
-		control: (provided, state) => ({
-			...provided,
-			backgroundColor: "#ffffff",
-			borderColor: "#cecec8ca",
-			borderRadius: "2px",
-			padding: "10px 0px",
-			boxShadow: state.isFocused
-				? "0 0 0 0.25rem rgba(0, 123, 255, 0.25)"
-				: "none",
-			"&:focus": {
-				boxShadow: "0 0 0 0.25rem rgba(0, 123, 255, 0.25)",
-			},
-			width: "100%",
-			// height: "48px", // Match Bootstrap's default form control height
-			minHeight: "48px", // Ensures the minimum height is 38px
-		}),
-		dropdownIndicator: (provided) => ({
-			...provided,
-			color: "rgba(0, 123, 255, 0.75)", // customize color of the dropdown arrow
-		}),
+
+    //  Handle item selection change
+    const handleProductChange = (selectedItem) => {
+        // Set prices to display
+        setUnitPrice(selectedItem.value.unitSalesPrice);
+        setPkgPrice(selectedItem.value.pkgSalesPrice);
+    };
+
+	const increment = async (data) => {
+		data.qty++;
+		//  find item if already exist in cart then update qty else add new to cart
+		const found = transactionItems.find((i) => i.id == data.id);
+		found.qty = data.qty;
+		const items = [...transactionItems];
+		// setTotal(
+		// 	transactionItems.reduce(
+		// 		(accumulator, currentVal) =>
+		// 		numeral(currentVal.qty)
+		// 			.multiply(currentVal.salesPrice)
+		// 			.add(accumulator)
+		// 			.value(),
+		// 		0
+		// 	)
+		// );
+		setTransactionItems(items);
+	};
+  
+	const decrement = async (data) => {
+		if (data.qty > 1) {
+			data.qty--;
+			setTotal(
+				items.reduce(
+					(accumulator, currentVal) =>
+						numeral(currentVal.qty)
+						.multiply(currentVal.salesPrice)
+						.add(accumulator)
+						.value(),
+					0
+				)
+			);
+		}
+	};
+
+	const handleRemoveConfirmation = (data) => {
+	  if (data) {
+		setDisplayMsg(`Remove item ${data.title} from your cart?`);
+		setShowConfirmModal(true);
+	  }
 	};
 
 	return (
 		<>
-			<div className="text-center my-5">
-				<h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-					<span className="me-4">Transactions</span>
-					<GrTransaction className="text-danger" size={"30px"} />
-				</h2>
+            <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+				<div className="text-center d-flex">
+					<h2 className="display-6 p-3 mb-0">
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Transactions</span>
+						<img src={SVG.counter_filled_white} style={{ width: "50px", height: "50px" }} />
+					</h2>
+				</div>
+                <span className='text-center m-1'>
+                    Perform unified transactions with items in all sections,
+                    generating both invoice and receipt on the fly.
+                </span>
 			</div>
 			<div className="container my-3 p-3 rounded bg-light shadow">
 				<div className="row mt-4 mb-3">
@@ -66,28 +179,32 @@ const MonoTransaction = () => {
 					</div>
 					<div className="col-8 d-flex flex-column gap-3">
 						<Controller
-							name="customer_name"
+							name="product"
 							control={control}
-							render={({ field: { onChange } }) => (
+							render={({ field: { onChange, value } }) => (
 								<Select
 									required
-									name="customer_name"
+									name="product"
 									placeholder="Select..."
 									className="text-dark col-12 col-md-6"
-									options={selectOption}
-									onChange={(val) => onChange(val.value)}
+                                	isLoading={itemsLoading}
+									options={itemOptions}
+									value={value}
+									onChange={(val) => {
+										onChange(val);
+										handleProductChange(val);
+									}}
 								/>
 							)}
 						/>
-
-						<ErrorMessage source={errors.customer_name} />
+						<ErrorMessage source={productSelectionErrors.product} />
 
 						<div className="d-flex gap-3">
 							<p>
-								Unit (N): <span className="text-info fw-bold">{"0"}</span>
+								Unit (N): <span className="text-danger fw-bold">{unitPrice}</span>
 							</p>
 							<p>
-								Package (N): <span className="text-info fw-bold">{"0"}</span>
+								Package (N): <span className="text-danger fw-bold">{pkgPrice}</span>
 							</p>
 						</div>
 					</div>
@@ -104,9 +221,9 @@ const MonoTransaction = () => {
 									className="form-control"
 									id="quantity_value"
 									placeholder="0"
-									{...register("quantity_amount")}
+									{...productSelectionRegister("qty")}
 								/>
-								<ErrorMessage source={errors.quantity_amount} />
+								<ErrorMessage source={productSelectionErrors.qty} />
 							</div>
 							<div className="col-12">
 								<div className="d-flex gap-3">
@@ -114,18 +231,18 @@ const MonoTransaction = () => {
 										type="radio"
 										label="Unit"
 										value="unit"
-										name="quantity_type"
-										{...register("quantity_type")}
+										name="qty_type"
+										{...productSelectionRegister("qty_type")}
 									/>
 									<Form.Check
 										type="radio"
-										label="Pack"
-										value="pack"
-										{...register("quantity_type")}
-										name="quantity_type"
+										label="Pkg"
+										value="pkg"
+										{...productSelectionRegister("qty_type")}
+										name="qty_type"
 									/>
 								</div>
-								<ErrorMessage source={errors.quantity_type} />
+								<ErrorMessage source={productSelectionErrors.qty_type} />
 							</div>
 						</div>
 					</div>
@@ -143,9 +260,9 @@ const MonoTransaction = () => {
 									className="form-control"
 									id="quantity_value"
 									placeholder="0"
-									{...register("discount_amount")}
+									{...productSelectionRegister("item_disc")}
 								/>
-								<ErrorMessage source={errors.discount_amount} />
+								<ErrorMessage source={productSelectionErrors.item_disc} />
 							</div>
 							<div className="col-12">
 								<div className="d-flex gap-3">
@@ -153,18 +270,18 @@ const MonoTransaction = () => {
 										type="radio"
 										label="N"
 										value="n"
-										name="discount"
-										{...register("discount")}
+										name="item_disc_type"
+										{...productSelectionRegister("item_disc_type")}
 									/>
 									<Form.Check
 										type="radio"
 										label="%"
 										value="perc"
-										{...register("discount")}
-										name="discount"
+										{...productSelectionRegister("item_disc_type")}
+										name="item_disc_type"
 									/>
 								</div>
-								<ErrorMessage source={errors.discount} />
+								<ErrorMessage source={productSelectionErrors.item_disc_type} />
 							</div>
 						</div>
 					</div>
@@ -173,7 +290,7 @@ const MonoTransaction = () => {
 				<div className="d-flex">
 					<button
 						className="btn btn-outline-dark mx-auto"
-						onClick={handleSubmit(onSubmit)}
+						onClick={handleProductSelectionSubmit(onSubmit)}
 					>
 						<span className="d-flex gap-2 align-items-center px-4">
 							<IoAddSharp size={"25"} />
@@ -185,37 +302,82 @@ const MonoTransaction = () => {
 
 			<div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
 				<div className="border bg-light my-3">
-					<Table id="myTable" className="rounded-2" striped hover responsive>
-						<thead>
-							<tr className="shadow-sm">
-								<th>Product Name</th>
-								<th>Quantity</th>
-								<th>Type</th>
-								<th>Price (x1)</th>
-								<th>Discount</th>
-								<th>Amount</th>
-							</tr>
-						</thead>
-						<tbody>
-							{/* <p>No content in table</p> */}
-							{Array.from({ length: 10 }).map((_, index) => (
-								<tr key={index}>
-									<td>CALAMINE LOTION</td>
-									<td>1</td>
-									<td>Unit</td>
-									<td>1050.00</td>
-									<td>0.00</td>
-									<td>1050.00</td>
-								</tr>
-							))}
-						</tbody>
-					</Table>
+
+					{/* only display in md. Never display in mobile view */}
+					<div className="d-none d-md-block mt-4">
+						<div className="row mb-2">
+						<div className="col-md-6 col-12 fw-bold ps-4">Product</div>
+						<div className="col-md-2 col-4 fw-bold">Qty</div>
+						<div className="col-md-2 col-4 fw-bold">Unit Price</div>
+						<div className="col-md-2 col-4 fw-bold">Total Price</div>
+						</div>
+					</div>
+					<hr />
+
+					{transactionItems.length > 0 && (
+						transactionItems.map((item) => {
+							const { id, name, qtyType, itemSoldOutPrice, itemDiscount, qty } = item;
+							return (
+								<div key={qty * id}>
+									<div className="row mt-4">
+										<div className="col-md-6 col-12">
+										<div className="d-flex">
+											<div className="ms-3">
+											<p className="fw-bold mb-2">{name}</p>
+											<button
+												className={`btn btn-sm btn-outline-danger px-3 rounded-pill`}
+												onClick={() => handleRemoveConfirmation(item)}
+											>
+												remove
+											</button>
+											</div>
+										</div>
+										</div>
+
+										{/* ONLY DISPLAY ON MOBILE VIEW. FROM md upward never show */}
+										<div className="row d-md-none mb-2 mt-2">
+										<div className="col-md-2 col-4 ps-4">Qty</div>
+										<div className="col-md-2 col-4">Unit Price (₦)</div>
+										<div className="col-md-2 col-4">Total Price (₦)</div>
+										</div>
+
+										<div className="col-md-2 col-4">
+										<span
+											onClick={() => increment(item)}
+											className={`btn btn-outline-dark py-1 px-2 rounded-circle ${
+											updating ? "disabled" : ""
+											}`}
+										>
+											<MdAdd />
+										</span>
+										<span className="ms-2 me-2">{qty}</span>
+										<button
+											onClick={() => decrement(item)}
+											className={`btn btn-outline-danger py-1 px-2 rounded-circle ${
+											updating ? "disabled" : ""
+											}`}
+										>
+											<MdRemove />
+										</button>
+										</div>
+										<div className="col-md-2 col-4">{itemSoldOutPrice}</div>
+										<div className="col-md-2 col-4 fw-bold">
+											{numeral(item.qty)
+												// .multiply(item.itemSoldOutPrice)
+												.format("0,0.00")}
+										</div>
+									</div>
+									<hr />
+								</div>
+							);
+						})
+					)}
 				</div>
 			</div>
 			{/*  */}
 			<div className="container my-5 py-3 d-flex flex-column flex-lg-row justify-content-center align-items-center gap-5">
 				<h2 className="mb-2">
-					Total (N): <span className="text-danger">9560.00</span>
+					Total (N): <span className="text-danger">{totalTransactionAmount}</span>
 				</h2>
 				<div className="border rounded shadow p-3 my-2">
 					<h5>Add Invoice Discount</h5>
@@ -253,7 +415,7 @@ const MonoTransaction = () => {
 						<div className="col-12 col-md-3 my-2">
 							<p className="h4">
 								(N):
-								<span className="text-success">456.00</span>
+								<span className="text-success">{invoiceDisc}</span>
 							</p>
 						</div>
 					</div>
@@ -302,27 +464,43 @@ const MonoTransaction = () => {
 						<div className="mb-4">
 							<Select
 								required
-								styles={customStyles}
+								// styles={customStyles}
 								placeholder="Select Customer..."
 								className="shadow-sm"
-								options={customerName}
+								options={customerOptions}
+								isLoading={customersLoading}
 								onChange={""}
 							/>
 						</div>
 						<h3 className="mb-3">Payment Mode</h3>
 						<div className="row payment-mode-cards mx-auto">
-							{["Cash", "Transfer", "POS/ATM", "Wallet"].map((mode, index) => (
-								<div key={index} className="col-6 p-2">
-									<div className="border p-3 rounded shadow-sm">
-										<Form.Check
-											type="checkbox"
-											label={mode}
-											className="fw-bold"
-										/>
-										<Form.Control type="number" placeholder="Enter Amount" />
-									</div>
+							<div className="col-6 p-2">
+								<div className="border p-3 rounded shadow-sm">
+									<label className="fw-bold">
+										Cash
+									</label>
+									<Form.Control type="number" placeholder="Enter Amount" />
+									<ErrorMessage source={productSelectionErrors.qty} />
 								</div>
-							))}
+							</div>
+							<div className="col-6 p-2">
+								<div className="border p-3 rounded shadow-sm">
+									<label className="fw-bold">
+										Transfer
+									</label>
+									<Form.Control type="number" placeholder="Enter Amount" />
+									<ErrorMessage source={productSelectionErrors.qty} />
+								</div>
+							</div>
+							<div className="col-6 p-2">
+								<div className="border p-3 rounded shadow-sm">
+									<label className="fw-bold">
+										POS/ATM
+									</label>
+									<Form.Control type="number" placeholder="Enter Amount" />
+									<ErrorMessage source={productSelectionErrors.qty} />
+								</div>
+							</div>
 						</div>
 						<div className="mt-2">
 							<label className="d-flex gap-2" htmlFor="print_receipt">

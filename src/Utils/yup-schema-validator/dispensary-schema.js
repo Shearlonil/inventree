@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-const schema = yup.object().shape({
+const dispensaryPageSchema = yup.object().shape({
     product: yup.object().required("Select a product"),
 
     quantity_val: yup
@@ -24,4 +24,16 @@ const schema = yup.object().shape({
         .oneOf(["unit", "pkg"], "Invalid quantity type selected"),
 });
 
-export { schema };
+const editFormSchema = yup.object().shape({
+    quantity_val: yup
+        .number()
+        .nullable()
+        .positive("Quantity must be a positive number")
+        .required("Dispense Quantity is required"),
+    dispense_qty_type: yup
+        .string()
+        .required("Select an option")
+        .oneOf(["pkg", "unit"], "Invalid quantity type selected"),
+});
+
+export { dispensaryPageSchema, editFormSchema };

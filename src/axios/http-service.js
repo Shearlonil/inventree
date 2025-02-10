@@ -42,7 +42,7 @@ axios.interceptors.response.use(null, (error) => {
 axios.interceptors.request.use((config) => {
     const token = Cookies.get("authorization");
     config.headers.authorization = token ? `Bearer ${token}` : "";
-    config.headers['X-TENANT-ID'] = 'inventree';
+    config.headers['X-TENANT-ID'] = 'hv';
     return config;
 });
 

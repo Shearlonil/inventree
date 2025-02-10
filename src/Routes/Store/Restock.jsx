@@ -180,6 +180,7 @@ const Restock = () => {
 		try {
 			setNetworkRequest(true);
 			await storeController.commitStockRecById(stockRecId, outpostId, destination);
+			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
 			navigate("/store/item/restock/0");
 
@@ -321,13 +322,10 @@ const Restock = () => {
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
-						//	replace old item found at index position in items array with edited one
+						//	cut out deleted item found at index position
 						items.splice(indexPos, 1);
 						setItems([...items]);
-						/*  MAINTAIN CURRENT PAGE.
-						normally, we would call setPagedData(response.data.products) here but that isn't necessary because calling setCurrentPage(pageNumber)
-						would cause PaginationLite to re-render as currentPage is part of it's useEffect dependencies. This re-render triggers setPageChanged to be
-						called with currentPage number.	*/
+						/*  MAINTAIN CURRENT PAGE.	*/
 						setCurrentPage(Math.ceil((totalItemsCount - 1) / pageSize));
 						setTotalItemsCount(totalItemsCount - 1);
 						toast.success('Delete successful');
@@ -340,6 +338,7 @@ const Restock = () => {
 					break;
 				case "deleteStockRec":
 					await storeController.deleteStockRec(stockRecId);
+					resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/store/item/reg/0");
 					break;
@@ -428,6 +427,7 @@ const Restock = () => {
     };
 
     const handleCloseModal = () => {
+		setEntityToEdit(null);
         setShowFormModal(false);
         setShowConfirmModal(false);
         setShowDropDownModal(false);

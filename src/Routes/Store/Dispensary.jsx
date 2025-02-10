@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import ErrorMessage from '../../Components/ErrorMessage';
-import { schema } from '../../Utils/yup-schema-validator/dispensary-schema';
+import { dispensaryPageSchema } from '../../Utils/yup-schema-validator/dispensary-schema';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import TableMain from '../../Components/TableView/TableMain';
@@ -19,6 +19,9 @@ import { DispensaryItem } from '../../Entities/DispensaryItem';
 import PaginationLite from '../../Components/PaginationLite';
 import storeController from '../../Controllers/store-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
+import DispensaryForm from '../../Components/StoreComp/DispensaryForm';
+import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 
 
 const defaultQtyType = 'unit';
@@ -34,11 +37,10 @@ const Dispensary = () => {
         handleSubmit,
         reset,
         control,
-        watch,
         setValue,
         formState: { errors },
     } = useForm({
-        resolver: yupResolver(schema),
+        resolver: yupResolver(dispensaryPageSchema),
         defaultValues: {
             //  Set default selection
 			product: null,
@@ -53,24 +55,24 @@ const Dispensary = () => {
         If true, then disable save button.	*/
     const [networkRequest, setNetworkRequest] = useState(false);
     
-    const [stockRecId, setStockRecId] = useState(dispensary_id);
+    const [dispensaryId, setDispensaryId] = useState(dispensary_id);
     const [entityToEdit, setEntityToEdit] = useState(null);
     const [showFormModal, setShowFormModal] = useState(false);
 
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedStoreQtyType, setSelectedStoreQtyType] = useState("unit");
     
+    const [displayMsg, setDisplayMsg] = useState("");
+    const [dropDownMsg, setDropDownMsg] = useState("");
+    const [showConfirmModal, setShowConfirmModal] = useState("");
+    const [showDropDownModal, setShowDropDownModal] = useState(false);
+    const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     //  for items
     const [itemOptions, setItemOptions] = useState([]);
     const [itemsLoading, setItemsLoading] = useState(true);
 
     //  for tracts
-    const [tractOptions, setTractOptions] = useState([]);
-    const [tractsLoading, setTractsLoading] = useState(true);
-
-    //  for tracts
     const [outpostOptions, setOutpostOptions] = useState([]);
-    const [outpostsLoading, setOutpostsLoading] = useState(true);
         
     //	for pagination
     const [pageSize] = useState(10);
@@ -83,16 +85,15 @@ const Dispensary = () => {
     const [pagedData, setPagedData] = useState([]);
 
 	const dispensaryOffCanvasMenu = [
-		{ label: "Search By Purchase No.", onClickParams: {evtName: 'searchByNo'} },
+		{ label: "Dispense", onClickParams: {evtName: 'dispense'} },
+		{ label: "Delete Dispensary", onClickParams: {evtName: 'deleteDispensary'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
 
     //	menus for the react-menu in table
     const menuItems = [
         { name: 'Delete', onClickParams: {evtName: 'deleteItem'} },
-        {
-            name: 'Edit', onClickParams: {evtName: 'editItem' }
-        },
+        { name: 'Edit', onClickParams: {evtName: 'editItem' } },
     ];
             
     useEffect( () => {
@@ -106,10 +107,10 @@ const Dispensary = () => {
 	const initialize = async () => {
 		try {
 			resetPageStates();
-            //  find active outposts, tracts and items with available store qty
-            const urls = [ '/api/items/dispensary/active', '/api/tracts/active', '/api/outposts/active' ];
+            //  find active outposts and items with available store qty
+            const urls = [ '/api/items/dispensary/active', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: storeItemsRequest, 1: tractsRequest, 2: outpostsRequest } = response;
+            const { 0: storeItemsRequest, 1: outpostsRequest } = response;
 
             //	check if the request to fetch store items doesn't fail before setting values to display
             if(storeItemsRequest){
@@ -118,16 +119,9 @@ const Dispensary = () => {
 				setItemOptions(dispensaryItems.map( item => ({label: item.name, value: item})));
             }
 
-            //	check if the request to fetch tracts doesn't fail before setting values to display
-            if(tractsRequest){
-				setTractsLoading(false);
-                setTractOptions(tractsRequest.data.map( tract => ({label: tract.name, value: tract.id})));
-            }
-
             //	check if the request to fetch outposts doesn't fail before setting values to display
             if(outpostsRequest){
-				setTractsLoading(false);
-                setTractOptions(outpostsRequest.data.map( outpost => ({label: outpost.name, value: outpost.id})));
+                setOutpostOptions(outpostsRequest.data.map( outpost => ({label: outpost.name, value: outpost.id})));
             }
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -165,19 +159,12 @@ const Dispensary = () => {
             if(storeItemsRequest){
                 const dispensaryItems = storeItemsRequest.data.filter(item => item.dtoQtyMgrs.length > 0).map(item => new DispensaryItem(item));
                 setItemsLoading(false);
-				setItemOptions(dispensaryItems.map( item => ({label: item.name, value: item})));
-            }
-
-            //	check if the request to fetch tracts doesn't fail before setting values to display
-            if(tractsRequest){
-				setTractsLoading(false);
-                setTractOptions(tractsRequest.data.map( tract => ({label: tract.name, value: tract.id})));
+				setItemOptions(dispensaryItems.map( item => ({label: item.name, value: item}) ));
             }
 
             //	check if the request to fetch outposts doesn't fail before setting values to display
             if(outpostsRequest){
-				setTractsLoading(false);
-                setTractOptions(outpostsRequest.data.map( outpost => ({label: outpost.name, value: outpost.id})));
+                setOutpostOptions(outpostsRequest.data.map( outpost => ({label: outpost.name, value: outpost.id})));
             }
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
@@ -208,33 +195,40 @@ const Dispensary = () => {
 		}
 	};
         
-        //	setup table data from fetched stock record
-        const buildTableData = (arr = []) => {
-            const tableArr = [];
-            arr.forEach(item => {
-                tableArr.push({
-                    id: item.itemId,
-                    name: item.itemName,
-                    itemDetailId: item.itemDetailId,
-                    dispensaryId: item.dispensaryId,
-                    qty: item.qty,
-                    qtyType: item.qtyType,
-                });
+    //	setup table data from fetched stock record
+    const buildTableData = (arr = []) => {
+        const tableArr = [];
+        arr.forEach(item => {
+            tableArr.push({
+                itemId: item.itemId,
+                itemName: item.itemName,
+                itemDetailId: item.itemDetailId,
+                dispensaryId: item.dispensaryId,
+                qty: item.qty,
+                qtyType: item.qtyType,
             });
-            /*	sorting the array is IMPORTANT as it prevents the items array from behaving unexpectedly
-                when working with pagination.
-                At first, when the pagination number is first clicked, the unexpected behaviour is, the 
-                elements in the items array are rearranged from the order the were initially	*/
-            tableArr.sort((a , b) => a.itemDetailId - b.itemDetailId);
-            return tableArr;
-        };
+        });
+        /*	sorting the array is IMPORTANT as it prevents the items array from behaving unexpectedly
+            when working with pagination.
+            At first, when the pagination number is first clicked, the unexpected behaviour is, the 
+            elements in the items array are rearranged from the order the were initially	*/
+        tableArr.sort((a , b) => a.itemDetailId - b.itemDetailId);
+        return tableArr;
+    };
+
+    const handleCloseModal = () => {
+		setEntityToEdit(null);
+        setShowFormModal(false);
+        setShowConfirmModal(false);
+        setShowDropDownModal(false);
+    };
 
 	const resetPageStates = () => {
 		setItems([]);
 		setPagedData([]);
 		setTotalItemsCount(0);
 		setCurrentPage(1);
-		setStockRecId(dispensary_id);
+		setDispensaryId(dispensary_id);
 		setEntityToEdit(null);
 	}
 
@@ -266,9 +260,19 @@ const Dispensary = () => {
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
-            case 'searchByNo':
-				//  setDisplayMsg("Please enter Purchases No.");
-				//  setShowInputModal(true);
+            case 'deleteDispensary':
+                if(dispensaryId > 0){
+                    setDisplayMsg(`Delete record with ${items.length} item${items.length > 1 ? 's' : ''}? Action cannot be undone`);
+                    setConfirmDialogEvtName(onclickParams.evtName);
+                    setShowConfirmModal(true);
+                }
+                break;
+            case 'dispense':
+                if(items.length > 0){
+                    setDisplayMsg(`Dispense record with ${items.length} item${items.length > 1 ? 's' : ''} to Sales/Shelf? Action cannot be undone`);
+                    setConfirmDialogEvtName(onclickParams.evtName);
+                    setShowConfirmModal(true);
+                }
                 break;
             case 'exportToPDF':
                 break;
@@ -280,48 +284,207 @@ const Dispensary = () => {
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'deleteItem':
+				setDisplayMsg(`Delete item ${entity.itemName}?`);
+                setEntityToEdit(entity);
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setShowConfirmModal(true);
                 break;
             case 'editItem':
+                setEntityToEdit(entity);
+                setShowFormModal(true);
                 break;
         }
     };
 
-    const onSubmit = (data) => {
-        console.log(data);
-        //  is item already added to table?
-        const index = items.findIndex(item => item.id === data.product.value.id);
-        if(index >= 0){
-            toast.error('item already exist, consider editing it');
-            return;
-        }
-        //  dispensed qty > store qty (unit or pkg)?
-        if( (data.dispense_qty_type === 'unit' && data.quantity_val > data.product.value.unitQty) 
-            ||
-            (data.dispense_qty_type === 'pkg' && data.quantity_val > data.product.value.pkgQty)){
-                toast.error('Dispensed quantity is greater than available quantity');
+    const onSubmit = async (data) => {
+        try {
+            //  is item already added to table?
+            const index = items.findIndex(item => item.itemId === data.product.value.id);
+            if(index >= 0){
+                toast.error('item already exist, consider editing it');
                 return;
-        }
-        const dispensedItem = {
-            id: data.product.value.id,
-            name: data.product.value.name,
-            qty: data.quantity_val,
-            qtyType: data.dispense_qty_type,
-        };
-        setItems([...items, dispensedItem]);
-        //	maintain current page
-        setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
-        //	update total items count
-        setTotalItemsCount(totalItemsCount + 1);
+            }
+            //  dispensed qty > store qty (unit or pkg)?
+            if( (data.dispense_qty_type === 'unit' && data.quantity_val > data.product.value.unitQty) 
+                ||
+                (data.dispense_qty_type === 'pkg' && data.quantity_val > data.product.value.pkgQty)){
+                    toast.error('Dispensed quantity is greater than available quantity');
+                    return;
+            }
+            const dispensedItem = {
+                itemId: data.product.value.id,
+                itemName: data.product.value.name,
+                qty: data.quantity_val,
+                qtyType: data.dispense_qty_type,
+            };
+            //  network request to save data
+            const response = await storeController.dispensary(dispensaryId, dispensedItem);
+            if(response && response.status === 200){
+                dispensedItem.id = response.data[0].id;
+                dispensedItem.itemDetailId = response.data[0].itemDetailId;
+                setDispensaryId(response.data[0].dispensaryId);
+                setItems([...items, dispensedItem]);
+                //	maintain current page
+                setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
+                //	update total items count
+                setTotalItemsCount(totalItemsCount + 1);
+            }
 
-        // clears the input fields after save
-        reset();
+            // clears the input fields after save
+            setSelectedStoreQtyType('unit');
+            reset();
+        } catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return onSubmit(data);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    };
+
+	const dispense = async (outpostId) => {
+		try {
+			setNetworkRequest(true);
+            console.log('outpost id', outpostId);
+            await storeController.dispense(dispensaryId, outpostId);
+            resetPageStates();
+            //	navigate back to this page which will cause reset of page states
+            navigate("/store/item/dispensary/0");
+
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return dispense(outpostId);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	};
+	
+	const handleConfirmOK = async () => {
+		setShowConfirmModal(false);
+		try {
+			setNetworkRequest(true);
+			switch (confirmDialogEvtName) {
+				case 'deleteItem':
+					await storeController.deleteDispensedItemDetail(entityToEdit.itemDetailId);
+					//	find index position of deleted item in items arr
+					const indexPos = items.findIndex(i => i.itemId == entityToEdit.itemId);
+					if(indexPos > -1){
+						//	cut out deleted item found at index position
+						items.splice(indexPos, 1);
+						setItems([...items]);
+						/*  MAINTAIN CURRENT PAGE.  */
+						setCurrentPage(Math.ceil((totalItemsCount - 1) / pageSize));
+						setTotalItemsCount(totalItemsCount - 1);
+						toast.success('Delete successful');
+					}
+					break;
+				case "dispense":
+					setDropDownMsg("Please select Outpost")
+					setShowDropDownModal(true);
+					break;
+				case "deleteDispensary":
+					await storeController.deleteDispensary(dispensaryId);
+                    resetPageStates();
+					//	navigate back to this page which will cause reset of page states
+					navigate("/store/item/dispensary/0");
+					break;
+				case "exportToPDF":
+					await storeController.exportToPDF(dispensaryId);
+					break;
+			}
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return handleConfirmOK();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+    
+    const updateDispensedItem = async (data) => {
+        try {
+            setNetworkRequest(true);
+            //  network request to update data
+            const response = await storeController.updateDispensedItem(data);
+            if(response && response.status === 200){
+                //	find index position of edited item in items arr
+                const indexPos = items.findIndex(i => i.itemId === data.itemId);
+                if(indexPos > -1){
+                    //	replace old item found at index position in items array with edited one
+                    items.splice(indexPos, 1, data);
+                    setItems([...items]);
+                    const startIndex = (currentPage - 1) * pageSize;
+                    setPagedData(items.slice(startIndex, startIndex + pageSize));
+                    toast.success('Update successful');
+                }
+            }
+            handleCloseModal();
+            setNetworkRequest(false);
+        } catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return updateDispensedItem(data);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
     };
         
     const tableProps = {
         //	table header
         headers: ['Item Name', 'Total Qty', 'Type', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'qty', 'qtyType'],
+        objectProps: ['itemName', 'qty', 'qtyType'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -390,6 +553,7 @@ const Dispensary = () => {
                             }
                         }}
                     />
+                    <ErrorMessage source={errors.quantity_val} />
 
                     <div className="d-flex gap-3">
                         <Form.Check
@@ -410,7 +574,6 @@ const Dispensary = () => {
                         />
                     </div>
                 </div>
-
 
                 <div className="col-md-4 col-12 mb-3">
                     <p className="h5 mb-2">Store Qty:</p>
@@ -460,16 +623,31 @@ const Dispensary = () => {
             <div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
                 <div className="border bg-light my-3">
                     <TableMain tableProps={tableProps} tableData={pagedData} />
-                    <div className="mt-3">
-                        <PaginationLite
-                            itemCount={totalItemsCount}
-                            pageSize={pageSize}
-                            setPageChanged={setPageChanged}
-                            pageNumber={currentPage}
-                        />
-                    </div>
+                </div>
+                <div className="mt-3">
+                    <PaginationLite
+                        itemCount={totalItemsCount}
+                        pageSize={pageSize}
+                        setPageChanged={setPageChanged}
+                        pageNumber={currentPage}
+                    />
                 </div>
             </div>
+            <ConfirmDialog
+                show={showConfirmModal}
+                handleClose={handleCloseModal}
+                handleConfirm={handleConfirmOK}
+                message={displayMsg}
+            />
+            <DropDownDialog
+                show={showDropDownModal}
+                handleClose={handleCloseModal}
+                handleConfirm={dispense}
+                message={dropDownMsg}
+                options={outpostOptions}
+            />
+
+            <DispensaryForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={updateDispensedItem} />
         </div>
     )
 }
