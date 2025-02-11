@@ -170,7 +170,7 @@ function NavBar() {
 										navigate("/store/item/dispensary/0");
 									}}
 									className={`nav-item ${
-										location.pathname === "/login" &&
+										location.pathname.startsWith("/store/item/dispensary") &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>

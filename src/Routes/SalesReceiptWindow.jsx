@@ -45,7 +45,7 @@ const SalesReceiptWindow = () => {
                         <ErrorMessage source={errors.receipt_no} />
                     </div>
 
-                    <div className="d-none d-md-block col-12 col-md-2 p-4 d-flex flex-column gap-2 rounded bg-light shadow-sm border overflow-md-auto border" style={{ minHeight: "700px", maxHeight: '80vh' }}>
+                    <div className="d-none d-md-block col-12 col-md-2 p-4 d-flex flex-column gap-2 rounded bg-light shadow-sm border overflow-md-auto border" style={{ minHeight: "80vh", maxHeight: '80vh', overflow: 'scroll' }}>
                         <h4 className='mb-3'>Reciept ID:-</h4>
                         <Table id="myTable" className="rounded-2" hover responsive>
                             <tbody>

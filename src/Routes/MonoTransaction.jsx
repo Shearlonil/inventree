@@ -10,22 +10,25 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import numeral from "numeral";
 
-import { product_selection_schema } from "../Utils/yup-schema-validator/transactions-schema";
+import { product_selection_schema, invoice_disc_schema, customer_selection_schema } from "../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../Components/ErrorMessage";
 import SVG from "../assets/Svg";
 import genericController from "../Controllers/generic-controller";
 import { useAuth } from "../app-context/auth-user-context";
 import handleErrMsg from "../Utils/error-handler";
 import { TransactionItem } from "../Entities/TransactionItem";
+import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
 
 const MonoTransaction = () => {
 		
-	const { handleRefresh, logout } = useAuth();
+	const { handleRefresh, logout, authUser } = useAuth();
+	const user = authUser();
 
 	const {
 		register: productSelectionRegister,
 		handleSubmit: handleProductSelectionSubmit,
-		control,
+		control: productSelectionControl,
+		setValue: productSelectionSetValue,
 		formState: { errors: productSelectionErrors },
 	} = useForm({
 		resolver: yupResolver(product_selection_schema),
@@ -36,13 +39,41 @@ const MonoTransaction = () => {
             item_disc_type: 'n'
 		},
 	});
+
+	const {
+		register: invoiceDiscRegister,
+		handleSubmit: handleInvoiceDiscSubmit,
+		setValue: invoiceDiscSetValue,
+		formState: { errors: invoiceDiscErrors },
+	} = useForm({
+		resolver: yupResolver(invoice_disc_schema),
+		defaultValues: {
+			invoice_disc: 0,
+            invoice_disc_type: 'n'
+		},
+	});
+
+	const {
+		register: customerSelectionRegister,
+		handleSubmit: handleCompleteTransactionSubmit,
+		control: customerSelectionControl,
+		setValue: customerSelectionSetValue,
+		formState: { errors: customerSelectionErrors },
+	} = useForm({
+		resolver: yupResolver(customer_selection_schema),
+		defaultValues: {
+			cash: 0,
+			transfer: 0,
+			atm: 0,
+		},
+	});
 	
 	const [networkRequest, setNetworkRequest] = useState(false);
 		
 	const [displayMsg, setDisplayMsg] = useState("");
 	const [dropDownMsg, setDropDownMsg] = useState("");
 	const [showConfirmModal, setShowConfirmModal] = useState("");
-	const [showDropDownModal, setShowDropDownModal] = useState(false);
+	const [entityToEdit, setEntityToEdit] = useState(null);
 	//  for items
 	const [items, setItems] = useState([]);
 	const [transactionItems, setTransactionItems] = useState([]);
@@ -57,9 +88,13 @@ const MonoTransaction = () => {
 	const [updating, setUpdating] = useState(false);
 	const [unitPrice, setUnitPrice] = useState(0);
 	const [pkgPrice, setPkgPrice] = useState(0);
+	//	invoice discount value entered into text field
 	const [invoiceDisc, setInvoiceDisc] = useState(0);
+	const [calculatedInvoiceDisc, setCalculatedInvoiceDisc] = useState(0);
+	const [invoiceDiscType, setInvoiceDiscType] = useState("n");
 	const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
-				
+	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+
 	useEffect( () => {
 		initialize();
 	}, []);
@@ -103,10 +138,69 @@ const MonoTransaction = () => {
 		}
 	};
 
+	const addInvoiceDisc = (data) => {
+		setInvoiceDiscType(data.invoice_disc_type);
+		setInvoiceDisc(data.invoice_disc);
+		updateTransactionAmount();
+	}
+
+	const resetPage = () => {
+		setTransactionItems([]);
+		removeInvoiceDisc();
+		productSelectionSetValue('qty', 0)
+		productSelectionSetValue('item_disc', 0);
+        productSelectionSetValue('qty_type', "unit");
+        productSelectionSetValue('item_disc_type', 'n');
+        productSelectionSetValue('product', null);
+        setUnitPrice(0);
+        setPkgPrice(0);
+		setTotalTransactionAmount(0);
+	}
+
+	const removeInvoiceDisc = () => {
+		setInvoiceDiscType('n');
+		setInvoiceDisc(0);
+		invoiceDiscSetValue('invoice_disc_type', 'n');
+		invoiceDiscSetValue('invoice_disc', 0);
+		setCalculatedInvoiceDisc(0);
+		setTotalTransactionAmount(numeral(calcSubTotalAmount(transactionItems)).subtract(0).value());
+	}
+
 	const onSubmit = (data) => {
+		//	detect if item already exists in the list
+		const indexPos = transactionItems.findIndex(i => i.id == data.product.value.id);
+		if(indexPos > -1){
+			toast.error('Item already added to list, consider updating quantity');
+			return;
+		}
 		const item = new TransactionItem(data);
-		setTransactionItems([...transactionItems, item]);
-		console.log(data);
+		item.discount = 0;
+		if(data.item_disc > 0){
+			if(user.hasAuth('ITEM_DISCOUNT')){
+				item.discount = data.item_disc_type === "perc" 
+				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
+				: data.item_disc;
+			}else {
+				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
+				return;
+			}
+		}
+		//	soldOutPrice is original item price (pack or unit) less discount
+		item.itemSoldOutPrice = data.qty_type === "pkg" 
+			? numeral(item.pkgSalesPrice).subtract(item.discount).value() 
+			: numeral(item.unitSalesPrice).subtract(item.discount).value();
+		transactionItems.push(item);
+		setTransactionItems(transactionItems);
+		updateTransactionAmount();
+		
+		//	reset fields for next input
+		productSelectionSetValue('qty', 0)
+		productSelectionSetValue('item_disc', 0);
+        productSelectionSetValue('qty_type', "unit");
+        productSelectionSetValue('item_disc_type', 'n');
+        productSelectionSetValue('product', null);
+        setUnitPrice(0);
+        setPkgPrice(0);
 	};
 
     //  Handle item selection change
@@ -116,47 +210,94 @@ const MonoTransaction = () => {
         setPkgPrice(selectedItem.value.pkgSalesPrice);
     };
 
-	const increment = async (data) => {
+    //  Handle customer selection change
+    const handleCustomerChange = (selectedCustomer) => {
+    };
+
+	const increment = (data) => {
+		setUpdating(true);
 		data.qty++;
-		//  find item if already exist in cart then update qty else add new to cart
-		const found = transactionItems.find((i) => i.id == data.id);
-		found.qty = data.qty;
-		const items = [...transactionItems];
-		// setTotal(
-		// 	transactionItems.reduce(
-		// 		(accumulator, currentVal) =>
-		// 		numeral(currentVal.qty)
-		// 			.multiply(currentVal.salesPrice)
-		// 			.add(accumulator)
-		// 			.value(),
-		// 		0
-		// 	)
-		// );
-		setTransactionItems(items);
+		updateTransactionAmount();
+		setUpdating(false);
 	};
   
-	const decrement = async (data) => {
+	const decrement = (data) => {
+		setUpdating(true);
 		if (data.qty > 1) {
 			data.qty--;
-			setTotal(
-				items.reduce(
-					(accumulator, currentVal) =>
-						numeral(currentVal.qty)
-						.multiply(currentVal.salesPrice)
-						.add(accumulator)
-						.value(),
-					0
-				)
-			);
+			updateTransactionAmount();
 		}
+		setUpdating(false);
 	};
 
 	const handleRemoveConfirmation = (data) => {
-	  if (data) {
-		setDisplayMsg(`Remove item ${data.title} from your cart?`);
-		setShowConfirmModal(true);
-	  }
+		if (data) {
+			setEntityToEdit(data);
+			setDisplayMsg(`Remove item ${data.name} from the list?`);
+			setConfirmDialogEvtName('removeItem');
+			setShowConfirmModal(true);
+		}
 	};
+
+	const handleCancelTransaction = () => {
+		if (transactionItems.length > 0) {
+			setDisplayMsg(`Discard Transaction?`);
+			setConfirmDialogEvtName('cancelTransaction');
+			setShowConfirmModal(true);
+		}
+	};
+
+	const handleSaveTransaction = (data) => {
+		if (transactionItems.length > 0) {
+			console.log(data);
+		}
+	};
+
+    const handleCloseModal = () => {
+		setEntityToEdit(null);
+        setShowConfirmModal(false);
+    };
+	
+	const handleConfirmOK = async () => {
+		switch (confirmDialogEvtName) {
+			case 'removeItem':
+				//	find index position of deleted item in items arr
+				const indexPos = transactionItems.findIndex(i => i.id == entityToEdit.id);
+				if(indexPos > -1){
+					//	cut out deleted item found at index position
+					transactionItems.splice(indexPos, 1);
+					updateTransactionAmount();
+					setTransactionItems([...transactionItems]);
+					setShowConfirmModal(false);
+				}
+				break;
+			case 'cancelTransaction':
+				resetPage();
+				setShowConfirmModal(false);
+				break;
+			case 'saveTransaction':
+				break;
+		}
+	};
+
+	//	helper function to calculate sub total of items selected (from total amount of items added)
+	const calcSubTotalAmount = (itemsList = []) => {
+		return itemsList.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0);
+	}
+
+	//	helper function to calculate invoice discount using sub total of all items and invoice discount value + discount type
+	const calcInvoiceDisc = (invoice_disc, invoice_disc_type) => {
+		return invoice_disc_type === 'perc' 
+			? numeral(calcSubTotalAmount(transactionItems)).multiply(numeral(invoice_disc).divide(100).value()).value()
+			: numeral(invoice_disc).value();
+	}
+
+	//	helper function to calculate and update total transaction amount using invoice discount and sub total
+	const updateTransactionAmount = () => {
+		const invoice_disc = calcInvoiceDisc(invoiceDisc, invoiceDiscType);
+		setCalculatedInvoiceDisc(invoice_disc);
+		setTotalTransactionAmount(numeral(calcSubTotalAmount(transactionItems)).subtract(invoice_disc).value());
+	}
 
 	return (
 		<>
@@ -180,7 +321,7 @@ const MonoTransaction = () => {
 					<div className="col-8 d-flex flex-column gap-3">
 						<Controller
 							name="product"
-							control={control}
+							control={productSelectionControl}
 							render={({ field: { onChange, value } }) => (
 								<Select
 									required
@@ -201,10 +342,10 @@ const MonoTransaction = () => {
 
 						<div className="d-flex gap-3">
 							<p>
-								Unit (N): <span className="text-danger fw-bold">{unitPrice}</span>
+								Unit (₦): <span className="text-danger fw-bold">{unitPrice}</span>
 							</p>
 							<p>
-								Package (N): <span className="text-danger fw-bold">{pkgPrice}</span>
+								Package (₦): <span className="text-danger fw-bold">{pkgPrice}</span>
 							</p>
 						</div>
 					</div>
@@ -308,28 +449,30 @@ const MonoTransaction = () => {
 						<div className="row mb-2">
 						<div className="col-md-6 col-12 fw-bold ps-4">Product</div>
 						<div className="col-md-2 col-4 fw-bold">Qty</div>
-						<div className="col-md-2 col-4 fw-bold">Unit Price</div>
-						<div className="col-md-2 col-4 fw-bold">Total Price</div>
+						<div className="col-md-2 col-4 fw-bold">Unit Price (₦)</div>
+						<div className="col-md-2 col-4 fw-bold">Total Price (₦)</div>
 						</div>
 					</div>
 					<hr />
 
 					{transactionItems.length > 0 && (
 						transactionItems.map((item) => {
-							const { id, name, qtyType, itemSoldOutPrice, itemDiscount, qty } = item;
+							const { id, name, qtyType, itemSoldOutPrice, discount, qty, totalAmount } = item;
 							return (
-								<div key={qty * id}>
+								<div key={id}>
 									<div className="row mt-4">
 										<div className="col-md-6 col-12">
 										<div className="d-flex">
 											<div className="ms-3">
-											<p className="fw-bold mb-2">{name}</p>
-											<button
-												className={`btn btn-sm btn-outline-danger px-3 rounded-pill`}
-												onClick={() => handleRemoveConfirmation(item)}
-											>
-												remove
-											</button>
+												<p className="fw-bold mb-2">{name}</p>
+												<p>discount: <span className="text-primary fw-bold">{discount}</span></p>
+												<p>Type: <span className="text-primary fw-bold">{qtyType}</span></p>
+												<button
+													className={`btn btn-sm btn-outline-danger px-3 rounded-pill mt-2`}
+													onClick={() => handleRemoveConfirmation(item)}
+												>
+													remove
+												</button>
 											</div>
 										</div>
 										</div>
@@ -360,11 +503,9 @@ const MonoTransaction = () => {
 											<MdRemove />
 										</button>
 										</div>
-										<div className="col-md-2 col-4">{itemSoldOutPrice}</div>
+										<div className="col-md-2 col-4">{numeral(itemSoldOutPrice).format('0,0.00')}</div>
 										<div className="col-md-2 col-4 fw-bold">
-											{numeral(item.qty)
-												// .multiply(item.itemSoldOutPrice)
-												.format("0,0.00")}
+											{totalAmount}
 										</div>
 									</div>
 									<hr />
@@ -375,52 +516,58 @@ const MonoTransaction = () => {
 				</div>
 			</div>
 			{/*  */}
-			<div className="container my-5 py-3 d-flex flex-column flex-lg-row justify-content-center align-items-center gap-5">
+			<Form className="container my-5 py-3 d-flex flex-column flex-lg-row justify-content-center align-items-center gap-5">
 				<h2 className="mb-2">
-					Total (N): <span className="text-danger">{totalTransactionAmount}</span>
+					Total (N): <span className="text-danger">{numeral(totalTransactionAmount).format('₦0,0.00')}</span>
 				</h2>
 				<div className="border rounded shadow p-3 my-2">
 					<h5>Add Invoice Discount</h5>
 					<div className="row">
-						<div className="col-12 col-md-4">
+						<div className="col-12 col-md-4 d-flex flex-column">
 							<input
 								type="number"
 								className="form-control"
-								id="discount_value"
+								id="invoice_disc"
 								placeholder="0"
+								{...invoiceDiscRegister("invoice_disc")}
 							/>
+							<ErrorMessage source={invoiceDiscErrors.invoice_disc} />
 						</div>
-						<div className="col-12 col-md-5 text-center my-2">
+						<div className="col-12 col-md-4 text-center my-2 me-1">
 							<div className="d-flex gap-4 align-items-center">
 								<Form.Check
 									type="radio"
-									label="N"
-									value="unit"
-									name="invoice_disc"
+									label="₦"
+									value="n"
+									name="invoice_disc_type"
+									{...invoiceDiscRegister("invoice_disc_type")}
 								/>
 								<Form.Check
 									type="radio"
 									label="%"
 									value="perc"
-									name="invoice_disc"
+									name="invoice_disc_type"
+									{...invoiceDiscRegister("invoice_disc_type")}
 								/>
-								<div className="btn btn-lg btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+								<div className="btn btn-lg btn-success fw-bold p-2 px-2 d-flex align-items-center justify-content-center" 
+									onClick={handleInvoiceDiscSubmit(addInvoiceDisc)}>
 									<BiPlus />
 								</div>
-								<div className="btn btn-lg btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center">
+								<div className="btn btn-lg btn-danger fw-bold p-2 px-2 d-flex align-items-center justify-content-center"
+									onClick={() => removeInvoiceDisc()}>
 									<BiMinus />
 								</div>
 							</div>
 						</div>
-						<div className="col-12 col-md-3 my-2">
+						<div className="col-12 col-md-4 my-2">
 							<p className="h4">
 								(N):
-								<span className="text-success">{invoiceDisc}</span>
+								<span className="text-success ms-2">{numeral(calculatedInvoiceDisc).format('₦0,0.00')}</span>
 							</p>
 						</div>
 					</div>
 				</div>
-			</div>
+			</Form>
 			{/*  */}
 			<div className="container bg-light border rounded-4 shadow-sm  p-4">
 				<h3 className="display-5 fw-bold mb-2">Customer Details</h3>
@@ -462,15 +609,26 @@ const MonoTransaction = () => {
 					{/* Payment Section */}
 					<div className="col-12 col-md-5 mb-4">
 						<div className="mb-4">
-							<Select
-								required
-								// styles={customStyles}
-								placeholder="Select Customer..."
-								className="shadow-sm"
-								options={customerOptions}
-								isLoading={customersLoading}
-								onChange={""}
+							<Controller
+								name="customer"
+								control={customerSelectionControl}
+								render={({ field: { onChange, value } }) => (
+									<Select
+										required
+										name="customer"
+										placeholder="Select Customer..."
+										className="shadow-sm"
+										isLoading={customersLoading}
+										options={customerOptions}
+										value={value}
+										onChange={(val) => {
+											onChange(val);
+											handleCustomerChange(val);
+										}}
+									/>
+								)}
 							/>
+							<ErrorMessage source={customerSelectionErrors.customer} />
 						</div>
 						<h3 className="mb-3">Payment Mode</h3>
 						<div className="row payment-mode-cards mx-auto">
@@ -479,8 +637,8 @@ const MonoTransaction = () => {
 									<label className="fw-bold">
 										Cash
 									</label>
-									<Form.Control type="number" placeholder="Enter Amount" />
-									<ErrorMessage source={productSelectionErrors.qty} />
+									<Form.Control type="number" placeholder="Enter Amount" id="cash" {...customerSelectionRegister("cash")} />
+									<ErrorMessage source={customerSelectionErrors.cash} />
 								</div>
 							</div>
 							<div className="col-6 p-2">
@@ -488,8 +646,8 @@ const MonoTransaction = () => {
 									<label className="fw-bold">
 										Transfer
 									</label>
-									<Form.Control type="number" placeholder="Enter Amount" />
-									<ErrorMessage source={productSelectionErrors.qty} />
+									<Form.Control type="number" placeholder="Enter Amount" id="transfer" {...customerSelectionRegister("transfer")} />
+									<ErrorMessage source={customerSelectionErrors.transfer} />
 								</div>
 							</div>
 							<div className="col-6 p-2">
@@ -497,8 +655,8 @@ const MonoTransaction = () => {
 									<label className="fw-bold">
 										POS/ATM
 									</label>
-									<Form.Control type="number" placeholder="Enter Amount" />
-									<ErrorMessage source={productSelectionErrors.qty} />
+									<Form.Control type="number" placeholder="Enter Amount" id="atm" {...customerSelectionRegister("atm")}/>
+									<ErrorMessage source={customerSelectionErrors.atm} />
 								</div>
 							</div>
 						</div>
@@ -521,18 +679,26 @@ const MonoTransaction = () => {
 						<button
 							className="btn btn-lg btn-danger rounded-3"
 							style={{ width: "270px" }}
+							onClick={() => handleCancelTransaction()}
 						>
 							Cancel
 						</button>
 						<button
 							className="btn btn-lg btn-success rounded-3"
 							style={{ width: "270px" }}
+							onClick={handleCompleteTransactionSubmit(handleSaveTransaction)}
 						>
 							OK
 						</button>
 					</div>
 				</div>
 			</div>
+            <ConfirmDialog
+                show={showConfirmModal}
+                handleClose={handleCloseModal}
+                handleConfirm={handleConfirmOK}
+                message={displayMsg}
+            />
 		</>
 	);
 };
