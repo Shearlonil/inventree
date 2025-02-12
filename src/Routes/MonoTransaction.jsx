@@ -19,6 +19,7 @@ import handleErrMsg from "../Utils/error-handler";
 import { TransactionItem } from "../Entities/TransactionItem";
 import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicator";
+import transactionsController from "../Controllers/transactions-controller";
 
 const MonoTransaction = () => {
 		
@@ -296,8 +297,8 @@ const MonoTransaction = () => {
 				break;
 			case 'saveTransaction':
 				const dtoReceipt = setUpReceiptDTO();
-				await commitTransaction(dtoReceipt);
 				setShowConfirmModal(false);
+				await commitTransaction(dtoReceipt);
 				break;
 		}
 	};
@@ -305,9 +306,8 @@ const MonoTransaction = () => {
     const commitTransaction = async (dtoReceipt) => {
 		try {
 			setNetworkRequest(true);
-			console.log(dtoReceipt);
+			await transactionsController.monoTransaction(dtoReceipt);
 			setNetworkRequest(false);
-			return true;
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
 			try {
@@ -387,7 +387,7 @@ const MonoTransaction = () => {
 	}
 
 	return (
-		<>
+		<div className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
@@ -768,7 +768,7 @@ const MonoTransaction = () => {
 				<div className="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center my-2 p-2">
 					<div className="d-flex flex-column flex-sm-row gap-3">
 						<button
-							className="btn btn-lg btn-danger rounded-3"
+							className={`btn btn-lg btn-danger rounded-3 ${networkRequest ? 'disabled' : ''}`}
 							style={{ width: "270px" }}
 							onClick={() => handleCancelTransaction()}
 						>
@@ -791,7 +791,7 @@ const MonoTransaction = () => {
                 handleConfirm={handleConfirmOK}
                 message={displayMsg}
             />
-		</>
+		</div>
 	);
 };
 

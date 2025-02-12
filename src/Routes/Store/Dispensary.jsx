@@ -494,7 +494,7 @@ const Dispensary = () => {
     };
 
     return (
-        <div style={{minHeight: '75vh'}}>
+        <div style={{minHeight: '75vh'}} className='container'>
 
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
 				<div>

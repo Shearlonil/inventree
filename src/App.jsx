@@ -20,6 +20,7 @@ import UnvenrifiedDispensary from "./Routes/UnvenrifiedDispensary";
 import UserWindow from "./Routes/UserWindow";
 import CustomerWindows from './Routes/CustomerWindow';
 import SalesReceiptWindow from './Routes/SalesReceiptWindow';
+import LedgerDisplay from './Routes/LedgerDisplay';
 
 function App() {
 	return (
@@ -31,7 +32,6 @@ function App() {
 					<Route path="cashier" element={<CashierWindow />} />
 					<Route path={"mono"} element={<MonoTransaction />} />
           		</Route>
-				<Route path={"/acct-voucher-creation"} element={<AcctVoucherCreation />} />
 				<Route path="/contacts" element={<ProtectedRoute />}>
 					<Route path={"customers"} element={<CustomerWindows />} />
           		</Route>
@@ -43,7 +43,10 @@ function App() {
 					<Route path={"unverified/dispensary"} element={<UnvenrifiedDispensary />} />
           		</Route>
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
-				<Route path={"/finance"} element={<Finance />} />
+				<Route path={"/finance"} element={<ProtectedRoute />}>
+					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
+					<Route path={"ledgers/view"} element={<LedgerDisplay />} />
+				</Route>
 				<Route path="/dashboard" element={<ProtectedRoute />}>
 					<Route path={"users"} element={<UserWindow />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />

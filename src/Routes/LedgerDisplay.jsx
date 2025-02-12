@@ -3,20 +3,31 @@ import { Table } from 'react-bootstrap';
 import { GrTransaction } from 'react-icons/gr';
 import { TbSum } from 'react-icons/tb';
 
+import SVG from '../assets/Svg';
+
 const LedgerDisplay = () => {
     return (
         <div className='container my-4'>
             {/* <h3 className="mb-4"><span>Ledger Summary</span></h3> */}
-            <div className='text-center'>
-                <h2 className="mx-auto display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-                    <span className="me-4">Ledger Summary</span>
-                    <TbSum className="text-danger" size={"30px"} />
-                </h2>
-            </div>
-            <div className="shadow p-4 border border-light rounded-3 bg-warning-subtle mt-5">
+            <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+				<div>
+					{/* <OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" /> */}
+				</div>
+				<div className="text-center d-flex">
+					<h2 className="display-6 p-3 mb-0">
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Ledgers</span>
+						<img src={SVG.dispensary_filled_white} style={{ width: "50px", height: "50px" }} />
+					</h2>
+				</div>
+                <span className='text-center m-1'>
+                    Dispense items in store to any section to increase sales quantity.
+                    Please Note that Dispensary requires STORE ITEM VIEW PERMISSION
+                </span>
+			</div>
+            <div className="shadow p-4 border border-light rounded-3 bg-warning-subtle mt-1">
                 <div className="row g-4"> {/* Adds gap between sections */}
                     {[
-                        { label: "Name", value: "ELBE PHARMA LTD (LEKAN)" },
+                        { label: "Name", value: "ELBE PHARMA LTD (LEKAN) ELBE PHARMA LTD (LEKAN) ELBE PHARMA LTD (LEKAN)" },
                         { label: "Creator", value: "pharmQAY" },
                         { label: "Date", value: "10-08-2022 09:35:32" },
                         { label: "Parent", value: "VENDORS" },
@@ -24,7 +35,7 @@ const LedgerDisplay = () => {
                     ].map((item, index) => (
                         <div key={index} className="col-12 col-md-6">
                             <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
-                                <span className="fw-bold text-md-end h5">{item.label}:</span>
+                                <span className="fw-bold text-md-end h5 me-2">{item.label}:</span>
                                 <span>{item.value}</span>
                             </div>
                         </div>

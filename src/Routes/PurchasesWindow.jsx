@@ -521,7 +521,7 @@ const PurchasesWindow = () => {
 							/>
 							<ErrorMessage source={errors.endDate} />
 						</Col>
-						<Col sm lg="4" className="align-self-end text-center mt-3">
+						<Col sm lg="3" className="align-self-end text-center mt-3">
 							<Button className="w-100" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
 								{ (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
 								{ (!networkRequest) && `Search` }
