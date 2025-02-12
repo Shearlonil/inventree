@@ -607,7 +607,7 @@ const Dispensary = () => {
 
                 <div className="d-flex">
                     <button
-                        className="btn btn-outline-success ms-auto"
+                        className={`btn btn-outline-success ms-auto ${networkRequest ? 'disabled' : ''}`}
                         onClick={handleSubmit(onSubmit)}
                     >
                         <span className="d-flex gap-2 align-items-center px-4">

@@ -18,6 +18,7 @@ import { useAuth } from "../app-context/auth-user-context";
 import handleErrMsg from "../Utils/error-handler";
 import { TransactionItem } from "../Entities/TransactionItem";
 import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
+import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicator";
 
 const MonoTransaction = () => {
 		
@@ -29,10 +30,12 @@ const MonoTransaction = () => {
 		handleSubmit: handleProductSelectionSubmit,
 		control: productSelectionControl,
 		setValue: productSelectionSetValue,
+		reset: productSelectionReset,
 		formState: { errors: productSelectionErrors },
 	} = useForm({
 		resolver: yupResolver(product_selection_schema),
 		defaultValues: {
+			product: null,
 			qty: 0,
 			item_disc: 0,
             qty_type: "unit", 
@@ -44,6 +47,7 @@ const MonoTransaction = () => {
 		register: invoiceDiscRegister,
 		handleSubmit: handleInvoiceDiscSubmit,
 		setValue: invoiceDiscSetValue,
+		reset: invoiceDiscReset,
 		formState: { errors: invoiceDiscErrors },
 	} = useForm({
 		resolver: yupResolver(invoice_disc_schema),
@@ -58,10 +62,12 @@ const MonoTransaction = () => {
 		handleSubmit: handleCompleteTransactionSubmit,
 		control: customerSelectionControl,
 		setValue: customerSelectionSetValue,
+		reset: customerSelectionReset,
 		formState: { errors: customerSelectionErrors },
 	} = useForm({
 		resolver: yupResolver(customer_selection_schema),
 		defaultValues: {
+			customer: null,
 			cash: 0,
 			transfer: 0,
 			atm: 0,
@@ -83,13 +89,18 @@ const MonoTransaction = () => {
 	//  for customers
 	const [customerOptions, setCustomerOptions] = useState([]);
 	const [customersLoading, setCustomersLoading] = useState(true);
+	const [customerName, setCustomerName] = useState('');
+	const [customerDiscount, setCustomerDiscount] = useState('');
+	const [customerPhone, setCustomerPhone] = useState('');
+	const [customerCardNo, setCustomerCardNo] = useState('');
+	const [customerPaymentInfo, setCustomerPaymentInfo] = useState(null);	//	for holding customer info and payment methods
 
 	//	for controlling the increment and decrement buttons while updating cart
 	const [updating, setUpdating] = useState(false);
 	const [unitPrice, setUnitPrice] = useState(0);
 	const [pkgPrice, setPkgPrice] = useState(0);
-	//	invoice discount value entered into text field
-	const [invoiceDisc, setInvoiceDisc] = useState(0);
+	
+	const [invoiceDisc, setInvoiceDisc] = useState(0);	//	invoice discount value entered into text field
 	const [calculatedInvoiceDisc, setCalculatedInvoiceDisc] = useState(0);
 	const [invoiceDiscType, setInvoiceDiscType] = useState("n");
 	const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
@@ -115,7 +126,7 @@ const MonoTransaction = () => {
 
             //	check if the request to fetch customers doesn't fail before setting values to display
             if(customersRequest){
-				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.customerName, value: customer.id})));
+				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.customerName, value: customer})));
 				setCustomersLoading(false);
             }
 		} catch (error) {
@@ -147,21 +158,26 @@ const MonoTransaction = () => {
 	const resetPage = () => {
 		setTransactionItems([]);
 		removeInvoiceDisc();
-		productSelectionSetValue('qty', 0)
-		productSelectionSetValue('item_disc', 0);
-        productSelectionSetValue('qty_type', "unit");
-        productSelectionSetValue('item_disc_type', 'n');
-        productSelectionSetValue('product', null);
+
+        productSelectionReset();
+
+		customerSelectionReset();
+
+		setCustomerName('');
+		setCustomerDiscount("0");
+		setCustomerPhone('');
+		setCustomerCardNo('');
         setUnitPrice(0);
         setPkgPrice(0);
 		setTotalTransactionAmount(0);
+
+		setCustomerPaymentInfo(null);
 	}
 
 	const removeInvoiceDisc = () => {
 		setInvoiceDiscType('n');
 		setInvoiceDisc(0);
-		invoiceDiscSetValue('invoice_disc_type', 'n');
-		invoiceDiscSetValue('invoice_disc', 0);
+		invoiceDiscReset();
 		setCalculatedInvoiceDisc(0);
 		setTotalTransactionAmount(numeral(calcSubTotalAmount(transactionItems)).subtract(0).value());
 	}
@@ -194,11 +210,7 @@ const MonoTransaction = () => {
 		updateTransactionAmount();
 		
 		//	reset fields for next input
-		productSelectionSetValue('qty', 0)
-		productSelectionSetValue('item_disc', 0);
-        productSelectionSetValue('qty_type', "unit");
-        productSelectionSetValue('item_disc_type', 'n');
-        productSelectionSetValue('product', null);
+		productSelectionReset();
         setUnitPrice(0);
         setPkgPrice(0);
 	};
@@ -212,6 +224,10 @@ const MonoTransaction = () => {
 
     //  Handle customer selection change
     const handleCustomerChange = (selectedCustomer) => {
+		setCustomerName(selectedCustomer.label);
+		setCustomerDiscount(selectedCustomer.value.ledger.discount === null ? "0" : selectedCustomer.value.ledger.discount);
+		setCustomerPhone(selectedCustomer.value.phoneNo);
+		setCustomerCardNo(selectedCustomer.value.loyaltyCardNo === null ? '0': selectedCustomer.value.loyaltyCardNo);
     };
 
 	const increment = (data) => {
@@ -249,7 +265,10 @@ const MonoTransaction = () => {
 
 	const handleSaveTransaction = (data) => {
 		if (transactionItems.length > 0) {
-			console.log(data);
+			setCustomerPaymentInfo(data);
+			setDisplayMsg(`Save Transaction?`);
+			setConfirmDialogEvtName('saveTransaction');
+			setShowConfirmModal(true);
 		}
 	};
 
@@ -276,9 +295,39 @@ const MonoTransaction = () => {
 				setShowConfirmModal(false);
 				break;
 			case 'saveTransaction':
+				const dtoReceipt = setUpReceiptDTO();
+				await commitTransaction(dtoReceipt);
+				setShowConfirmModal(false);
 				break;
 		}
 	};
+
+    const commitTransaction = async (dtoReceipt) => {
+		try {
+			setNetworkRequest(true);
+			console.log(dtoReceipt);
+			setNetworkRequest(false);
+			return true;
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return commitTransaction(dtoReceipt);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+    };
 
 	//	helper function to calculate sub total of items selected (from total amount of items added)
 	const calcSubTotalAmount = (itemsList = []) => {
@@ -296,7 +345,45 @@ const MonoTransaction = () => {
 	const updateTransactionAmount = () => {
 		const invoice_disc = calcInvoiceDisc(invoiceDisc, invoiceDiscType);
 		setCalculatedInvoiceDisc(invoice_disc);
-		setTotalTransactionAmount(numeral(calcSubTotalAmount(transactionItems)).subtract(invoice_disc).value());
+		const total = numeral(calcSubTotalAmount(transactionItems)).subtract(invoice_disc).value();
+		setTotalTransactionAmount(total);
+		customerSelectionSetValue('cash', total);
+	}
+
+	const setUpReceiptDTO = () => {
+		const paymentModes = [];
+		if(customerPaymentInfo.atm){
+			paymentModes.push({
+				type: 'POS/DEBIT-CARD',
+				amount: customerPaymentInfo.atm
+			})
+		}
+		if(customerPaymentInfo.transfer){
+			paymentModes.push({
+				type: 'TRANSFER',
+				amount: customerPaymentInfo.transfer
+			})
+		}
+		if(customerPaymentInfo.cash){
+			paymentModes.push({
+				type: 'CASH',
+				amount: customerPaymentInfo.cash
+			})
+		}
+		const dtoInvoice = {
+			id: 0,
+			outpostID: 1,	//	for now default to the default outpost
+			invoiceDiscount: calculatedInvoiceDisc,
+			dtoSalesRecords: transactionItems,
+		};
+
+		return {
+			id: 0,
+			customerId: customerPaymentInfo.customer.value.id,
+			ledgerDiscount: customerPaymentInfo.customer.value.ledger.discount,
+			dtoInvoice,
+			paymentModes,
+		}
 	}
 
 	return (
@@ -577,20 +664,24 @@ const MonoTransaction = () => {
 						<div className="text-center mb-4">
 							<HiUser size={80} className="mb-3" />
 							<p>Customer Name: </p>
-							<h4>John Doe</h4>
+							<h4>{customerName}</h4>
 						</div>
 
 						{/* Wallet Info */}
 						<div className="mb-3 text-center">
-							<p className="fw-bold">
-								Wallet Balance:{" "}
-								<span className="text-warning h3">₦1100.00</span>
-							</p>
 							<p>
-								Discount: <span className="text-warning h3">0%</span>
+								Discount: <span className="text-warning h3">{customerDiscount}%</span>
+							</p>
+							<p className="">
+								Phone No:{" "}
+								<span className="text-warning h5">{customerPhone}</span>
+							</p>
+							<p className="">
+								Card No:{" "}
+								<span className="text-warning h5">{customerCardNo}</span>
 							</p>
 
-							<label
+							{/* <label
 								className="d-flex gap-2 text-light"
 								htmlFor="deduct_wallet_discount_from_payment"
 							>
@@ -602,7 +693,7 @@ const MonoTransaction = () => {
 									name="deduct_wallet_discount_from_payment"
 								/>
 								deduct wallet discount from payment
-							</label>
+							</label> */}
 						</div>
 					</div>
 
@@ -684,11 +775,12 @@ const MonoTransaction = () => {
 							Cancel
 						</button>
 						<button
-							className="btn btn-lg btn-success rounded-3"
+							className={`btn btn-lg btn-success rounded-3 ${networkRequest ? 'disabled' : ''}`}
 							style={{ width: "270px" }}
 							onClick={handleCompleteTransactionSubmit(handleSaveTransaction)}
 						>
-							OK
+							{ (networkRequest) && <ThreeDotLoading color="white" size="small" /> }
+							{ (!networkRequest) && `OK` }
 						</button>
 					</div>
 				</div>
