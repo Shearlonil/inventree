@@ -29,7 +29,7 @@ const Login = () => {
             .required("Username is required"),
         password: yup
             .string()
-            .min(6, "Password must be a min of 6 characters!")
+            .min(3, "Password must be a min of 3 characters!")
             .required("Input correct password"),
     });
 

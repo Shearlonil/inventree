@@ -208,10 +208,10 @@ function NavBar() {
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/contacts/vendors");
+										navigate("/transaction/section");
 									}}
 									className={`nav-item ${
-										location.pathname === "/contacts/vendors" &&
+										location.pathname === "/transaction/section" &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>

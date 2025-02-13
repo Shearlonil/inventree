@@ -69,7 +69,7 @@ const deleteStockRecItem = async (itemDetailId) => {
     });
 }
 
-const exportToPDF = async (stockRecId) => {
+const pdfExport = async (stockRecId) => {
     return await httpService.get(`/api/store/stock-record/pdf`, {
         params: {
             stockRecId,
@@ -159,7 +159,7 @@ export default {
     updateDispensedItem,
     deleteDispensedItemDetail,
     deleteDispensary,
-    exportToPDF,
+    pdfExport,
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
 }

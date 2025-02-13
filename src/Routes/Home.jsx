@@ -71,7 +71,7 @@ const Home = () => {
 								</div>
 							</div>
 							<a className="text-decoration-none" href="">
-								<p>Invoices with receipts</p>
+								<p>Invoices without receipts</p>
 							</a>
 						</div>
 					</div>

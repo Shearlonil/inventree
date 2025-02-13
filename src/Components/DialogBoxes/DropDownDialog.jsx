@@ -6,7 +6,7 @@ import ErrorMessage from '../ErrorMessage';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";
 
-const DropDownDialog = ({ show, handleClose, handleConfirm, options, message }) => {
+const DropDownDialog = ({ show, handleClose, handleConfirm, options, optionsLoading = false, message }) => {
     const schema = yup.object().shape({
         select: yup.object().required("Select an option from the drop down")
     });
@@ -42,6 +42,7 @@ const DropDownDialog = ({ show, handleClose, handleConfirm, options, message }) 
                                     placeholder="Select..."
                                     className="text-dark w-100"
                                     options={options}
+                                	isLoading={optionsLoading}
                                     onChange={(val) => onChange(val)}
                                     value={value}
                                 />

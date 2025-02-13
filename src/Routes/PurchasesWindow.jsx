@@ -28,7 +28,8 @@ import DropDownDialog from "../Components/DialogBoxes/DropDownDialog";
 const PurchasesWindow = () => {
 	const navigate = useNavigate();
 		
-	const { handleRefresh, logout } = useAuth();
+	const { handleRefresh, logout, authUser } = useAuth();
+	const user = authUser();
 
 	const schema = object().shape(
 		{
@@ -90,7 +91,12 @@ const PurchasesWindow = () => {
 	];
 		
 	useEffect( () => {
-		initialize();
+		if(user.hasAuth('REPORT_WINDOW')){
+			initialize();
+		}else {
+			toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+			navigate('/404');
+		}
 	}, []);
 
 	const initialize = async () => {
@@ -484,40 +490,40 @@ const PurchasesWindow = () => {
 						<Col sm lg="4" className="mt-3 mt-md-0">
 							<Form.Label className="fw-bold">End Date</Form.Label>
 							<Controller
-							name="endDate"
-							control={control}
-							render={({ field }) => (
-								<Datetime
-									{...field}
-									timeFormat={false}
-									closeOnSelect={true}
-									dateFormat="DD/MM/YYYY"
-									inputProps={{
-										placeholder: "Choose end date",
-										className: "form-control",
-										readOnly: true, // Optional: makes input read-only
-									}}
-									onChange={(date) =>
-										field.onChange(date ? date.toDate() : null)
-									}
-									isValidDate={(current) => {
-										// Ensure end date is after start date
-										return (
-										!startDate || current.isSameOrAfter(startDate, "day")
-										);
-									}}
-									/*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-										refs:
-											*	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-											*	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-										there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-										the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-										or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-									renderInput={(props) => {
-										return <input {...props} value={field.value ? props.value : ''} />
-									}}
-								/>
-							)}
+								name="endDate"
+								control={control}
+								render={({ field }) => (
+									<Datetime
+										{...field}
+										timeFormat={false}
+										closeOnSelect={true}
+										dateFormat="DD/MM/YYYY"
+										inputProps={{
+											placeholder: "Choose end date",
+											className: "form-control",
+											readOnly: true, // Optional: makes input read-only
+										}}
+										onChange={(date) =>
+											field.onChange(date ? date.toDate() : null)
+										}
+										isValidDate={(current) => {
+											// Ensure end date is after start date
+											return (
+											!startDate || current.isSameOrAfter(startDate, "day")
+											);
+										}}
+										/*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
+											refs:
+												*	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
+												*	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
+											there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
+											the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
+											or field.value is null : I've been able to "patch" it with the renderInput prop :*/
+										renderInput={(props) => {
+											return <input {...props} value={field.value ? props.value : ''} />
+										}}
+									/>
+								)}
 							/>
 							<ErrorMessage source={errors.endDate} />
 						</Col>

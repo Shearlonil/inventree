@@ -30,7 +30,8 @@ const Dispensary = () => {
     const navigate = useNavigate();
     const { dispensary_id } = useParams();
         
-    const { handleRefresh, logout } = useAuth();
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
 
     const {
         register,
@@ -71,7 +72,7 @@ const Dispensary = () => {
     const [itemOptions, setItemOptions] = useState([]);
     const [itemsLoading, setItemsLoading] = useState(true);
 
-    //  for tracts
+    //  for outposts
     const [outpostOptions, setOutpostOptions] = useState([]);
         
     //	for pagination
@@ -87,7 +88,7 @@ const Dispensary = () => {
 	const dispensaryOffCanvasMenu = [
 		{ label: "Dispense", onClickParams: {evtName: 'dispense'} },
 		{ label: "Delete Dispensary", onClickParams: {evtName: 'deleteDispensary'} },
-		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
 	];
 
     //	menus for the react-menu in table
@@ -97,10 +98,15 @@ const Dispensary = () => {
     ];
             
     useEffect( () => {
-        if(dispensary_id > 0){
-            initializeWithDispensaryRec();
+        if(user.hasAuth('DISPENSE')){
+            if(dispensary_id > 0){
+                initializeWithDispensaryRec();
+            }else {
+                initialize();
+            }
         }else {
-            initialize();
+            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            navigate('/404');
         }
     }, [dispensary_id]);
 
@@ -153,7 +159,7 @@ const Dispensary = () => {
             //  find active outposts, tracts and items with available store qty
             const urls = [ '/api/items/dispensary/active', '/api/tracts/active', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: storeItemsRequest, 1: tractsRequest, 2: outpostsRequest } = response;
+            const { 0: storeItemsRequest, 1: outpostsRequest } = response;
 
             //	check if the request to fetch store items doesn't fail before setting values to display
             if(storeItemsRequest){
@@ -274,7 +280,7 @@ const Dispensary = () => {
                     setShowConfirmModal(true);
                 }
                 break;
-            case 'exportToPDF':
+            case 'pdfExport':
                 break;
             case 'search':
                 break;
@@ -414,8 +420,8 @@ const Dispensary = () => {
 					//	navigate back to this page which will cause reset of page states
 					navigate("/store/item/dispensary/0");
 					break;
-				case "exportToPDF":
-					await storeController.exportToPDF(dispensaryId);
+				case "pdfExport":
+					await storeController.pdfExport(dispensaryId);
 					break;
 			}
 			setNetworkRequest(false);

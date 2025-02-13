@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Form, Table } from "react-bootstrap";
+import React, { useEffect, useState } from 'react'
+import { Form } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { MdAdd, MdRemove } from "react-icons/md";
-import {  HiUser } from "react-icons/hi2";
 import { IoAddSharp } from "react-icons/io5";
 import Select from "react-select";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -10,18 +9,21 @@ import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import numeral from "numeral";
 
-import { product_selection_schema, invoice_disc_schema, customer_selection_schema } from "../Utils/yup-schema-validator/transactions-schema";
-import ErrorMessage from "../Components/ErrorMessage";
-import SVG from "../assets/Svg";
-import genericController from "../Controllers/generic-controller";
-import { useAuth } from "../app-context/auth-user-context";
-import handleErrMsg from "../Utils/error-handler";
-import { TransactionItem } from "../Entities/TransactionItem";
-import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
-import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicator";
-import transactionsController from "../Controllers/transactions-controller";
+import { product_selection_schema, invoice_disc_schema } from "../../Utils/yup-schema-validator/transactions-schema";
+import ErrorMessage from "../../Components/ErrorMessage";
+import SVG from "../../assets/Svg";
+import { useAuth } from "../../app-context/auth-user-context";
+import handleErrMsg from "../../Utils/error-handler";
+import { TransactionItem } from "../../Entities/TransactionItem";
+import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
+import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
+import transactionsController from "../../Controllers/transactions-controller";
+import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
+import OffcanvasMenu from '../../Components/OffcanvasMenu';
+import InputDialog from '../../Components/DialogBoxes/InputDialog';
+import tractController from '../../Controllers/tract-controller';
 
-const MonoTransaction = () => {
+const SectionTransaction = () => {
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
@@ -57,44 +59,24 @@ const MonoTransaction = () => {
             invoice_disc_type: 'n'
 		},
 	});
-
-	const {
-		register: customerSelectionRegister,
-		handleSubmit: handleCompleteTransactionSubmit,
-		control: customerSelectionControl,
-		setValue: customerSelectionSetValue,
-		reset: customerSelectionReset,
-		formState: { errors: customerSelectionErrors },
-	} = useForm({
-		resolver: yupResolver(customer_selection_schema),
-		defaultValues: {
-			customer: null,
-			cash: 0,
-			transfer: 0,
-			atm: 0,
-		},
-	});
 	
 	const [networkRequest, setNetworkRequest] = useState(false);
 		
 	const [displayMsg, setDisplayMsg] = useState("");
-	const [dropDownMsg, setDropDownMsg] = useState("");
 	const [showConfirmModal, setShowConfirmModal] = useState("");
 	const [entityToEdit, setEntityToEdit] = useState(null);
+    const [showDropDownModal, setShowDropDownModal] = useState(false);
+    const [dropDownMsg, setDropDownMsg] = useState("");
+        //	for input dialog
+    const [showInputModal, setShowInputModal] = useState(false);
 	//  for items
-	const [items, setItems] = useState([]);
 	const [transactionItems, setTransactionItems] = useState([]);
 	const [itemOptions, setItemOptions] = useState([]);
 	const [itemsLoading, setItemsLoading] = useState(true);
-
-	//  for customers
-	const [customerOptions, setCustomerOptions] = useState([]);
-	const [customersLoading, setCustomersLoading] = useState(true);
-	const [customerName, setCustomerName] = useState('');
-	const [customerDiscount, setCustomerDiscount] = useState('');
-	const [customerPhone, setCustomerPhone] = useState('');
-	const [customerCardNo, setCustomerCardNo] = useState('');
-	const [customerPaymentInfo, setCustomerPaymentInfo] = useState(null);	//	for holding customer info and payment methods
+    
+    //  for tracts
+    const [tractOptions, setTractOptions] = useState([]);
+	const [tractsLoading, setTractsLoading] = useState(true);
 
 	//	for controlling the increment and decrement buttons while updating cart
 	const [updating, setUpdating] = useState(false);
@@ -107,28 +89,23 @@ const MonoTransaction = () => {
 	const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
+    const tractTransactionOffCanvasMenu = [
+        { label: "Search Invoice", onClickParams: {evtName: 'invoiceSearch'} },
+        { label: "Select Section", onClickParams: {evtName: 'sectionSelect'} },
+    ];
+
 	useEffect( () => {
 		initialize();
 	}, []);
 
 	const initialize = async () => {
 		try {
-            //  find active customers and items with sales prices
-            const urls = [ '/api/items/dispensary/active', '/api/customers/active' ];
-            const response = await genericController.performGetRequests(urls);
-            const { 0: itemsRequest, 1: customersRequest } = response;
+            const tractsRequest = await tractController.fetchAllActive();
 
             //	check if the request to fetch items doesn't fail before setting values to display
-            if(itemsRequest){
-				setItems(itemsRequest.data)
-				setItemOptions(itemsRequest.data.map(item => ({label: item.itemName, value: item})));
-                setItemsLoading(false);
-            }
-
-            //	check if the request to fetch customers doesn't fail before setting values to display
-            if(customersRequest){
-				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.customerName, value: customer})));
-				setCustomersLoading(false);
+            if(tractsRequest){
+				setTractOptions(tractsRequest.data.map( tract => ({label: tract.name, value: tract}) ))
+                setTractsLoading(false);
             }
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -162,17 +139,9 @@ const MonoTransaction = () => {
 
         productSelectionReset();
 
-		customerSelectionReset();
-
-		setCustomerName('');
-		setCustomerDiscount("0");
-		setCustomerPhone('');
-		setCustomerCardNo('');
         setUnitPrice(0);
         setPkgPrice(0);
 		setTotalTransactionAmount(0);
-
-		setCustomerPaymentInfo(null);
 	}
 
 	const removeInvoiceDisc = () => {
@@ -219,16 +188,8 @@ const MonoTransaction = () => {
     //  Handle item selection change
     const handleProductChange = (selectedItem) => {
         // Set prices to display
-        setUnitPrice(selectedItem.value.unitSalesPrice);
-        setPkgPrice(selectedItem.value.pkgSalesPrice);
-    };
-
-    //  Handle customer selection change
-    const handleCustomerChange = (selectedCustomer) => {
-		setCustomerName(selectedCustomer.label);
-		setCustomerDiscount(selectedCustomer.value.ledger.discount === null ? "0" : selectedCustomer.value.ledger.discount);
-		setCustomerPhone(selectedCustomer.value.phoneNo);
-		setCustomerCardNo(selectedCustomer.value.loyaltyCardNo === null ? '0': selectedCustomer.value.loyaltyCardNo);
+        setUnitPrice(selectedItem.value.salesPrice.unitSalesPrice);
+        setPkgPrice(selectedItem.value.salesPrice.packSalesPrice);
     };
 
 	const increment = (data) => {
@@ -264,11 +225,10 @@ const MonoTransaction = () => {
 		}
 	};
 
-	const handleSaveTransaction = (data) => {
+	const handleGenerateInvoice = (data) => {
 		if (transactionItems.length > 0) {
-			setCustomerPaymentInfo(data);
-			setDisplayMsg(`Save Transaction?`);
-			setConfirmDialogEvtName('saveTransaction');
+			setDisplayMsg(`Generate Invoice?`);
+			setConfirmDialogEvtName('generateInvoice');
 			setShowConfirmModal(true);
 		}
 	};
@@ -276,6 +236,95 @@ const MonoTransaction = () => {
     const handleCloseModal = () => {
 		setEntityToEdit(null);
         setShowConfirmModal(false);
+        setShowDropDownModal(false);
+		setShowInputModal(false);
+    };
+
+	const idSearch = async (id) => {
+		try {
+			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
+				Technique 1: use the unary plus operator which is what i've adopted below
+				Technique 2: multiply by a number. 
+				etc	*/
+			if(!+id){
+				toast.error('Please enter a valid number');
+				return;
+			}
+			setNetworkRequest(true);
+	
+			const response = await transactionsController.findInvoiceForReceipt(id);
+	
+			//  check if the request to fetch indstries doesn't fail before setting values to display
+			if (response && response.data) {
+			}
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return idSearch(id);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+			setNetworkRequest(false);
+		}
+	}
+
+	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+		switch (onclickParams.evtName) {
+            case 'invoiceSearch':
+				setShowInputModal(true);
+                break;
+            case 'sectionSelect':
+				setConfirmDialogEvtName(onclickParams.evtName);
+                setShowDropDownModal(true);
+                break;
+        }
+	}
+
+    const fetchTractItems = async (tract) => {
+        try {
+			setNetworkRequest(true);
+            const itemsRequest = await transactionsController.fetchTractItems(tract.id);
+    
+            //	check if the request to fetch items doesn't fail before setting values to display
+            if(itemsRequest){
+                setItemOptions(itemsRequest.data.map(item => ({label: item.itemName, value: item})));
+                setItemsLoading(false);
+            }
+    
+            setItemOptions(itemsRequest.data.map(item => ({label: item.itemName, value: item})));
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return fetchTractItems(tract);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+			setNetworkRequest(false);
+		}
     };
 	
 	const handleConfirmOK = async () => {
@@ -295,25 +344,28 @@ const MonoTransaction = () => {
 				resetPage();
 				setShowConfirmModal(false);
 				break;
-			case 'saveTransaction':
-				const dtoReceipt = setUpReceiptDTO();
+			case 'generateInvoice':
+				const dtoInvoice = setUpInvoiceDTO();
 				setShowConfirmModal(false);
-				await commitTransaction(dtoReceipt);
+				await generateInvoice(dtoInvoice);
 				break;
 		}
 	};
 
-    const commitTransaction = async (dtoReceipt) => {
+    const generateInvoice = async (dtoInvoice) => {
 		try {
 			setNetworkRequest(true);
-			await transactionsController.monoTransaction(dtoReceipt);
+			const response = await transactionsController.generateInvoice(dtoInvoice);
+			resetPage();
+            // display error message
+            toast.info(`Invoice id: ${response.data.id}`, { autoClose: false });
 			setNetworkRequest(false);
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
-					return commitTransaction(dtoReceipt);
+					return generateInvoice(dtoInvoice);
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -347,57 +399,32 @@ const MonoTransaction = () => {
 		setCalculatedInvoiceDisc(invoice_disc);
 		const total = numeral(calcSubTotalAmount(transactionItems)).subtract(invoice_disc).value();
 		setTotalTransactionAmount(total);
-		customerSelectionSetValue('cash', total);
 	}
 
-	const setUpReceiptDTO = () => {
-		const paymentModes = [];
-		if(customerPaymentInfo.atm){
-			paymentModes.push({
-				type: 'POS/DEBIT-CARD',
-				amount: customerPaymentInfo.atm
-			})
-		}
-		if(customerPaymentInfo.transfer){
-			paymentModes.push({
-				type: 'TRANSFER',
-				amount: customerPaymentInfo.transfer
-			})
-		}
-		if(customerPaymentInfo.cash){
-			paymentModes.push({
-				type: 'CASH',
-				amount: customerPaymentInfo.cash
-			})
-		}
-		const dtoInvoice = {
+	const setUpInvoiceDTO = () => {
+		return {
 			id: 0,
 			outpostID: 1,	//	for now default to the default outpost
 			invoiceDiscount: calculatedInvoiceDisc,
 			dtoSalesRecords: transactionItems,
 		};
-
-		return {
-			id: 0,
-			customerId: customerPaymentInfo.customer.value.id,
-			ledgerDiscount: customerPaymentInfo.customer.value.ledger.discount,
-			dtoInvoice,
-			paymentModes,
-		}
 	}
 
-	return (
+    return (
 		<div className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+                <div>
+                    <OffcanvasMenu menuItems={tractTransactionOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                </div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Transactions</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Section Transactions</span>
 						<img src={SVG.counter_filled_white} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
                 <span className='text-center m-1'>
-                    Perform unified transactions with items in all sections,
-                    generating both invoice and receipt on the fly.
+                    Perform section transactions with items in a specified section.
+                    To begin with, please select a section.
                 </span>
 			</div>
 			<div className="container my-3 p-3 rounded bg-light shadow">
@@ -657,114 +684,6 @@ const MonoTransaction = () => {
 			</Form>
 			{/*  */}
 			<div className="container bg-light border rounded-4 shadow-sm  p-4">
-				<h3 className="display-5 fw-bold mb-2">Customer Details</h3>
-				<div className="row mx-auto">
-					{/* Customer Profile Section */}
-					<div className="col-12 col-md-6 bg-success text-white p-4 d-flex flex-column align-items-center mb-3">
-						<div className="text-center mb-4">
-							<HiUser size={80} className="mb-3" />
-							<p>Customer Name: </p>
-							<h4>{customerName}</h4>
-						</div>
-
-						{/* Wallet Info */}
-						<div className="mb-3 text-center">
-							<p>
-								Discount: <span className="text-warning h3">{customerDiscount}%</span>
-							</p>
-							<p className="">
-								Phone No:{" "}
-								<span className="text-warning h5">{customerPhone}</span>
-							</p>
-							<p className="">
-								Card No:{" "}
-								<span className="text-warning h5">{customerCardNo}</span>
-							</p>
-
-							{/* <label
-								className="d-flex gap-2 text-light"
-								htmlFor="deduct_wallet_discount_from_payment"
-							>
-								<Form.Check
-									type="checkbox"
-									value="yes"
-									className="shadow-sm p-0 m-0"
-									id="deduct_wallet_discount_from_payment"
-									name="deduct_wallet_discount_from_payment"
-								/>
-								deduct wallet discount from payment
-							</label> */}
-						</div>
-					</div>
-
-					{/* Payment Section */}
-					<div className="col-12 col-md-5 mb-4">
-						<div className="mb-4">
-							<Controller
-								name="customer"
-								control={customerSelectionControl}
-								render={({ field: { onChange, value } }) => (
-									<Select
-										required
-										name="customer"
-										placeholder="Select Customer..."
-										className="shadow-sm"
-										isLoading={customersLoading}
-										options={customerOptions}
-										value={value}
-										onChange={(val) => {
-											onChange(val);
-											handleCustomerChange(val);
-										}}
-									/>
-								)}
-							/>
-							<ErrorMessage source={customerSelectionErrors.customer} />
-						</div>
-						<h3 className="mb-3">Payment Mode</h3>
-						<div className="row payment-mode-cards mx-auto">
-							<div className="col-6 p-2">
-								<div className="border p-3 rounded shadow-sm">
-									<label className="fw-bold">
-										Cash
-									</label>
-									<Form.Control type="number" placeholder="Enter Amount" id="cash" {...customerSelectionRegister("cash")} />
-									<ErrorMessage source={customerSelectionErrors.cash} />
-								</div>
-							</div>
-							<div className="col-6 p-2">
-								<div className="border p-3 rounded shadow-sm">
-									<label className="fw-bold">
-										Transfer
-									</label>
-									<Form.Control type="number" placeholder="Enter Amount" id="transfer" {...customerSelectionRegister("transfer")} />
-									<ErrorMessage source={customerSelectionErrors.transfer} />
-								</div>
-							</div>
-							<div className="col-6 p-2">
-								<div className="border p-3 rounded shadow-sm">
-									<label className="fw-bold">
-										POS/ATM
-									</label>
-									<Form.Control type="number" placeholder="Enter Amount" id="atm" {...customerSelectionRegister("atm")}/>
-									<ErrorMessage source={customerSelectionErrors.atm} />
-								</div>
-							</div>
-						</div>
-						<div className="mt-2">
-							<label className="d-flex gap-2" htmlFor="print_receipt">
-								<Form.Check
-									type="checkbox"
-									value="yes"
-									className="shadow-sm p-0 m-0"
-									id="print_receipt"
-									name="print_receipt"
-								/>
-								Print Receipt
-							</label>
-						</div>
-					</div>
-				</div>
 				<div className="d-flex flex-column flex-sm-row gap-2 justify-content-center align-items-center my-2 p-2">
 					<div className="d-flex flex-column flex-sm-row gap-3">
 						<button
@@ -777,7 +696,7 @@ const MonoTransaction = () => {
 						<button
 							className={`btn btn-lg btn-success rounded-3 ${networkRequest ? 'disabled' : ''}`}
 							style={{ width: "270px" }}
-							onClick={handleCompleteTransactionSubmit(handleSaveTransaction)}
+							onClick={() => handleGenerateInvoice()}
 						>
 							{ (networkRequest) && <ThreeDotLoading color="white" size="small" /> }
 							{ (!networkRequest) && `OK` }
@@ -791,8 +710,22 @@ const MonoTransaction = () => {
                 handleConfirm={handleConfirmOK}
                 message={displayMsg}
             />
+            <DropDownDialog
+                show={showDropDownModal}
+                handleClose={handleCloseModal}
+                handleConfirm={fetchTractItems}
+                message={dropDownMsg}
+                optionsLoading={tractsLoading}
+                options={tractOptions}
+            />
+            <InputDialog
+                show={showInputModal}
+                handleClose={handleCloseModal}
+                handleConfirm={idSearch}
+                message={displayMsg}
+            />
 		</div>
-	);
-};
+    )
+}
 
-export default MonoTransaction;
+export default SectionTransaction;

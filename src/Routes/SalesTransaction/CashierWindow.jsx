@@ -2,15 +2,15 @@ import React from "react";
 import {  Form, Table } from "react-bootstrap";
 import { BiSearch } from "react-icons/bi";
 import {  HiUser } from "react-icons/hi2";
-import "../Components/Styles/CashierWindow.css";
 import Select from "react-select";
 import { FaCashRegister } from "react-icons/fa";
-import ReactMenu from "../Components/ReactMenu";
-
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { schema } from "../Utils/yup-schema-validator/store-schema";
-import { customerName, reactMenuItems } from "../../data";
+
+import ReactMenu from "../../Components/ReactMenu";
+import "../../Components/Styles/CashierWindow.css";
+import { schema } from "../../Utils/yup-schema-validator/store-schema";
+import { customerName, reactMenuItems } from "../../../data";
 
 const CashierWindow = () => {
 	const customStyles = {

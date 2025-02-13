@@ -7,8 +7,8 @@ export class TransactionItem {
         _itemProps.set(this, {
             id: jsonObject.product.value.id,
             name: jsonObject.product.value.itemName,
-            unitSalesPrice: jsonObject.product.value.unitSalesPrice,
-            pkgSalesPrice: jsonObject.product.value.pkgSalesPrice,
+            unitSalesPrice: jsonObject.product.value.salesPrice.unitSalesPrice,
+            pkgSalesPrice: jsonObject.product.value.salesPrice.pkgSalesPrice,
             qty: jsonObject.qty,
             qtyType: jsonObject.qty_type,
             discount: 0,
