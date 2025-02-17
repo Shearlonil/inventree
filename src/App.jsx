@@ -23,6 +23,8 @@ import LedgerDisplay from './Routes/LedgerDisplay';
 import CashierWindow from "./Routes/SalesTransaction/CashierWindow";
 import SectionTransaction from "./Routes/SalesTransaction/SectionTransaction";
 import VendorsWindow from "./Routes/Contacts/VendorsWindow";
+import ContactLedgerDisplay from "./Routes/Contacts/ContactLedgerDisplay";
+import ContactTrash from "./Routes/Contacts/ContactTrash";
 
 function App() {
 	return (
@@ -39,6 +41,8 @@ function App() {
 				<Route path="/contacts" element={<ProtectedRoute />}>
 					<Route path={"customers"} element={<CustomersWindow />} />
 					<Route path={"vendors"} element={<VendorsWindow />} />
+					<Route path={":contact/ledger"} element={<ContactLedgerDisplay />} />
+					<Route path={":contacts/trash"} element={<ContactTrash />} />
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path="/store/item" element={<ProtectedRoute />}>

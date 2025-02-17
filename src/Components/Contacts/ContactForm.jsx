@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import ErrorMessage from '../ErrorMessage';
 import { schema } from '../../Utils/yup-schema-validator/contact-schema';
 import { ThreeDotLoading } from '../react-loading-indicators/Indicator';
+import { Contact } from '../../Entities/Contact';
 
 const ContactForm = (props) => {
 	const { data, fnUpdate, show, networkRequest, handleClose }  = props;
@@ -29,13 +30,12 @@ const ContactForm = (props) => {
     }, [data]);
     
     const onSubmit = async (formData) => {
-        const edited = {
-            id: data.id,
-            name: formData.name,
-            phoneNo: formData.phone_no,
-            address: formData.address,
-            email: formData.email
-        };
+        const edited = new Contact(data);
+        edited.name = formData.name;
+        edited.phoneNo = formData.phone_no,
+        edited.address = formData.address,
+        edited.email = formData.email,
+        
         fnUpdate(edited);
     };
 

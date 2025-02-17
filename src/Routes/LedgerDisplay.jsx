@@ -7,9 +7,6 @@ import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
-import { GrTransaction } from 'react-icons/gr';
-import { TbSum } from 'react-icons/tb';
-
 import SVG from '../assets/Svg';
 import ErrorMessage from '../Components/ErrorMessage';
 import { ThreeDotLoading } from '../Components/react-loading-indicators/Indicator';

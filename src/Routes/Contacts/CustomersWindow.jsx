@@ -12,7 +12,7 @@ import customerController from '../../Controllers/customer-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
-import { Customer } from '../../Entities/Customer';
+import { Contact } from '../../Entities/Contact';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import { schema } from '../../Utils/yup-schema-validator/contact-schema';
 import ContactForm from '../../Components/Contacts/ContactForm';
@@ -32,6 +32,13 @@ const CustomersWindow = () => {
         formState: { errors },
     } = useForm({
         resolver: yupResolver(schema),
+        defaultValues: {
+            //  Set default selection
+			name: "",
+			address: "",
+			email: "",
+            phone_no: "", 
+        },
     });
 
     //	menus for the react-menu in table
@@ -39,6 +46,7 @@ const CustomersWindow = () => {
         { name: 'Edit', onClickParams: {evtName: 'edit' } },
         { name: 'Add Card', onClickParams: {evtName: 'addCard' } },
         { name: 'Delete', onClickParams: {evtName: 'deleteCustomer'} },
+        { name: 'Ledger', onClickParams: {evtName: 'ledger'} },
     ];
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -66,10 +74,12 @@ const CustomersWindow = () => {
     const customersOffCanvasMenu = [
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Search By Card", onClickParams: {evtName: 'searchByCardNo'} },
+        { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
+        { label: "Sort By Card", onClickParams: {evtName: 'sortByCardNo'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
         { label: "Trash", onClickParams: {evtName: 'trash'} },
     ];
-                
+
     useEffect( () => {
         if(user.hasAuth('CONTACTS_WINDOWS')){
             initialize();
@@ -85,7 +95,7 @@ const CustomersWindow = () => {
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
-                response.data.forEach( customer => arr.push(new Customer(customer)) );
+                response.data.forEach( customer => arr.push(new Contact(customer)) );
 				setCustomers(arr);
                 setFilteredCustomers(arr);
 				setTotalItemsCount(response.data.length);
@@ -118,6 +128,15 @@ const CustomersWindow = () => {
 		setShowFormModal(false);
     };
 
+    const resetPage = () => {
+        setDisplayMsg("");
+		setEntityToEdit(null);
+        setShowConfirmModal(false);
+		setShowInputModal(false);
+		setShowFormModal(false);
+        setConfirmDialogEvtName(null);
+    };
+
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'deleteCustomer':
@@ -128,12 +147,17 @@ const CustomersWindow = () => {
 				setShowConfirmModal(true);
                 break;
             case 'addCard':
-                setDisplayMsg("Enter Unique Loyalty Card No.");
+				setEntityToEdit(entity);
+				setConfirmDialogEvtName(onclickParams.evtName);
+                setDisplayMsg(`Enter Unique Card No. for ${entity.name}`);
                 setShowInputModal(true);
                 break;
             case 'edit':
 				setEntityToEdit(entity);
 				setShowFormModal(true);
+                break;
+            case 'ledger':
+                window.open('/contacts/customer/ledger', '_blank')?.focus();
                 break;
         }
     };
@@ -151,10 +175,25 @@ const CustomersWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'trash':
+                navigate('/contacts/customers/trash');
                 break;
             case 'showAll':
                 setFilteredCustomers(customers);
                 setTotalItemsCount(customers.length);
+                break;
+            case 'sortByName':
+                filteredCustomers.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+                if(currentPage === 1){
+                    setPagedData(filteredCustomers.slice(0, 0 + pageSize));
+                }
+                setCurrentPage(1);
+                break;
+            case 'sortByCardNo':
+                filteredCustomers.sort((a, b) => a.loyaltyCardNo - b.loyaltyCardNo);
+                if(currentPage === 1){
+                    setPagedData(filteredCustomers.slice(0, 0 + pageSize));
+                }
+                setCurrentPage(1);
                 break;
         }
 	}
@@ -165,20 +204,54 @@ const CustomersWindow = () => {
       	setPagedData(filteredCustomers.slice(startIndex, startIndex + pageSize));
     };
 
-    const onSubmit = (data) => {
-        console.log(data);
+    const onSubmit = async (data) => {
+        try {
+            let customer = new Contact(data);
+            customer.phoneNo = data.phone_no;
+            customer.status = true;
+            const response = await customerController.createCustomer(customer);
+            if(response && response.data){
+                customer = new Contact(response.data);
+                const arr = [...filteredCustomers, customer];
+                customers.push(customer);
+                setCustomers(customer);
+                setFilteredCustomers([...arr]);
+                /*  GO TO PAGE WHERE NEW CUSTOMER IS.  */
+                setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
+                setTotalItemsCount(totalItemsCount + 1);
+                toast.success('Delete successful');
+                reset();
+            }
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return onSubmit(data);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    };
+
+    const resetForm = () => {
         reset();
-        setValue("name", "");
-        setValue("phone_no", "");
-        setValue("address", "");
-        setValue("email", "");
     };
 	
 	const handleInputOK = async (str) => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                arr = customers.filter(customer => customer.customerName.toLowerCase().includes(str));
+                arr = customers.filter(customer => customer.name.toLowerCase().includes(str));
                 setFilteredCustomers(arr);
                 setTotalItemsCount(arr.length);
                 break;
@@ -194,6 +267,15 @@ const CustomersWindow = () => {
                 arr = customers.filter(customer => customer.loyaltyCardNo == str);
                 setFilteredCustomers(arr);
                 setTotalItemsCount(arr.length);
+                break;
+            case 'addCard':
+                if(!+str){
+                    toast.error('Please enter a valid number');
+                    return;
+                }
+                const edited = new Contact(entityToEdit);
+                edited.loyaltyCardNo = str;
+                await updateCustomer(edited);
                 break;
         }
 	}
@@ -229,6 +311,7 @@ const CustomersWindow = () => {
                     }
 					break;
 			}
+            resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -275,6 +358,7 @@ const CustomersWindow = () => {
                     setCustomers([...customers]);
                 }
             }
+            resetPage();
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
@@ -377,7 +461,7 @@ const CustomersWindow = () => {
                 </div>
 
                 <div className="d-flex gap-3">
-                    <button type="reset" className="btn btn-outline-danger ms-auto">
+                    <button type="reset" className="btn btn-outline-danger ms-auto" onClick={() => resetForm()}>
                         <span className="d-flex gap-2 align-items-center px-4">
                             <span className="fs-5">Reset</span>
                         </span>

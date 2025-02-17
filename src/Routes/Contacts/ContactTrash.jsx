@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -9,42 +9,24 @@ import SVG from '../../assets/Svg';
 import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import vedorController from '../../Controllers/vendor-controller';
+import customerController from '../../Controllers/customer-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
 import { Contact } from '../../Entities/Contact';
-import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import { schema } from '../../Utils/yup-schema-validator/contact-schema';
-import ContactForm from '../../Components/Contacts/ContactForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import InputDialog from '../../Components/DialogBoxes/InputDialog';
 
-const VendorsWindow = () => {
+const ContactTrash = () => {
     const navigate = useNavigate();
+    const { contacts } = useParams();
             
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm({
-        resolver: yupResolver(schema),
-        defaultValues: {
-            //  Set default selection
-			name: "",
-			address: "",
-			email: "",
-            phone_no: "", 
-        },
-    });
-
     //	menus for the react-menu in table
     const menuItems = [
-        { name: 'Edit', onClickParams: {evtName: 'edit' } },
-        { name: 'Delete', onClickParams: {evtName: 'deleteVendor'} },
-        { name: 'Ledger', onClickParams: {evtName: 'ledger'} },
+        { name: 'Restore', onClickParams: {evtName: 'restore'} },
     ];
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -73,7 +55,6 @@ const VendorsWindow = () => {
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
-        { label: "Trash", onClickParams: {evtName: 'trash'} },
     ];
 
     useEffect( () => {
@@ -83,11 +64,16 @@ const VendorsWindow = () => {
             toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
             navigate('/404');
         }
-    }, []);
+    }, [contacts]);
 
 	const initialize = async () => {
 		try {
-            const response = await vedorController.fetchAllActive();
+            let response;
+            if(contacts === 'vendors'){
+                response = await vedorController.fetchAllActive();
+            }else {
+                response = await customerController.fetchAllActive();
+            }
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -132,29 +118,26 @@ const VendorsWindow = () => {
 		setShowFormModal(false);
         setConfirmDialogEvtName(null);
     };
+	
+	const handleInputOK = async (str) => {
+        let arr = [];
+		switch (confirmDialogEvtName) {
+            case 'searchByName':
+                arr = vendors.filter(vendor => vendor.name.toLowerCase().includes(str));
+                setFilteredVendors(arr);
+                setTotalItemsCount(arr.length);
+                break;
+        }
+	}
 
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
-            case 'deleteVendor':
+            case 'restore':
 				//	ask if sure to delete
 				setEntityToEdit(entity);
-				setDisplayMsg(`Delete vendor ${entity.name}?`);
+				setDisplayMsg(`Restore vendor ${entity.name}?`);
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setShowConfirmModal(true);
-                break;
-            case 'addCard':
-				setEntityToEdit(entity);
-				setConfirmDialogEvtName(onclickParams.evtName);
-                setDisplayMsg(`Enter Unique Card No. for ${entity.name}`);
-                setShowInputModal(true);
-                break;
-            case 'edit':
-				setEntityToEdit(entity);
-				setShowFormModal(true);
-                break;
-            case 'ledger':
-                console.log(entity);
-                window.open('/contacts/vendor/ledger', '_blank')?.focus();
                 break;
         }
     };
@@ -166,27 +149,12 @@ const VendorsWindow = () => {
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setShowInputModal(true);
                 break;
-            case 'searchByCardNo':
-                setDisplayMsg("Enter Vendor Card No.");
-				setConfirmDialogEvtName(onclickParams.evtName);
-                setShowInputModal(true);
-                break;
-            case 'trash':
-                navigate('/contacts/vendors/trash');
-                break;
             case 'showAll':
                 setFilteredVendors(vendors);
                 setTotalItemsCount(vendors.length);
                 break;
             case 'sortByName':
                 filteredVendors.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
-                if(currentPage === 1){
-                    setPagedData(filteredVendors.slice(0, 0 + pageSize));
-                }
-                setCurrentPage(1);
-                break;
-            case 'sortByCardNo':
-                filteredVendors.sort((a, b) => a.loyaltyCardNo - b.loyaltyCardNo);
                 if(currentPage === 1){
                     setPagedData(filteredVendors.slice(0, 0 + pageSize));
                 }
@@ -200,60 +168,6 @@ const VendorsWindow = () => {
     	const startIndex = (pageNumber - 1) * pageSize;
       	setPagedData(filteredVendors.slice(startIndex, startIndex + pageSize));
     };
-
-    const onSubmit = async (data) => {
-        try {
-            let vendor = new Contact(data);
-            vendor.phoneNo = data.phone_no;
-            vendor.status = true;
-            const response = await vedorController.createVendor(vendor);
-            if(response && response.data){
-                vendor = new Contact(response.data);
-                const arr = [...filteredVendors, vendor];
-                vendors.push(vendor);
-                setVendors(vendor);
-                setFilteredVendors([...arr]);
-                /*  GO TO PAGE WHERE NEW VENDOR IS.  */
-                setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
-                setTotalItemsCount(totalItemsCount + 1);
-                toast.success('Delete successful');
-                reset();
-            }
-        } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onSubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-        }
-    };
-
-    const resetForm = () => {
-        reset();
-    };
-	
-	const handleInputOK = async (str) => {
-        let arr = [];
-		switch (confirmDialogEvtName) {
-            case 'searchByName':
-                arr = vendors.filter(vendor => vendor.name.toLowerCase().includes(str));
-                setFilteredVendors(arr);
-                setTotalItemsCount(arr.length);
-                break;
-        }
-	}
 	
 	const handleConfirmOK = async () => {
 		setShowConfirmModal(false);
@@ -378,76 +292,14 @@ const VendorsWindow = () => {
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Vendors</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash ({contacts === 'vendors' ? 'Vendors' : 'Customers'})</span>
                         <img src={SVG.customers_filled_white} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
                     Vendors are your liabilities.
-                    Add new, edit/update, search for Vendors.
+                    View, Restore deleted {contacts === 'vendors' ? 'Vendors' : 'Customers'}.
                 </span>
-            </div>
-
-            <div className="container row mx-auto my-3 p-3 rounded bg-light shadow border">
-                <h4 className="mb-4 text-primary">Vendor ID:-</h4>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Vendor Name:</p>
-                    <input
-                        type="text"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="Vendor Name"
-                        {...register("name")}
-                    />
-                    <small className="text-danger">{errors.name?.message}</small>
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Phone Number:</p>
-                    <input
-                        type="tel"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="Phone Number"
-                        {...register("phone_no")}
-                    />
-                    <small className="text-danger">{errors.phone_no?.message}</small>
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Address:</p>
-                    <input
-                        type="text"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="Address here"
-                        {...register("address")}
-                    />
-                    <small className="text-danger">{errors.address?.message}</small>
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">E-mail:</p>
-                    <input
-                        type="email"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="example@gmail.com"
-                        {...register("email")}
-                    />
-                    <small className="text-danger">{errors.email?.message}</small>
-                </div>
-
-                <div className="d-flex gap-3">
-                    <button type="reset" className="btn btn-outline-danger ms-auto" onClick={() => resetForm()}>
-                        <span className="d-flex gap-2 align-items-center px-4">
-                            <span className="fs-5">Reset</span>
-                        </span>
-                    </button>
-
-                    <button className="btn btn-outline-success" onClick={handleSubmit(onSubmit)}>
-                        <span className="d-flex gap-2 align-items-center px-4">
-                            <span className="fs-5">Save</span>
-                        </span>
-                    </button>
-                </div>
             </div>
 
             <div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
@@ -475,9 +327,8 @@ const VendorsWindow = () => {
                 handleConfirm={handleInputOK}
                 message={displayMsg}
             />
-            <ContactForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={updateVendor} />
         </div>
     );
 };
 
-export default VendorsWindow;
+export default ContactTrash;
