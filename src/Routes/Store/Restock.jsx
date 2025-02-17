@@ -82,7 +82,7 @@ const Restock = () => {
 		try {
 			setNetworkRequest(true);
 			resetPageStates();
-            const urls = [ '/api/items/transaction/mono', '/api/outposts/active' ];
+            const urls = [ '/api/items/transactions/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: dbItemRequest, 1: outpostRequest } = response;
 
@@ -124,7 +124,7 @@ const Restock = () => {
 	
 			const unverifiedStockRequest = await storeController.findUnverifiedStockRecById(stock_rec_id);
             
-            const urls = [ '/api/items/transaction/mono', '/api/outposts/active' ];
+            const urls = [ '/api/items/transactions/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: dbItemRequest, 1: outpostRequest } = response;
 
@@ -434,7 +434,7 @@ const Restock = () => {
     };
 
     return (
-		<>
+		<div style={{minHeight: '60vh'}}>
             {/* Offcanvas Sidebar for small screens */}
             <div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center ">
                 <div>
@@ -493,7 +493,7 @@ const Restock = () => {
                 </Modal.Body>
                 <Modal.Footer></Modal.Footer>
             </Modal>
-        </>
+        </div>
     )
 }
 

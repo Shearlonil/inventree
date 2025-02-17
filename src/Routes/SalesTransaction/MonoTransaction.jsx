@@ -8,6 +8,7 @@ import Select from "react-select";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import numeral from "numeral";
 
 import { product_selection_schema, invoice_disc_schema, customer_selection_schema } from "../../Utils/yup-schema-validator/transactions-schema";
@@ -22,6 +23,7 @@ import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indic
 import transactionsController from "../../Controllers/transactions-controller";
 
 const MonoTransaction = () => {
+	const navigate = useNavigate();
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
@@ -39,7 +41,7 @@ const MonoTransaction = () => {
 			product: null,
 			qty: 0,
 			item_disc: 0,
-            qty_type: "unit", 
+            qty_type: "Unit", 
             item_disc_type: 'n'
 		},
 	});
@@ -89,7 +91,7 @@ const MonoTransaction = () => {
 	const [customerOptions, setCustomerOptions] = useState([]);
 	const [customersLoading, setCustomersLoading] = useState(true);
 	const [customerName, setCustomerName] = useState('');
-	const [customerDiscount, setCustomerDiscount] = useState('');
+	const [customerDiscount, setCustomerDiscount] = useState(0);
 	const [customerPhone, setCustomerPhone] = useState('');
 	const [customerCardNo, setCustomerCardNo] = useState('');
 	const [customerPaymentInfo, setCustomerPaymentInfo] = useState(null);	//	for holding customer info and payment methods
@@ -192,7 +194,7 @@ const MonoTransaction = () => {
 		if(data.item_disc > 0){
 			if(user.hasAuth('ITEM_DISCOUNT')){
 				item.discount = data.item_disc_type === "perc" 
-				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
+				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'Pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
 				: data.item_disc;
 			}else {
 				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
@@ -200,7 +202,7 @@ const MonoTransaction = () => {
 			}
 		}
 		//	soldOutPrice is original item price (pack or unit) less discount
-		item.itemSoldOutPrice = data.qty_type === "pkg" 
+		item.itemSoldOutPrice = data.qty_type === "Pkg" 
 			? numeral(item.pkgSalesPrice).subtract(item.discount).value() 
 			: numeral(item.unitSalesPrice).subtract(item.discount).value();
 		transactionItems.push(item);
@@ -368,6 +370,7 @@ const MonoTransaction = () => {
 				amount: customerPaymentInfo.cash
 			})
 		}
+		//	TODO: if none of the above, then wallet/ledger/credit-sales payment mode
 		const dtoInvoice = {
 			id: 0,
 			outpostID: 1,	//	for now default to the default outpost
@@ -456,14 +459,14 @@ const MonoTransaction = () => {
 									<Form.Check
 										type="radio"
 										label="Unit"
-										value="unit"
+										value="Unit"
 										name="qty_type"
 										{...productSelectionRegister("qty_type")}
 									/>
 									<Form.Check
 										type="radio"
 										label="Pkg"
-										value="pkg"
+										value="Pkg"
 										{...productSelectionRegister("qty_type")}
 										name="qty_type"
 									/>

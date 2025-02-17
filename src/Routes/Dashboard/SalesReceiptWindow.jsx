@@ -1,10 +1,8 @@
 import React from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
-import ErrorMessage from '../Components/ErrorMessage';
 import { Table } from 'react-bootstrap';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { dispensaryPageSchema } from '../Utils/yup-schema-validator/dispensary-schema';
 import { CgUserAdd } from 'react-icons/cg';
 import { IoReceipt } from 'react-icons/io5';
 import { LuReceipt } from 'react-icons/lu';

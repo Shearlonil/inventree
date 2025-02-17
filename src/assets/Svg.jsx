@@ -12,6 +12,9 @@ const SVG = {
 	dispensary_outline_white: new URL("./Svg/dispensary_outline_white.svg", import.meta.url).href,
 	dispensary_filled_white: new URL("./Svg/dispensary_filled_white.svg", import.meta.url).href,
 	dispensary_filled_black: new URL("./Svg/dispensary_filled_black.svg", import.meta.url).href,
+	customers_filled_white: new URL("./Svg/customers_filled_white.svg", import.meta.url).href,
+	vendor_one_filled_white: new URL("./Svg/vendor_one_filled_white.svg", import.meta.url).href,
+	vendor_two_filled_white: new URL("./Svg/vendor_two_filled_white.svg", import.meta.url).href,
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,
 	svg_2: new URL("./Svg/svg_2.svg", import.meta.url).href,

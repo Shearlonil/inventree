@@ -10,18 +10,19 @@ import PurchasesWindow from "./Routes/PurchasesWindow";
 import Finance from "./Routes/Finance";
 import Login from "./Routes/Login";
 import Dashboard from "./Routes/Dashboard";
-import UnverifiedStockRec from "./Routes/UnverifiedStockRec";
+import UnverifiedStockRec from "./Routes/Dashboard/UnverifiedStockRec";
 import Restock from './Routes/Store/Restock';
 import Dispensary from './Routes/Store/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
 import { ProtectedRoute } from './Routes/ProtectedRoute';
-import UnvenrifiedDispensary from "./Routes/UnvenrifiedDispensary";
-import UserWindow from "./Routes/UserWindow";
-import CustomerWindows from './Routes/Contacts/CustomerWindow';
-import SalesReceiptWindow from './Routes/SalesReceiptWindow';
+import UnvenrifiedDispensary from "./Routes/Dashboard/UnvenrifiedDispensary";
+import UserWindow from "./Routes/Dashboard/UserWindow";
+import CustomersWindow from './Routes/Contacts/CustomersWindow';
+import SalesReceiptWindow from './Routes/Dashboard/SalesReceiptWindow';
 import LedgerDisplay from './Routes/LedgerDisplay';
 import CashierWindow from "./Routes/SalesTransaction/CashierWindow";
 import SectionTransaction from "./Routes/SalesTransaction/SectionTransaction";
+import VendorsWindow from "./Routes/Contacts/VendorsWindow";
 
 function App() {
 	return (
@@ -36,7 +37,8 @@ function App() {
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path="/contacts" element={<ProtectedRoute />}>
-					<Route path={"customers"} element={<CustomerWindows />} />
+					<Route path={"customers"} element={<CustomersWindow />} />
+					<Route path={"vendors"} element={<VendorsWindow />} />
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path="/store/item" element={<ProtectedRoute />}>

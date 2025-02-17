@@ -1,23 +1,23 @@
-import { Wallet } from './Wallet';
+import { Ledger } from './Ledger';
 const _customerProps = new WeakMap();
 
 export class Customer {
     constructor(jsonObject) {
-        const { id, customerName, address, phoneNo, email, loyaltyCardNo, status, wallet, dateOfReg } = jsonObject;
+        const { id, customerName, address, phoneNo, email, loyaltyCardNo, status, ledger, dateOfReg } = jsonObject;
         _customerProps.set(this, {
-            id, customerName, address, phoneNo, email, loyaltyCardNo, status, dateOfReg, 
-            wallet: wallet ? new Wallet(wallet) : null,
+            id, name: customerName, address, phoneNo, email, loyaltyCardNo, status, dateOfReg, 
+            ledger: ledger ? new Ledger(ledger) : null,
         });
     }
 
     get id() { return _customerProps.get(this).id; }
     set id(id) { _customerProps.get(this).id = id }
 
-    get customerName() { return _customerProps.get(this).customerName; }
-    set customerName(customerName) { _customerProps.get(this).customerName = customerName }
+    get name() { return _customerProps.get(this).name; }
+    set name(name) { _customerProps.get(this).name = name }
 
     get address() { return _customerProps.get(this).address }
-    set address(name) { _customerProps.get(this).address = name }
+    set address(address) { _customerProps.get(this).address = address }
 
     get phoneNo() { return _customerProps.get(this).phoneNo; }
     set phoneNo(phoneNo) { _customerProps.get(this).phoneNo = phoneNo }
@@ -34,20 +34,21 @@ export class Customer {
     get dateOfReg() { return _customerProps.get(this).dateOfReg }
     set dateOfReg(dateOfReg) { _customerProps.get(this).dateOfReg = dateOfReg }
 
-    get wallet() { return _customerProps.get(this).wallet; }
-    set wallet(wallet) { _customerProps.get(this).wallet = wallet }
+    get ledger() { return _customerProps.get(this).ledger; }
+    set ledger(ledger) { _customerProps.get(this).ledger = ledger }
+
+    get ledgerBalance() { return _customerProps.get(this).ledger?.ledgerBalance; }
 
     toJSON() {
         return {
             id: this.id,
-            customerName: this.customerName,
+            name: this.name,
             address: this.address,
             phoneNo: this.phoneNo,
             email: this.email,
             loyaltyCardNo: this.loyaltyCardNo,
             status: this.status,
             dateOfReg: this.dateOfReg,
-            walletId: this.wallet?.id
         }
     }
 }

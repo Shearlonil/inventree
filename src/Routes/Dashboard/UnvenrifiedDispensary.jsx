@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import { format } from 'date-fns';
-import { useNavigate, useParams } from 'react-router-dom';
 
-import { useAuth } from '../app-context/auth-user-context';
-import handleErrMsg from '../Utils/error-handler';
-import storeController from '../Controllers/store-controller';
-import ConfirmDialog from '../Components/DialogBoxes/ConfirmDialog';
+import { useAuth } from '../../app-context/auth-user-context';
+import handleErrMsg from '../../Utils/error-handler';
+import storeController from '../../Controllers/store-controller';
+import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 
-const UnverifiedStockRec = () => {
-    const { mode } = useParams();
+const UnvenrifiedDispensary = () => {
     const navigate = useNavigate();
 
     const [networkRequest, setNetworkRequest] = useState(true);
@@ -25,7 +24,7 @@ const UnverifiedStockRec = () => {
 
     const { authUser, handleRefresh, logout } = useAuth();
     const user = authUser();
-
+    
     useEffect(() => {
         initialize();
     }, []);
@@ -34,7 +33,7 @@ const UnverifiedStockRec = () => {
         try {
             setNetworkRequest(true);
     
-            const response = await storeController.unverifiedStockRec(mode);
+            const response = await storeController.unverifiedDispensary();
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
@@ -71,30 +70,12 @@ const UnverifiedStockRec = () => {
             setSelectedEntry(item);
             return;
         }
-        switch(mode){
-            case 'restock':
-                navigate(`/store/item/restock/${item.id}`);
-                break;
-            case 'new':
-                navigate(`/store/item/reg/${item.id}`);
-                break
-        }
+        navigate(`/store/item/dispensary/${item.id}`);
     };
 
     //  confirmation for updating item details and updating item imgs
     const handleConfirmAction = async () => {
-        switch(mode){
-            case 'restock':
-                navigate(`/store/item/restock/${selectedEntry.id}`);
-                setSelectedEntry(null);
-                setShowConfirmModal(false);
-                break;
-            case 'new':
-                navigate(`/store/item/reg/${selectedEntry.id}`);
-                setSelectedEntry(null);
-                setShowConfirmModal(false);
-                break
-        }
+        navigate(`/store/item/dispensary/${selectedEntry.id}`);
     };
   
     const closeConfirmModal = () => {
@@ -186,7 +167,7 @@ const UnverifiedStockRec = () => {
 
     return (
         <div className="container my-5" style={{minHeight: '70vh'}}>
-            <h2 className="paytone-one text-success mt-4">Unverified {mode === 'restock' ? "Restock" : "New"} Entries</h2>
+            <h2 className="paytone-one text-success mt-4">Unverified Dispensary Entries</h2>
 
             {/* only display in md. Never display in mobile view */}
             <div className="d-none d-md-block mt-4">
@@ -212,4 +193,4 @@ const UnverifiedStockRec = () => {
     )
 }
 
-export default UnverifiedStockRec;
+export default UnvenrifiedDispensary;

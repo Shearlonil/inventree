@@ -47,8 +47,8 @@ const Dispensary = () => {
 			product: null,
 			quantity_val: 0,
 			store_qty: 0,
-            store_qty_type: "unit", 
-            dispense_qty_type: 'unit'
+            store_qty_type: "Unit", 
+            dispense_qty_type: 'Unit'
         },
     });
     
@@ -61,7 +61,7 @@ const Dispensary = () => {
     const [showFormModal, setShowFormModal] = useState(false);
 
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const [selectedStoreQtyType, setSelectedStoreQtyType] = useState("unit");
+    const [selectedStoreQtyType, setSelectedStoreQtyType] = useState("Unit");
     
     const [displayMsg, setDisplayMsg] = useState("");
     const [dropDownMsg, setDropDownMsg] = useState("");
@@ -551,9 +551,9 @@ const Dispensary = () => {
                         placeholder="0"
                         {...register("quantity_val")}
                         min={0}
-                        max={selectedStoreQtyType === "pkg" ? selectedProduct?.pkgQty : selectedProduct?.unitQty} // Set max dynamically
+                        max={selectedStoreQtyType === "Pkg" ? selectedProduct?.pkgQty : selectedProduct?.unitQty} // Set max dynamically
                         onChange={(e) => {
-                            const maxQty = selectedStoreQtyType === "pkg" ? selectedProduct?.pkgQty : selectedProduct?.unitQty;
+                            const maxQty = selectedStoreQtyType === "Pkg" ? selectedProduct?.pkgQty : selectedProduct?.unitQty;
                             if (e.target.value > maxQty) {
                                 setValue("quantity_val", maxQty); // Auto-correct if input exceeds available
                             }
@@ -565,7 +565,7 @@ const Dispensary = () => {
                         <Form.Check
                             type="radio"
                             label="Unit"
-                            value="unit"
+                            value="Unit"
                             {...register("dispense_qty_type")}
                             name="dispense_qty_type"
                             // onChange={handleUnitTypeChange}
@@ -573,7 +573,7 @@ const Dispensary = () => {
                         <Form.Check
                             type="radio"
                             label="Pkg"
-                            value="pkg"
+                            value="Pkg"
                             {...register("dispense_qty_type")}
                             name="dispense_qty_type"
                             // onChange={handleUnitTypeChange}
@@ -595,7 +595,7 @@ const Dispensary = () => {
                         <Form.Check
                             type="radio"
                             label="Unit"
-                            value="unit"
+                            value="Unit"
                             {...register("store_qty_type")}
                             name="store_qty_type"
                             onChange={handleStoreQtyUnitTypeChange}
@@ -603,7 +603,7 @@ const Dispensary = () => {
                         <Form.Check
                             type="radio"
                             label="Pkg"
-                            value="pkg"
+                            value="Pkg"
                             {...register("store_qty_type")}
                             name="store_qty_type"
                             onChange={handleStoreQtyUnitTypeChange}

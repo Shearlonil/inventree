@@ -5,10 +5,10 @@ import Select from "react-select";
 import { Button, Form, Modal, Table } from "react-bootstrap";
 import { CgMenuLeft, CgUserAdd } from "react-icons/cg";
 
-import ErrorMessage from "../Components/ErrorMessage";
-import { schema } from "../Utils/yup-schema-validator/user-window-schema";
-import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
-import DropDownDialog from "../Components/DialogBoxes/DropDownDialog";
+import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
+import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
+import { schema } from '../../Utils/yup-schema-validator/user-window-schema';
+import ErrorMessage from "../../Components/ErrorMessage";
 
 const products = [
     { id: 1, name: "Pharmacy", label: "Pharmacy" },

@@ -8,6 +8,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import numeral from "numeral";
+import { useNavigate } from 'react-router-dom';
 
 import { product_selection_schema, invoice_disc_schema } from "../../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../../Components/ErrorMessage";
@@ -24,6 +25,7 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import tractController from '../../Controllers/tract-controller';
 
 const SectionTransaction = () => {
+	const navigate = useNavigate();
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
@@ -41,7 +43,7 @@ const SectionTransaction = () => {
 			product: null,
 			qty: 0,
 			item_disc: 0,
-            qty_type: "unit", 
+            qty_type: "Unit", 
             item_disc_type: 'n'
 		},
 	});
@@ -67,7 +69,7 @@ const SectionTransaction = () => {
 	const [entityToEdit, setEntityToEdit] = useState(null);
     const [showDropDownModal, setShowDropDownModal] = useState(false);
     const [dropDownMsg, setDropDownMsg] = useState("");
-        //	for input dialog
+    //	for input dialog
     const [showInputModal, setShowInputModal] = useState(false);
 	//  for items
 	const [transactionItems, setTransactionItems] = useState([]);
@@ -83,9 +85,13 @@ const SectionTransaction = () => {
 	const [unitPrice, setUnitPrice] = useState(0);
 	const [pkgPrice, setPkgPrice] = useState(0);
 	
-	const [invoiceDisc, setInvoiceDisc] = useState(0);	//	invoice discount value entered into text field
-	const [calculatedInvoiceDisc, setCalculatedInvoiceDisc] = useState(0);
-	const [invoiceDiscType, setInvoiceDiscType] = useState("n");
+	const [invoiceProps, setInvoiceProps] = useState({
+		invoiceId: 0,
+		invoiceDisc: 0,
+		calculatedInvoiceDisc: 0,
+		invoiceDiscType: 'n'
+	});
+
 	const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
@@ -128,13 +134,19 @@ const SectionTransaction = () => {
 	};
 
 	const addInvoiceDisc = (data) => {
-		setInvoiceDiscType(data.invoice_disc_type);
-		setInvoiceDisc(data.invoice_disc);
+		invoiceProps.invoiceDiscType = data.invoice_disc_type;
+		invoiceProps.invoiceDisc = data.invoice_disc;
 		updateTransactionAmount();
 	}
 
 	const resetPage = () => {
 		setTransactionItems([]);
+		setInvoiceProps({
+			invoiceId: 0,
+			invoiceDisc: 0,
+			calculatedInvoiceDisc: 0,
+			invoiceDiscType: 'n'
+		});
 		removeInvoiceDisc();
 
         productSelectionReset();
@@ -145,10 +157,13 @@ const SectionTransaction = () => {
 	}
 
 	const removeInvoiceDisc = () => {
-		setInvoiceDiscType('n');
-		setInvoiceDisc(0);
+		setInvoiceProps({
+			invoiceId: 0,
+			invoiceDisc: 0,
+			calculatedInvoiceDisc: 0,
+			invoiceDiscType: 'n'
+		});
 		invoiceDiscReset();
-		setCalculatedInvoiceDisc(0);
 		setTotalTransactionAmount(numeral(calcSubTotalAmount(transactionItems)).subtract(0).value());
 	}
 
@@ -164,7 +179,7 @@ const SectionTransaction = () => {
 		if(data.item_disc > 0){
 			if(user.hasAuth('ITEM_DISCOUNT')){
 				item.discount = data.item_disc_type === "perc" 
-				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
+				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'Pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
 				: data.item_disc;
 			}else {
 				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
@@ -172,7 +187,7 @@ const SectionTransaction = () => {
 			}
 		}
 		//	soldOutPrice is original item price (pack or unit) less discount
-		item.itemSoldOutPrice = data.qty_type === "pkg" 
+		item.itemSoldOutPrice = data.qty_type === "Pkg" 
 			? numeral(item.pkgSalesPrice).subtract(item.discount).value() 
 			: numeral(item.unitSalesPrice).subtract(item.discount).value();
 		transactionItems.push(item);
@@ -251,11 +266,36 @@ const SectionTransaction = () => {
 				return;
 			}
 			setNetworkRequest(true);
+			resetPage();
 	
 			const response = await transactionsController.findInvoiceForReceipt(id);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
-			if (response && response.data) {
+			if (response && response.data && response.data.length > 0) {
+				/*	truncating transactionItems to remove previous items as react state update is unpredictable	*/
+				transactionItems.length = 0;
+				invoiceProps.invoiceId = response.data[0].invoice_id;
+				invoiceProps.calculatedInvoiceDisc = response.data[0].disc_value ? response.data[0].disc_value : 0;
+				invoiceProps.invoiceDisc = response.data[0].disc_value ? response.data[0].disc_value : 0;
+				setInvoiceProps(invoiceProps);
+
+				const arr = response.data.map(salesRec => {
+					const item = new TransactionItem();
+					item.name = salesRec.item_name;
+					item.qty = salesRec.qty;
+					item.itemSoldOutPrice = salesRec.price;
+					item.id = salesRec.item_id;
+					item.qtyType = salesRec.qty_type;
+					item.discount = numeral(salesRec.qty_type === 'Pkg' ? salesRec.pack_sales : salesRec.unit_sales).subtract(salesRec.price).value();
+					item.unitSalesPrice = salesRec.unit_sales;
+					item.pkgSalesPrice = salesRec.pack_sales;
+					/*	temporarily pushing to transactionItems to cause an immediate reset of transactionAmount as react state update is unpredictable	*/
+					transactionItems.push(item);
+
+					return item;
+				});
+				setTransactionItems(arr);
+				updateTransactionAmount();
 			}
 			setNetworkRequest(false);
 		} catch (error) {
@@ -341,8 +381,12 @@ const SectionTransaction = () => {
 				}
 				break;
 			case 'cancelTransaction':
-				resetPage();
-				setShowConfirmModal(false);
+				if (invoiceProps.invoiceId > 0) {
+					await cancelTransaction();
+				}else {
+					resetPage();
+					setShowConfirmModal(false);
+				}
 				break;
 			case 'generateInvoice':
 				const dtoInvoice = setUpInvoiceDTO();
@@ -357,7 +401,7 @@ const SectionTransaction = () => {
 			setNetworkRequest(true);
 			const response = await transactionsController.generateInvoice(dtoInvoice);
 			resetPage();
-            // display error message
+            // display message
             toast.info(`Invoice id: ${response.data.id}`, { autoClose: false });
 			setNetworkRequest(false);
 		} catch (error) {
@@ -366,6 +410,36 @@ const SectionTransaction = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return generateInvoice(dtoInvoice);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+    };
+
+    const cancelTransaction = async () => {
+		try {
+			setNetworkRequest(true);
+			setShowConfirmModal(false);
+			const response = await transactionsController.cancelInvoice(invoiceProps.invoiceId);
+			resetPage();
+            // display message
+            toast.info(`Transaction cancelled successfully`);
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return cancelTransaction();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -395,17 +469,18 @@ const SectionTransaction = () => {
 
 	//	helper function to calculate and update total transaction amount using invoice discount and sub total
 	const updateTransactionAmount = () => {
-		const invoice_disc = calcInvoiceDisc(invoiceDisc, invoiceDiscType);
-		setCalculatedInvoiceDisc(invoice_disc);
+		const invoice_disc = calcInvoiceDisc(invoiceProps.invoiceDisc, invoiceProps.invoiceDiscType);
+		invoiceProps.calculatedInvoiceDisc = invoice_disc;
+		setInvoiceProps(invoiceProps);
 		const total = numeral(calcSubTotalAmount(transactionItems)).subtract(invoice_disc).value();
 		setTotalTransactionAmount(total);
 	}
 
 	const setUpInvoiceDTO = () => {
 		return {
-			id: 0,
+			id: invoiceProps.invoiceId,
 			outpostID: 1,	//	for now default to the default outpost
-			invoiceDiscount: calculatedInvoiceDisc,
+			invoiceDiscount: invoiceProps.calculatedInvoiceDisc,
 			dtoSalesRecords: transactionItems,
 		};
 	}
@@ -485,14 +560,14 @@ const SectionTransaction = () => {
 									<Form.Check
 										type="radio"
 										label="Unit"
-										value="unit"
+										value="Unit"
 										name="qty_type"
 										{...productSelectionRegister("qty_type")}
 									/>
 									<Form.Check
 										type="radio"
 										label="Pkg"
-										value="pkg"
+										value="Pkg"
 										{...productSelectionRegister("qty_type")}
 										name="qty_type"
 									/>
@@ -676,7 +751,7 @@ const SectionTransaction = () => {
 						<div className="col-12 col-md-4 my-2">
 							<p className="h4">
 								(N):
-								<span className="text-success ms-2">{numeral(calculatedInvoiceDisc).format('₦0,0.00')}</span>
+								<span className="text-success ms-2">{numeral(invoiceProps.calculatedInvoiceDisc).format('₦0,0.00')}</span>
 							</p>
 						</div>
 					</div>

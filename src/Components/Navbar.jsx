@@ -379,7 +379,7 @@ function NavBar() {
 								Dashboard
 							</Nav.Link>}
 
-							{user && <NavDropdown title="Contacts" id="basic-nav-dropdown">
+							{user && user.hasAuth('CONTACTS_WINDOWS') && <NavDropdown title="Contacts" id="basic-nav-dropdown">
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
