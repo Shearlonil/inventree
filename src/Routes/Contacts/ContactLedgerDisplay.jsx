@@ -59,7 +59,6 @@ const ContactLedgerDisplay = () => {
                 
     useEffect( () => {
         if(user.hasAuth('FINANCE')){
-            toast.info(contact);
         }else {
             toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
             navigate('/404');

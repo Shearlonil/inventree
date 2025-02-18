@@ -359,9 +359,9 @@ const VendorsWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Vendor Name', 'Phone No', 'Address', 'E-Mail', 'Card No.', 'Balance', 'Options'],
+        headers: ['Vendor Name', 'Phone No', 'Address', 'E-Mail', 'Balance', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'phoneNo', 'address', 'email', 'loyaltyCardNo', 'ledgerBalance'],
+        objectProps: ['name', 'phoneNo', 'address', 'email', 'ledgerBalance'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -450,7 +450,7 @@ const VendorsWindow = () => {
                 </div>
             </div>
 
-            <div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
+            <div className={`container mt-4 p-3 shadow-sm border border-2 rounded-1 ${networkRequest ? 'disabledDiv' : ''}`}>
                 <div className="border bg-light my-3">
                     <TableMain tableProps={tableProps} tableData={pagedData} />
                 </div>

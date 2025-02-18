@@ -475,7 +475,7 @@ const CustomersWindow = () => {
                 </div>
             </div>
 
-            <div className="container mt-4 p-3 shadow-sm border border-2 rounded-1">
+            <div className={`container mt-4 p-3 shadow-sm border border-2 rounded-1 ${networkRequest ? 'disabledDiv' : ''}`}>
                 <div className="border bg-light my-3">
                     <TableMain tableProps={tableProps} tableData={pagedData} />
                 </div>

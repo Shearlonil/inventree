@@ -4,6 +4,10 @@ const fetchAllActive = async () => {
     return await httpService.get(`/api/customers/active`);
 }
 
+const fetchAllNonActive = async () => {
+    return await httpService.get(`/api/trash/customers`);
+}
+
 const createCustomer = async (data) => {
     return await httpService.post(`/api/customers/create`, data);
 }
@@ -20,9 +24,19 @@ const deleteCustomer = async (id) => {
     });
 }
 
+const restoreCustomer = async (id) => {
+    return await httpService.put(`/api/trash/customers/restore`, null, {
+        params: {
+            id,
+        }
+    });
+}
+
 export default {
     fetchAllActive,
+    fetchAllNonActive,
     createCustomer,
     updateCustomer,
     deleteCustomer,
+    restoreCustomer,
 }

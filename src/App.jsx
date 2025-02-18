@@ -1,6 +1,5 @@
 import { Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-import "./App.css";
 import Home from "./Routes/Home";
 import AcctVoucherCreation from "./Routes/AcctVoucherCreation";
 import MonoTransaction from "./Routes/SalesTransaction/MonoTransaction";
@@ -42,7 +41,7 @@ function App() {
 					<Route path={"customers"} element={<CustomersWindow />} />
 					<Route path={"vendors"} element={<VendorsWindow />} />
 					<Route path={":contact/ledger"} element={<ContactLedgerDisplay />} />
-					<Route path={":contacts/trash"} element={<ContactTrash />} />
+					<Route path={":contact/trash"} element={<ContactTrash />} />
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path="/store/item" element={<ProtectedRoute />}>

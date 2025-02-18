@@ -90,7 +90,7 @@ const CashierWindow = () => {
 
             //	check if the request to fetch customers doesn't fail before setting values to display
             if(customersRequest){
-				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.customerName, value: customer})));
+				setCustomerOptions(customersRequest.data.map( customer => ({label: customer.name, value: customer})));
 				setCustomersLoading(false);
             }
 		} catch (error) {
