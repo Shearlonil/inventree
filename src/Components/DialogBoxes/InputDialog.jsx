@@ -32,7 +32,6 @@ const InputDialog = ({ show, handleClose, handleConfirm, message }) => {
                 <Modal.Body>
                     <div className="d-flex flex-column">
                         <Form.Control type="text" placeholder="Enter value" {...register("input_value")} />
-
                         <ErrorMessage source={errors.input_value} />
                     </div>
                 </Modal.Body>

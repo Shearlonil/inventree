@@ -87,7 +87,7 @@ const PurchasesWindow = () => {
 
 	const purchasesOffCanvasMenu = [
 		{ label: "Search By Purchase No.", onClickParams: {evtName: 'searchByNo'} },
-		{ label: "Delete", onClickParams: {evtName: 'searchByNo'} },
+		// { label: "Delete", onClickParams: {evtName: 'delete'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
 		

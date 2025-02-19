@@ -1,56 +1,379 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { CgUserAdd } from 'react-icons/cg';
-import { IoReceipt } from 'react-icons/io5';
-import { LuReceipt } from 'react-icons/lu';
+import { toast } from 'react-toastify';
+import { format, parseISO } from 'date-fns';
+import numeral from 'numeral';
 
-const receiptObj = [
-    { id: 1, name: "Pharmacy", label: "Pharmacy", availableQtyPkg: 10, availableQtyUnit: 100, unitsPerPkg: 10 },
-    { id: 2, name: "Hotel", label: "Hotel", availableQtyPkg: 5, availableQtyUnit: 50, unitsPerPkg: 10 },
-    { id: 3, name: "SuperMarket", label: "SuperMarket", availableQtyPkg: 8, availableQtyUnit: 80, unitsPerPkg: 10 },
-];
+import ErrorMessage from '../../Components/ErrorMessage';
+import OffcanvasMenu from '../../Components/OffcanvasMenu';
+import SVG from '../../assets/Svg';
+import DateDialog from '../../Components/DialogBoxes/DateDialog';
+import handleErrMsg from '../../Utils/error-handler';
+import { useAuth } from '../../app-context/auth-user-context';
+import transactionsController from '../../Controllers/transactions-controller';
+import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
+import { Receipt } from '../../Entities/Receipt';
+import TableMain from '../../Components/TableView/TableMain';
+import { TransactionItem } from '../../Entities/TransactionItem';
+import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import InputDialog from '../../Components/DialogBoxes/InputDialog';
 
 const SalesReceiptWindow = () => {
-    const { control, formState: { errors } } = useForm({ resolver: yupResolver(dispensaryPageSchema) })
+    //  format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
+
+    const { control, setValue, formState: { errors } } = useForm();
+
+	const receiptsOffCanvasMenu = [
+		{ label: "Search By Receipt No.", onClickParams: {evtName: 'searchByNo'} },
+		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
+		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
+		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
+		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+	];
+    
+    const tableProps = {
+        //	table header
+        headers: ['Item Name', 'Qty', 'Type', "Price (x1)", "Discount", "Amount"],
+        //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
+        objectProps: ['itemName', 'qty', 'qtyType', 'itemSoldOutPrice', 'discount', 'totalAmount'],
+    };
+
+    const [networkRequest, setNetworkRequest] = useState(false);
+    //	indicate where id search or date search, 0 => date search	|	1 => id search
+    const [searchMode, setSearchMode] = useState(null);
+    //	incase of id search, store in this state
+    const [searchedId, setSearchedId] = useState(0);
+    //	incase of date search, store in this state
+    const [searchedDate, setSearchedDate] = useState(null);
+
+    const [receipts, setReceipts] = useState([]);
+    const [receiptOptions, setReceiptOptions] = useState([]);
+    const [selectedReceipt, setSelectedReceipt] = useState(null);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [salesRecords, setSalesRecords] = useState([]);
+    const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
+
+    //	for date dialog
+    const [showDateModal, setShowDateModal] = useState(false);
+    //	for input dialog
+    const [showInputModal, setShowInputModal] = useState(false);
+    //	for confirmation dialog
+    const [displayMsg, setDisplayMsg] = useState("");
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+
+	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+		switch (onclickParams.evtName) {
+            case 'searchByNo':
+				setDisplayMsg("Please enter Receipt No.");
+				setShowInputModal(true);
+                break;
+            case 'exportToPDF':
+                break;
+            case 'searchByDate':
+				setShowDateModal(true);
+                break;
+            case 'activateReceipt':
+                if(!selectedReceipt){
+                    toast.error("Please select a receipt");
+                    return;
+                }
+                if(selectedReceipt.reversalStatus === false){
+                    toast.info("Receipt is active");
+                    return;
+                }
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Activate receipt with No. ${selectedReceipt.id}`);
+				setShowConfirmModal(true);
+                break;
+            case 'reverseReceipt':
+                if(!selectedReceipt){
+                    toast.error("Please select a receipt");
+                    return;
+                }
+                if(selectedReceipt.reversalStatus === true){
+                    toast.info("Receipt is already reversed");
+                    return;
+                }
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Reverse receipt with No. ${selectedReceipt.id}`);
+				setShowConfirmModal(true);
+                break;
+        }
+	}
+
+	const handleCloseModal = () => {
+		setShowDateModal(false);
+		setShowInputModal(false);
+		setShowConfirmModal(false);
+	};
+	
+	const handleConfirmOK = async () => {
+		setShowConfirmModal(false);
+		switch (confirmDialogEvtName) {
+            case 'activateReceipt':
+				activateReceipt();
+                break;
+            case 'reverseReceipt':
+				reverseReceipt();
+                break;
+        }
+	}
+
+    //  Handle item selection change
+    const handleReceiptChange = (selectedReceipt) => {
+        setSelectedReceipt(selectedReceipt.value);
+        setSelectedInvoice(selectedReceipt.value.dtoInvoice);
+        setSalesRecords(buildTableData(selectedReceipt.value.dtoInvoice.dtoSalesRecords));
+    };
+
+    //  Handle item selection clicked from table
+    const handleReceiptClicked = (selectedReceipt) => {
+        setValue('receipt_no', {label: selectedReceipt.id, value: selectedReceipt});
+        setSelectedReceipt(selectedReceipt);
+        setSelectedInvoice(selectedReceipt.dtoInvoice);
+        setSalesRecords(buildTableData(selectedReceipt.dtoInvoice.dtoSalesRecords));
+    };
+
+	const idSearch = async (id) => {
+		try {
+			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
+				Technique 1: use the unary plus operator which is what i've adopted below
+				Technique 2: multiply by a number. 
+				etc	*/
+			if(!+id){
+				toast.error('Please enter a valid number');
+				return;
+			}
+			setNetworkRequest(true);
+			setReceipts([]);
+            setSalesRecords([]);
+			setSearchMode(1);
+            setTotalTransactionAmount(0);
+            setSelectedReceipt(null);
+            setSelectedInvoice(null);
+
+			setSearchedId(id);
+			setSearchedDate(null);
+			setValue('startDate', null);
+			setValue('endDate', null);
+	
+			const response = await transactionsController.findPurchaseReceiptByNo(id);
+            if(response && response.data){
+                const tableArr = [];
+                response.data.forEach(res => tableArr.push(new Receipt(res)));
+                tableArr.sort((a, b) => a.id - b.id);
+                response.data.sort((a, b) => a.id - b.id);
+                setReceipts(tableArr);
+                setReceiptOptions(tableArr.map( receipt => ({label: receipt.id, value: receipt})));
+                console.log(response.data, tableArr);
+            }
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return idSearch(id);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+			setNetworkRequest(false);
+		}
+	}
+	
+	const dateSearch = async (date) => {
+        try {
+			if (date.startDate && date.endDate) {
+				setNetworkRequest(true);
+                setTotalTransactionAmount(0);
+                setReceipts([]);
+                setSalesRecords([]);
+                setSelectedReceipt(null);
+                setSelectedInvoice(null);
+				setSearchedId(0);
+				setSearchedDate(date);
+                
+				const response = await transactionsController.searchPurchaseReceiptByDate(date.startDate.toISOString(), date.endDate.toISOString());
+				if(response && response.data){
+                    const tableArr = [];
+                    response.data.forEach(res => tableArr.push(new Receipt(res)));
+                    tableArr.sort((a, b) => a.id - b.id);
+                    response.data.sort((a, b) => a.id - b.id);
+                    setReceipts(tableArr);
+                    setReceiptOptions(tableArr.map( receipt => ({label: receipt.id, value: receipt})));
+                    console.log(response.data, tableArr);
+				}
+                
+				// const res = await transactionsController.searchPurchaseReceiptByDatee(date.startDate.toISOString(), date.endDate.toISOString());
+                // console.log('searching within date', date);
+				// if(res && res.data){
+                //     console.log(res.data.sort((a, b) => a.id - b.id));
+				// }
+				setNetworkRequest(false);
+			}
+		} catch (error) {
+			setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return dateSearch(date);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const activateReceipt = async () => {
+        try {
+            setNetworkRequest(true);
+            
+            const response = await transactionsController.activateReceipt(selectedReceipt);
+            if(response && response.status === 200){
+                toast.info('activated');
+            }
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return activateReceipt();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
+	
+	const reverseReceipt = async () => {
+        try {
+            setNetworkRequest(true);
+            
+            const response = await transactionsController.reverseReceipt(selectedReceipt);
+            if(response && response.status === 200){
+                toast.info('reversed');
+            }
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return reverseReceipt();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
+            
+    //	setup table data from fetched stock record
+    const buildTableData = (arr = []) => {
+        const tableArr = [];
+        arr.forEach(item => {
+            const dtoItem = new TransactionItem();
+            dtoItem.id = item.id;
+            dtoItem.itemSoldOutPrice = item.itemSoldOutPrice;
+            dtoItem.itemName = item.itemName;
+            dtoItem.qty = item.qty;
+            dtoItem.qtyType = item.qtyType;
+            dtoItem.discount = item.discount ? item.discount : '0';
+
+            tableArr.push(dtoItem);
+        });
+        setTotalTransactionAmount(tableArr.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0));
+        return tableArr;
+    };
+
     return (
         <div>
-            <div className="container-fluid">
-                <div className="text-center my-5">
-                    <h2 className="my-4 text-center display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-                        <span className="me-4">Sales Receipt</span>
-                        <LuReceipt className="text-danger" size={"30px"} />
-                    </h2>
+            <div className={`container-fluid`}>
+                <div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+                    <div>
+                        <OffcanvasMenu menuItems={receiptsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
+                    </div>
+                    <div className="text-center d-flex">
+                        <h2 className="display-6 p-3 mb-0">
+                            <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Receipts</span>
+                            <img src={SVG.receipt} style={{ width: "50px", height: "50px" }} />
+                        </h2>
+                    </div>
+                    <p className='text-center m-2'>Search receipts by date or number to view, update, delete etc</p>
                 </div>
-                <div className='row justify-content-center' id='user-window'>
+                <div className="justify-content-center d-flex">
+                    {networkRequest && <OribitalLoading color='red' />}
+                </div>
+                <div className={`row justify-content-center ${networkRequest ? 'disabledDiv' : ''}`} id='user-window'>
+                    {/* Receipts drop down.... ONLY SHOW ON MOBILE */}
                     <div className="d-md-none mb-3">
                         <p className="h5 mb-2">Receipt No.: </p>
                         <Controller
                             name="receipt_no"
                             control={control}
-                            render={({ field: { onChange } }) => (
+                            render={({ field: { onChange, value } }) => (
                                 <Select
                                     required
                                     placeholder="Select..."
                                     className="text-dark"
-                                    options={receiptObj}
-                                    onChange={(val) => val.value}
+                                    options={receiptOptions}
+									value={value}
+                                    onChange={(val) => {
+										onChange(val);
+										handleReceiptChange(val);
+									}}
                                 />
                             )}
                         />
                         <ErrorMessage source={errors.receipt_no} />
                     </div>
 
-                    <div className="d-none d-md-block col-12 col-md-2 p-4 d-flex flex-column gap-2 rounded bg-light shadow-sm border overflow-md-auto border" style={{ minHeight: "80vh", maxHeight: '80vh', overflow: 'scroll' }}>
+                    <div className="d-none d-md-block col-12 col-md-2 p-4 d-flex flex-column gap-2 rounded bg-light shadow-sm border overflow-md-auto border" style={{ maxHeight: "100vh", overflow: 'scroll' }}>
                         <h4 className='mb-3'>Reciept ID:-</h4>
                         <Table id="myTable" className="rounded-2" hover responsive>
                             <tbody>
                                 {/* <tr> */}
-                                {Array.from({ length: 20 }).map((_, index) => (
-                                    <tr className='' key={index}>
-                                        <td>456455</td>
+                                {receipts.map((receipt, index) => (
+                                    <tr className='' key={index} onClick={() => handleReceiptClicked(receipt)}>
+                                        <td>{receipt.id}</td>
                                     </tr>
                                 ))}
                                 {/* </tr> */}
@@ -64,117 +387,112 @@ const SalesReceiptWindow = () => {
                         <div className="shadow p-4 border rounded-3 bg-success-subtle mb-3">
                             <h4>Receipt Details:- </h4>
                             <div className="row g-4"> {/* Adds gap between sections */}
-                                {[
-                                    { label: "Cashier", value: "Titilayo" },
-                                    { label: "Customer", value: "Customer" },
-                                    { label: "Date", value: "10-08-2022 09:35:32" },
-                                    { label: "Status", value: "Active" },
-                                    { label: "Payment Mode", value: "TRANSFER = 700.00" },
-                                ].map((item, index) => (
-                                    <div key={index} className="col-12 col-md-6">
-                                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
-                                            <span className="fw-bold text-md-end h5">{item.label}:</span>
-                                            <span>{item.value}</span>
-                                        </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">ID:</span>
+                                        <span className='pe-2 fw-bold text-danger h3'>{selectedReceipt?.id}</span>
                                     </div>
-                                ))}
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">Cashier:</span>
+                                        <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>{selectedReceipt?.cashier}</span>
+                                    </div>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">Customer:</span>
+                                        <span style={{overflow: 'scroll', textAlign: "right" }} className='pe-2 text-primary fw-bold'>{selectedReceipt?.customerName}</span>
+                                    </div>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">Date:</span>
+                                        <span className='pe-2 text-primary fw-bold'>
+                                            {selectedReceipt?.transactionDate ? format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss') : ''}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">Status:</span>
+                                        <span className={`pe-2 fw-bold ${selectedReceipt?.reversalStatus ? 'text-danger' : 'text-primary'}`}>
+                                            {selectedReceipt?.reversalStatus ? 'REVERSED' : "ACTIVE"}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5 me-2">Payment Mode:</span>
+                                        <span style={{overflow: 'scroll' }} className='pe-2 text-primary fw-bold'>
+                                            {selectedReceipt?.paymentModes.map(pm => pm.type + " = " + pm.amount + ", ")}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div className="shadow p-4 border border-light rounded-3 bg-warning-subtle">
                             <h4>Invoice Details:- </h4>
                             <div className="row g-4"> {/* Adds gap between sections */}
-                                {[
-                                    { label: "Name", value: "ELBE PHARMA LTD (LEKAN)" },
-                                    { label: "Creator", value: "pharmQAY" },
-                                    { label: "Date", value: "10-08-2022 09:35:32" },
-                                    { label: "Parent", value: "VENDORS" },
-                                    { label: "Status", value: "Active" }
-                                ].map((item, index) => (
-                                    <div key={index} className="col-12 col-md-6">
-                                        <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
-                                            <span className="fw-bold text-md-end h5">{item.label}:</span>
-                                            <span>{item.value}</span>
-                                        </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5">ID:</span>
+                                        <span className='pe-2 text-danger fw-bold'>{selectedInvoice?.id}</span>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <Table id="myTable" className="rounded-2 border mt-4" striped hover responsive>
-                            <thead>
-                                <tr className="shadow-sm">
-                                    <th>Product Name</th>
-                                    <th>Quantity</th>
-                                    <th>Type:</th>
-                                    <th>Price (x1)</th>
-                                    <th>Discount</th>
-                                    <th>Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* <p>No content in table</p> */}
-                                {Array.from({ length: 5 }).map((_, index) => (
-                                    <tr className='' key={index}>
-                                        <td>Joy</td>
-                                        <td>1.00</td>
-                                        <td>Unitt</td>
-                                        <td>701.00</td>
-                                        <td>0</td>
-                                        <td>123</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                        {/* <div className="border border rounded-3 p-1 bg-light my-3 shadow">
-                            <Table id="myTable" className="rounded-2" striped hover responsive>
-                                <thead>
-                                    <tr className="shadow-sm">
-                                        <th>First Name</th>
-                                        <th>Last</th>
-                                        <th>Phone No.:</th>
-                                        <th>Gender</th>
-                                        <th>Role</th>
-                                        <th>Username</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {Array.from({ length: 10 }).map((_, index) => (
-                                        <tr className='' key={index}>
-                                            <td>Joy</td>
-                                            <td>Samuel</td>
-                                            <td>7012345678</td>
-                                            <td>F</td>
-                                            <td>Sales Assistant</td>
-                                            <td>Joy</td>
-                                            <td className='text-center'>
-                                                <span className='fw-bold'>Active</span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </Table>
-                            <div className='container my-3 p-3'>
-                                <div className='d-flex flex-wrap gap-3 justify-content-between align-items-center mx-auto'>
-                                    <div className="">
-                                        <p className='fw-bold h5 text-success'>Balance:</p>
-                                        <h5><span>$680000</span></h5>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5">Creator:</span>
+                                        <span className='pe-2 text-primary fw-bold'>{selectedInvoice?.username}</span>
                                     </div>
-                                    <div className="">
-                                        <p className='fw-bold h5 text-danger'>Dr.:</p>
-                                        <h5><span>$680000</span></h5>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5">Date:</span>
+                                        <span className='pe-2 text-primary fw-bold'>
+                                            {selectedInvoice?.transactionDate ? format(selectedInvoice?.transactionDate, 'dd/MM/yyyy HH:mm:ss') : ''}
+                                        </span>
                                     </div>
-                                    <div className="">
-                                        <p className='fw-bold h5 text-warning'>Cr.:</p>
-                                        <h5><span>$680000</span></h5>
+                                </div>
+                                <div className="col-12 col-md-6">
+                                    <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        <span className="fw-bold text-md-end h5">Discount:</span>
+                                        <span className='pe-2 text-primary fw-bold'>{selectedInvoice?.invoiceDiscount ? selectedInvoice.invoiceDiscount : 0}</span>
                                     </div>
                                 </div>
                             </div>
-                        </div> */}
+                        </div>
+
+                        <div className="rounded-2 border mt-4">
+                            <div style={{maxHeight: '400px', minHeight: '400px', overflow: 'scroll'}}>
+                                <TableMain tableProps={tableProps} tableData={salesRecords} />
+                            </div>
+                        </div>
+                        <div className='pe-2 fw-bold h3 mt-5'>
+                            Total (₦): <span className='h3 text-danger fw-bold'>{numeral(totalTransactionAmount).format('₦0,0.00')}</span> 
+                        </div>
                     </div>
                 </div>
             </div>
+            <ConfirmDialog
+                show={showConfirmModal}
+                handleClose={handleCloseModal}
+                handleConfirm={handleConfirmOK}
+                message={displayMsg}
+            />
+            <DateDialog
+                show={showDateModal}
+                handleClose={handleCloseModal}
+                handleConfirm={dateSearch}
+                message={"Select date range"}
+            />
+            <InputDialog
+                show={showInputModal}
+                handleClose={handleCloseModal}
+                handleConfirm={idSearch}
+                message={displayMsg}
+            />
         </div>
     )
 }

@@ -1,7 +1,7 @@
 import React from 'react'
 
 const TableBody = (props) => {
-    const { data = [], objectProps, menus } = props;
+    const { data = [], objectProps, menus = {} } = props;
     const { ReactMenu, menuItems, menuItemClick } = menus;
 
     const rowShadow = {
@@ -13,7 +13,7 @@ const TableBody = (props) => {
         <tbody>
             {data.map( (datum, index) => <tr style={rowShadow} key={index} >
                 {objectProps.map((prop, index) => <td key={index}> {datum[prop]} </td>)}
-                {menus && <td> <span><ReactMenu entity={datum} menuItems={menuItems} menuItemClick={menuItemClick} /></span> </td>}
+                { Object.keys(menus).length > 0 &&  <td> <span><ReactMenu entity={datum} menuItems={menuItems} menuItemClick={menuItemClick} /></span> </td> }
             </tr> )}
         </tbody>
         
