@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, Form, Modal } from 'react-bootstrap';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import ErrorMessage from '../ErrorMessage';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from "yup";

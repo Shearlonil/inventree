@@ -370,7 +370,14 @@ const MonoTransaction = () => {
 				amount: customerPaymentInfo.cash
 			})
 		}
-		//	TODO: if none of the above, then wallet/ledger/credit-sales payment mode
+
+		//	if none of the above, then wallet/ledger/credit-sales payment mode
+		if(paymentModes.length === 0){
+			paymentModes.push({
+				type: 'WALLET',
+				amount: totalTransactionAmount
+			})
+		}
 		const dtoInvoice = {
 			id: 0,
 			outpostID: 1,	//	for now default to the default outpost

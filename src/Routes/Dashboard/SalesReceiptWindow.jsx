@@ -19,6 +19,7 @@ import TableMain from '../../Components/TableView/TableMain';
 import { TransactionItem } from '../../Entities/TransactionItem';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
+import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 
 const SalesReceiptWindow = () => {
     //  format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
@@ -56,7 +57,9 @@ const SalesReceiptWindow = () => {
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [salesRecords, setSalesRecords] = useState([]);
     const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
-
+    
+    //	for payment dialog
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     //	for date dialog
     const [showDateModal, setShowDateModal] = useState(false);
     //	for input dialog
@@ -87,8 +90,7 @@ const SalesReceiptWindow = () => {
                     return;
                 }
                 setConfirmDialogEvtName(onclickParams.evtName);
-				setDisplayMsg(`Activate receipt with No. ${selectedReceipt.id}`);
-				setShowConfirmModal(true);
+                setShowPaymentModal(true);
                 break;
             case 'reverseReceipt':
                 if(!selectedReceipt){
@@ -110,6 +112,10 @@ const SalesReceiptWindow = () => {
 		setShowDateModal(false);
 		setShowInputModal(false);
 		setShowConfirmModal(false);
+	};
+
+	const handleClosePaymentModal = () => {
+		setShowPaymentModal(false);
 	};
 	
 	const handleConfirmOK = async () => {
@@ -138,6 +144,43 @@ const SalesReceiptWindow = () => {
         setSelectedInvoice(selectedReceipt.dtoInvoice);
         setSalesRecords(buildTableData(selectedReceipt.dtoInvoice.dtoSalesRecords));
     };
+
+    const paymentModeSet = (payments) => {
+        console.log(payments);
+        const paymentModes = [];
+		if(payments.atm){
+			paymentModes.push({
+				type: 'POS/DEBIT-CARD',
+				amount: payments.atm
+			})
+		}
+		if(payments.transfer){
+			paymentModes.push({
+				type: 'TRANSFER',
+				amount: payments.transfer
+			})
+		}
+		if(payments.cash){
+			paymentModes.push({
+				type: 'CASH',
+				amount: payments.cash
+			})
+		}
+
+		//	if none of the above, then wallet/ledger/credit-sales payment mode
+		if(paymentModes.length === 0){
+			paymentModes.push({
+				type: 'WALLET',
+				amount: totalTransactionAmount
+			})
+		}
+        
+        selectedReceipt.paymentModes = paymentModes;
+        console.log(selectedReceipt);
+        setSelectedReceipt(selectedReceipt);
+        setDisplayMsg(`Activate receipt with No. ${selectedReceipt.id} with the following payment mode: ${selectedReceipt?.paymentModes.map(pm => pm.type + " = " + pm.amount + " ")}`);
+		setShowConfirmModal(true);
+    }
 
 	const idSearch = async (id) => {
 		try {
@@ -205,6 +248,7 @@ const SalesReceiptWindow = () => {
                 setSelectedReceipt(null);
                 setSelectedInvoice(null);
 				setSearchedId(0);
+                setSearchMode(0);
 				setSearchedDate(date);
                 
 				const response = await transactionsController.searchPurchaseReceiptByDate(date.startDate.toISOString(), date.endDate.toISOString());
@@ -252,6 +296,9 @@ const SalesReceiptWindow = () => {
             
             const response = await transactionsController.activateReceipt(selectedReceipt);
             if(response && response.status === 200){
+                console.log(response.data);
+                selectedReceipt.reversalStatus = false;
+                setSelectedReceipt(selectedReceipt);
                 toast.info('activated');
             }
             setNetworkRequest(false);
@@ -282,6 +329,8 @@ const SalesReceiptWindow = () => {
             
             const response = await transactionsController.reverseReceipt(selectedReceipt);
             if(response && response.status === 200){
+                selectedReceipt.reversalStatus = true;
+                setSelectedReceipt(selectedReceipt);
                 toast.info('reversed');
             }
             setNetworkRequest(false);
@@ -492,6 +541,11 @@ const SalesReceiptWindow = () => {
                 handleClose={handleCloseModal}
                 handleConfirm={idSearch}
                 message={displayMsg}
+            />
+            <PaymentModeDialog
+                show={showPaymentModal}
+                handleClose={handleClosePaymentModal}
+                handleConfirm={paymentModeSet}
             />
         </div>
     )
