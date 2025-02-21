@@ -213,7 +213,6 @@ const SalesReceiptWindow = () => {
                 response.data.sort((a, b) => a.id - b.id);
                 setReceipts(tableArr);
                 setReceiptOptions(tableArr.map( receipt => ({label: receipt.id, value: receipt})));
-                console.log(response.data, tableArr);
             }
 			setNetworkRequest(false);
 		} catch (error) {
@@ -251,7 +250,7 @@ const SalesReceiptWindow = () => {
                 setSearchMode(0);
 				setSearchedDate(date);
                 
-				const response = await transactionsController.searchPurchaseReceiptByDate(date.startDate.toISOString(), date.endDate.toISOString());
+				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate.toISOString(), date.endDate.toISOString());
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -259,14 +258,7 @@ const SalesReceiptWindow = () => {
                     response.data.sort((a, b) => a.id - b.id);
                     setReceipts(tableArr);
                     setReceiptOptions(tableArr.map( receipt => ({label: receipt.id, value: receipt})));
-                    console.log(response.data, tableArr);
 				}
-                
-				// const res = await transactionsController.searchPurchaseReceiptByDatee(date.startDate.toISOString(), date.endDate.toISOString());
-                // console.log('searching within date', date);
-				// if(res && res.data){
-                //     console.log(res.data.sort((a, b) => a.id - b.id));
-				// }
 				setNetworkRequest(false);
 			}
 		} catch (error) {
@@ -486,6 +478,7 @@ const SalesReceiptWindow = () => {
                             <div className="row g-4"> {/* Adds gap between sections */}
                                 <div className="col-12 col-md-6">
                                     <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
+                                        {/* TODO: Make a link and navigate to invoice page when clicked */}
                                         <span className="fw-bold text-md-end h5">ID:</span>
                                         <span className='pe-2 text-danger fw-bold'>{selectedInvoice?.id}</span>
                                     </div>

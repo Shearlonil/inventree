@@ -277,9 +277,11 @@ const PurchasesWindow = () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'deleteItem':
+				//	TODO: delte item
 				console.log('deleting.....');
                 break;
             case 'updateVendor':
+				//	TODO: Update vendor
 				console.log('editing vendor.....');
                 break;
         }

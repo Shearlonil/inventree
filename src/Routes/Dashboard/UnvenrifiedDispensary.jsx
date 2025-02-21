@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import { format } from 'date-fns';
+import { Table } from 'react-bootstrap';
 
 import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
@@ -87,7 +88,7 @@ const UnvenrifiedDispensary = () => {
         return data.map((item) => {
             const { id, user_name, item_count, f_name, l_name, date } = item;
             return (
-                <div key={id}>
+                <tr key={id}>
                     <div className="row mt-2">
                         <div className="col-md-6 col-12">
                             <div className="d-flex">
@@ -123,7 +124,7 @@ const UnvenrifiedDispensary = () => {
                         </div>
                     </div>
                     <hr />
-                </div>
+                </tr>
             );
         });
     };
@@ -180,8 +181,13 @@ const UnvenrifiedDispensary = () => {
             </div>
             <hr />
 
-            {!networkRequest && data.length > 0 && buildSummaryCards()}
-            {networkRequest && buildSkeleton()}
+            <Table className="rounded-2" striped>
+                <tbody>
+                    {!networkRequest && data.length > 0 && buildSummaryCards()}
+                    {networkRequest && buildSkeleton()}
+                </tbody>
+
+            </Table>
 
             <ConfirmDialog
               show={showConfirmModal}

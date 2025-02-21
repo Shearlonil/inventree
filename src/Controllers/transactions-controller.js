@@ -37,6 +37,24 @@ const reverseReceipt = async (dtoReceipt) => {
     });
 }
 
+const activateInvoice = async (invoiceId) => {
+    return await httpService.put(`/api/transactions/invoice/status`, null, {
+        params: {
+            invoiceId,
+            status: true,
+        }
+    });
+}
+
+const reverseInvoice = async (invoiceId) => {
+    return await httpService.put(`/api/transactions/invoice/status`, null, {
+        params: {
+            invoiceId,
+            status: false,
+        }
+    });
+}
+
 const fetchTractItems = async (tract_id) => {
     return await httpService.get(`/api/items/transactions/tract`, {
         params: {
@@ -53,11 +71,11 @@ const findInvoiceForReceipt = async (invoiceId) => {
     });
 }
 
-const searchPurchaseReceiptByDate = async (startDate, endDate) => {
+const searchPurchaseReceiptsByDate = async (startDate, endDate) => {
     return await httpService.post(`/api/transactions/receipts/get-within`, { startDate, endDate });
 }
 
-const searchPurchaseReceiptByDatee = async (startDate, endDate) => {
+const searchPurchaseReceiptsByDatee = async (startDate, endDate) => {
     return await httpService.post(`/api/transactions/receipts/get-withinn`, { startDate, endDate });
 }
 
@@ -65,6 +83,18 @@ const findPurchaseReceiptByNo = async (receiptId) => {
     return await httpService.get(`/api/transactions/receipts/get-one`, {
         params: {
             receiptId,
+        }
+    });
+}
+
+const searchInvoicesByDate = async (startDate, endDate) => {
+    return await httpService.post(`/api/transactions/invoices/get-within`, { startDate, endDate });
+}
+
+const findInvoiceByNo = async (id) => {
+    return await httpService.get(`/api/transactions/invoices/get-one`, {
+        params: {
+            id,
         }
     });
 }
@@ -77,9 +107,13 @@ export default {
     cancelInvoice,
     activateReceipt,
     reverseReceipt,
+    activateInvoice,
+    reverseInvoice,
     fetchTractItems,
     findInvoiceForReceipt,
-    searchPurchaseReceiptByDate,
-    searchPurchaseReceiptByDatee,
+    searchPurchaseReceiptsByDate,
+    searchPurchaseReceiptsByDatee,
     findPurchaseReceiptByNo,
+    searchInvoicesByDate,
+    findInvoiceByNo,
 }

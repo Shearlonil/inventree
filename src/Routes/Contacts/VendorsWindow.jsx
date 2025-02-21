@@ -17,6 +17,7 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import { schema } from '../../Utils/yup-schema-validator/contact-schema';
 import ContactForm from '../../Components/Contacts/ContactForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 
 const VendorsWindow = () => {
     const navigate = useNavigate();
@@ -87,6 +88,7 @@ const VendorsWindow = () => {
 
 	const initialize = async () => {
 		try {
+            setNetworkRequest(true);
             const response = await vedorController.fetchAllActive();
 
             if (response && response.data && response.data.length > 0) {
@@ -96,7 +98,9 @@ const VendorsWindow = () => {
                 setFilteredVendors(arr);
 				setTotalItemsCount(response.data.length);
             }
+            setNetworkRequest(false);
 		} catch (error) {
+            setNetworkRequest(false);
 			//	Incase of 500 (Invalid Token received!), perform refresh
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
@@ -203,6 +207,7 @@ const VendorsWindow = () => {
 
     const onSubmit = async (data) => {
         try {
+            setNetworkRequest(true);
             let vendor = new Contact(data);
             vendor.phoneNo = data.phone_no;
             vendor.status = true;
@@ -219,7 +224,9 @@ const VendorsWindow = () => {
                 toast.success('Delete successful');
                 reset();
             }
+            setNetworkRequest(false);
         } catch (error) {
+            setNetworkRequest(false);
             //	Incase of 500 (Invalid Token received!), perform refresh
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
@@ -448,6 +455,10 @@ const VendorsWindow = () => {
                         </span>
                     </button>
                 </div>
+            </div>
+
+            <div className="justify-content-center d-flex">
+                {networkRequest && <OribitalLoading color='red' />}
             </div>
 
             <div className={`container mt-4 p-3 shadow-sm border border-2 rounded-1 ${networkRequest ? 'disabledDiv' : ''}`}>

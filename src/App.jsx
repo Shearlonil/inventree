@@ -24,6 +24,7 @@ import SectionTransaction from "./Routes/SalesTransaction/SectionTransaction";
 import VendorsWindow from "./Routes/Contacts/VendorsWindow";
 import ContactLedgerDisplay from "./Routes/Contacts/ContactLedgerDisplay";
 import ContactTrash from "./Routes/Contacts/ContactTrash";
+import InvoiceWindow from "./Routes/Dashboard/InvoiceWindow";
 
 function App() {
 	return (
@@ -61,6 +62,7 @@ function App() {
 				<Route path="/dashboard" element={<ProtectedRoute />}>
 					<Route path={"users"} element={<UserWindow />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
+					<Route path={"invoices"} element={<InvoiceWindow />} />
 					<Route path={""} element={<Dashboard />} />
           		</Route>
 				<Route path={"/test"} element={<Test />} />

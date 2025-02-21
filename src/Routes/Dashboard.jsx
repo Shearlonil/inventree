@@ -44,7 +44,7 @@ const Dashboard = () => {
                         </div>}
 
                         {user.hasAuth('INVOICE_WINDOW') && <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('invoices')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img

@@ -5,8 +5,9 @@ export class Invoice {
         const { dtoSalesRecords } = jsonObject;
         _invoiceProps.set(this, {
             id: jsonObject.id,
+            receiptId: jsonObject.receipt_id,
             username: jsonObject.username,
-            outpostName: jsonObject.outpostName,
+            outpostName: jsonObject.outpostname,
             outpostID: jsonObject.outpostID,
             invoiceDiscount: jsonObject.invoiceDiscount,
             transactionDate: jsonObject.invoice_date,
@@ -17,6 +18,9 @@ export class Invoice {
 
     get id() { return _invoiceProps.get(this).id; }
     set id(id) { _invoiceProps.get(this).id = id }
+
+    get receiptId() { return _invoiceProps.get(this).receiptId; }
+    set receiptId(receiptId) { _invoiceProps.get(this).receiptId = receiptId }
     
     get username() { return _invoiceProps.get(this).username }
     set username(name) { _invoiceProps.get(this).username = name }
