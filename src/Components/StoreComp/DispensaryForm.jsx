@@ -54,14 +54,14 @@ const DispensaryForm = (props) => {
                             <Form.Check
                                 type="radio"
                                 label="Unit"
-                                value="unit"
+                                value="Unit"
                                 {...register("dispense_qty_type")}
                                 name="dispense_qty_type"
                             />
                             <Form.Check
                                 type="radio"
                                 label="Pkg"
-                                value="pkg"
+                                value="Pkg"
                                 {...register("dispense_qty_type")}
                                 name="dispense_qty_type"
                             />

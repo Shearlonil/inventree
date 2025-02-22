@@ -6,6 +6,7 @@ import "react-datetime/css/react-datetime.css";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
+import numeral from "numeral";
 import { useNavigate } from "react-router-dom";
 
 import { restockSchema } from "../../Utils/yup-schema-validator/store-form-schema";
@@ -84,11 +85,11 @@ const RestockForm = (props) => {
 			if(data){
 				setValue("total_qty", data.qty);
 				setValue("qty_per_pkg", data.qtyPerPkg);
-				setValue("unit_stock", data.unitStockPrice);
-				setValue("unit_sales", data.unitSalesPrice);
-				setValue("pkg_stock_price", data.pkgStockPrice);
-				setValue("pkg_sales_price", data.pkgSalesPrice);
-				setValue("amount_paid", data.cashPurchaseAmount);
+				setValue("unit_stock", numeral(data.unitStockPrice).value());
+				setValue("unit_sales", numeral(data.unitSalesPrice).value());
+				setValue("pkg_stock_price", numeral(data.pkgStockPrice).value());
+				setValue("pkg_sales_price", numeral(data.pkgSalesPrice).value());
+				setValue("amount_paid", numeral(data.cashPurchaseAmount).value());
 				setValue("item", {value: data.id, label: data.itemName});
 				setValue("qty_type", {value: data.pkg.id, label: data.pkg.name});
 				setValue("vendor", {value: data.vendor.id, label: data.vendor.name});

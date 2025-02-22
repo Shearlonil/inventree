@@ -223,7 +223,7 @@ const CustomersWindow = () => {
                 /*  GO TO PAGE WHERE NEW CUSTOMER IS.  */
                 setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
                 setTotalItemsCount(totalItemsCount + 1);
-                toast.success('Delete successful');
+                toast.success('Account creation successful');
                 reset();
             }
         } catch (error) {

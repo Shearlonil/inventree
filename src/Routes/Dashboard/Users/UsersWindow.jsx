@@ -5,10 +5,11 @@ import Select from "react-select";
 import { Button, Form, Modal, Table } from "react-bootstrap";
 import { CgMenuLeft, CgUserAdd } from "react-icons/cg";
 
-import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
-import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
-import { schema } from '../../Utils/yup-schema-validator/user-window-schema';
-import ErrorMessage from "../../Components/ErrorMessage";
+import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
+import DropDownDialog from "../../../Components/DialogBoxes/DropDownDialog";
+import { schema } from '../../../Utils/yup-schema-validator/user-window-schema';
+import ErrorMessage from "../../../Components/ErrorMessage";
+import OffcanvasMenu from "../../../Components/OffcanvasMenu";
 
 const products = [
     { id: 1, name: "Pharmacy", label: "Pharmacy" },
@@ -22,12 +23,11 @@ const myStyle = {
     cursor: "pointer",
     zIndex: 999,
 }
-const UserWindow = () => {
+const UsersWindow = () => {
     const [show, setShow] = useState(false);
 
     const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
-
 
     const {
         register,
@@ -49,6 +49,15 @@ const UserWindow = () => {
         },
     });
 
+    const usersOffCanvasMenu = [
+        { label: "Search By Username", onClickParams: {evtName: 'searchByUsername'} },
+        { label: "Search By First Name", onClickParams: {evtName: 'searchByFirstName'} },
+        { label: "Sort By Username", onClickParams: {evtName: 'sortByUsername'} },
+        { label: "Sort By First Name", onClickParams: {evtName: 'sortByFirstName'} },
+        { label: "Show All", onClickParams: {evtName: 'showAll'} },
+        { label: "Trash", onClickParams: {evtName: 'trash'} },
+    ];
+
     const onSubmit = (data) => {
         console.log(data);
     };
@@ -56,6 +65,42 @@ const UserWindow = () => {
     const handleReset = () => {
         reset();  //  Clears the form
     };
+
+	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+		switch (onclickParams.evtName) {
+            case 'searchByUsername':
+                // setDisplayMsg("Enter Customer Name");
+				// setConfirmDialogEvtName(onclickParams.evtName);
+				// setShowInputModal(true);
+                break;
+            case 'searchByFirstName':
+                // setDisplayMsg("Enter Customer Card No.");
+				// setConfirmDialogEvtName(onclickParams.evtName);
+                // setShowInputModal(true);
+                break;
+            case 'trash':
+                // navigate('/contacts/customers/trash');
+                break;
+            case 'showAll':
+                setFilteredCustomers(customers);
+                setTotalItemsCount(customers.length);
+                break;
+            case 'sortByUsername':
+                // filteredCustomers.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+                // if(currentPage === 1){
+                //     setPagedData(filteredCustomers.slice(0, 0 + pageSize));
+                // }
+                // setCurrentPage(1);
+                break;
+            case 'sortByFirstName':
+                // filteredCustomers.sort((a, b) => a.loyaltyCardNo - b.loyaltyCardNo);
+                // if(currentPage === 1){
+                //     setPagedData(filteredCustomers.slice(0, 0 + pageSize));
+                // }
+                // setCurrentPage(1);
+                break;
+        }
+	}
 
     const formComp = () => (
         <>
@@ -181,16 +226,25 @@ const UserWindow = () => {
                     Save
                 </button>
             </div>
-        </>)
+        </>
+    );
 
     return (
         <div className="container-fluid">
             {/* Header */}
-            <div className="text-center my-5">
-                <h2 className="my-4 display-6 p-3 bg-light-subtle d-inline rounded-4 shadow">
-                    <span className="me-4">Add New User</span>
-                    <CgUserAdd className="text-danger" size={30} />
-                </h2>
+            <div className="container-fluid mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+                <div>
+                    <OffcanvasMenu menuItems={usersOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                </div>
+                <div className="text-center d-flex">
+                    <h2 className="display-6 p-3 mb-0">
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Users</span>
+                        <CgUserAdd className="text-white" size={40} />
+                    </h2>
+                </div>
+                <span className='text-center m-1'>
+                    Add new, edit/update, delete and search for users. Update user permissions/authorities on the fly
+                </span>
             </div>
 
             <div className="row justify-content-center">
@@ -258,4 +312,4 @@ const UserWindow = () => {
     );
 };
 
-export default UserWindow;
+export default UsersWindow;

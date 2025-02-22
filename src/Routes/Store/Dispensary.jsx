@@ -24,7 +24,7 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 
 
-const defaultQtyType = 'unit';
+const defaultQtyType = 'Unit';
 
 const Dispensary = () => {
     const navigate = useNavigate();
@@ -260,7 +260,7 @@ const Dispensary = () => {
         setSelectedStoreQtyType(newType);
         
         if (selectedProduct) {
-            setValue("store_qty", newType === "pkg" ? selectedProduct.pkgQty : selectedProduct.unitQty);
+            setValue("store_qty", newType === "Pkg" ? selectedProduct.pkgQty : selectedProduct.unitQty);
         }
     };
 
@@ -311,9 +311,9 @@ const Dispensary = () => {
                 return;
             }
             //  dispensed qty > store qty (unit or pkg)?
-            if( (data.dispense_qty_type === 'unit' && data.quantity_val > data.product.value.unitQty) 
+            if( (data.dispense_qty_type === 'Unit' && data.quantity_val > data.product.value.unitQty) 
                 ||
-                (data.dispense_qty_type === 'pkg' && data.quantity_val > data.product.value.pkgQty)){
+                (data.dispense_qty_type === 'Pkg' && data.quantity_val > data.product.value.pkgQty)){
                     toast.error('Dispensed quantity is greater than available quantity');
                     return;
             }
@@ -337,7 +337,7 @@ const Dispensary = () => {
             }
 
             // clears the input fields after save
-            setSelectedStoreQtyType('unit');
+            setSelectedStoreQtyType('Unit');
             reset();
         } catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh

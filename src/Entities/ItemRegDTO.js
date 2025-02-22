@@ -38,7 +38,7 @@ export class ItemRegDTO {
     get unitSalesPrice() { return numeral(_itemProps.get(this).unitSalesPrice).format('₦0,0.00'); }
     set unitSalesPrice(unitSalesPrice) { _itemProps.get(this).unitSalesPrice = unitSalesPrice; }
     
-    get unitStockPrice() { return _itemProps.get(this).unitStockPrice }
+    get unitStockPrice() { return numeral(_itemProps.get(this).unitStockPrice).format('₦0,0.00'); }
     set unitStockPrice(unitStockPrice) { _itemProps.get(this).unitStockPrice = unitStockPrice }
 
     get pkgSalesPrice() { return numeral(_itemProps.get(this).pkgSalesPrice).format('₦0,0.00'); }
@@ -119,12 +119,12 @@ export class ItemRegDTO {
             vendorId: this.vendorId,
             tractId: this.tractId,
             status: this.status,
-            cashPurchaseAmount: this.cashPurchaseAmount,
+            cashPurchaseAmount: numeral(this.cashPurchaseAmount).value(),
             expDate: this.expDate,
-            pkgSalesPrice: this.pkgSalesPrice,
-            unitSalesPrice: this.unitSalesPrice,
-            pkgStockPrice: this.pkgStockPrice,
-            unitStockPrice: this.unitStockPrice,
+            pkgSalesPrice: numeral(this.pkgSalesPrice).value(),
+            unitSalesPrice: numeral(this.unitSalesPrice).value(),
+            pkgStockPrice: numeral(this.pkgStockPrice).value(),
+            unitStockPrice: numeral(this.unitStockPrice).value(),
         }
     }
 }

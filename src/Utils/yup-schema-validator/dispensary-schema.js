@@ -11,7 +11,7 @@ const dispensaryPageSchema = yup.object().shape({
     dispense_qty_type: yup
         .string()
         .required("Select an option")
-        .oneOf(["pkg", "unit"], "Invalid quantity type selected"),
+        .oneOf(["Pkg", "Unit"], "Invalid quantity type selected"),
 
     store_qty: yup
         .number()
@@ -21,7 +21,7 @@ const dispensaryPageSchema = yup.object().shape({
     store_qty_type: yup
         .string()
         .required("Select an option")
-        .oneOf(["unit", "pkg"], "Invalid quantity type selected"),
+        .oneOf(["Unit", "Pkg"], "Invalid quantity type selected"),
 });
 
 const editFormSchema = yup.object().shape({
@@ -33,7 +33,7 @@ const editFormSchema = yup.object().shape({
     dispense_qty_type: yup
         .string()
         .required("Select an option")
-        .oneOf(["pkg", "unit"], "Invalid quantity type selected"),
+        .oneOf(["Pkg", "Unit"], "Invalid quantity type selected"),
 });
 
 export { dispensaryPageSchema, editFormSchema };

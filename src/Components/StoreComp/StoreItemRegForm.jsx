@@ -19,6 +19,7 @@ import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
+import numeral from "numeral";
 
 const StoreItemRegForm = (props) => {
 	const { data, fnSave, networkRequest }  = props;
@@ -96,11 +97,11 @@ const StoreItemRegForm = (props) => {
 				setValue("item_name", data.itemName);
 				setValue("total_qty", data.qty);
 				setValue("qty_per_pkg", data.qtyPerPkg);
-				setValue("unit_stock", data.unitStockPrice);
-				setValue("unit_sales", data.unitSalesPrice);
-				setValue("pkg_stock_price", data.pkgStockPrice);
-				setValue("pkg_sales_price", data.pkgSalesPrice);
-				setValue("amount_paid", data.cashPurchaseAmount);
+				setValue("unit_stock", numeral(data.unitStockPrice).value());
+				setValue("unit_sales", numeral(data.unitSalesPrice).value());
+				setValue("pkg_stock_price", numeral(data.pkgStockPrice).value());
+				setValue("pkg_sales_price", numeral(data.pkgSalesPrice).value());
+				setValue("amount_paid",numeral( data.cashPurchaseAmount).value());
 				setValue("section", {value: data.tract.id, label: data.tract.name});
 				setValue("qty_type", {value: data.pkg.id, label: data.pkg.name});
 				setValue("vendor", {value: data.vendor.id, label: data.vendor.name});

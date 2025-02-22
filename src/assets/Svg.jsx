@@ -15,6 +15,11 @@ const SVG = {
 	customers_filled_white: new URL("./Svg/customers_filled_white.svg", import.meta.url).href,
 	vendor_one_filled_white: new URL("./Svg/vendor_one_filled_white.svg", import.meta.url).href,
 	vendor_two_filled_white: new URL("./Svg/vendor_two_filled_white.svg", import.meta.url).href,
+	branch_svg_repo: new URL("./Svg/branch-svgrepo-com.svg", import.meta.url).href,
+	branch_colored_one: new URL("./Svg/branch_colored_one.svg", import.meta.url).href,
+	branch_colored_two: new URL("./Svg/branch_colored_two.svg", import.meta.url).href,
+	literal_branch_colored: new URL("./Svg/literal_branch_colored.svg", import.meta.url).href,
+
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,
 	svg_2: new URL("./Svg/svg_2.svg", import.meta.url).href,

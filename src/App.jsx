@@ -15,7 +15,7 @@ import Dispensary from './Routes/Store/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
 import { ProtectedRoute } from './Routes/ProtectedRoute';
 import UnvenrifiedDispensary from "./Routes/Dashboard/UnvenrifiedDispensary";
-import UserWindow from "./Routes/Dashboard/UserWindow";
+import UsersWindow from "./Routes/Dashboard/Users/UsersWindow";
 import CustomersWindow from './Routes/Contacts/CustomersWindow';
 import SalesReceiptWindow from './Routes/Dashboard/SalesReceiptWindow';
 import LedgerDisplay from './Routes/LedgerDisplay';
@@ -25,6 +25,8 @@ import VendorsWindow from "./Routes/Contacts/VendorsWindow";
 import ContactLedgerDisplay from "./Routes/Contacts/ContactLedgerDisplay";
 import ContactTrash from "./Routes/Contacts/ContactTrash";
 import InvoiceWindow from "./Routes/Dashboard/InvoiceWindow";
+import OutpostsWindow from "./Routes/Outposts/OutpostsWindow";
+import OutpostTrash from "./Routes/Outposts/OutpostTrash";
 
 function App() {
 	return (
@@ -54,13 +56,17 @@ function App() {
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
+				<Route path="/outposts" element={<ProtectedRoute />}>
+					<Route path={"trash"} element={<OutpostTrash />} />
+					<Route path={""} element={<OutpostsWindow />} />
+				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
 					<Route path={"ledgers/view"} element={<LedgerDisplay />} />
 					<Route path="" element={<PageNotFound />} />
 				</Route>
 				<Route path="/dashboard" element={<ProtectedRoute />}>
-					<Route path={"users"} element={<UserWindow />} />
+					<Route path={"users"} element={<UsersWindow />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
 					<Route path={"invoices"} element={<InvoiceWindow />} />
 					<Route path={""} element={<Dashboard />} />

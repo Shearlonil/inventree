@@ -6,18 +6,16 @@ import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import vedorController from '../../Controllers/vendor-controller';
-import customerController from '../../Controllers/customer-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
-import { Contact } from '../../Entities/Contact';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
+import outpostController from '../../Controllers/outpost-controller';
+import { Outpost } from '../../Entities/Outpost';
 
-const ContactTrash = () => {
+const OutpostTrash = () => {
     const navigate = useNavigate();
-    const { contact } = useParams();
             
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -42,41 +40,31 @@ const ContactTrash = () => {
     const [totalItemsCount, setTotalItemsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     
-    const [contacts, setContacts] = useState([]);
+    const [outposts, setOutposts] = useState([]);
         
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
-    const [filteredContacts, setFilteredContacts] = useState([]);
+    const [filteredOutposts, setFilteredOutposts] = useState([]);
 
-    const contactsOffCanvasMenu = [
+    const outpostsOffCanvasMenu = [
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
 
     useEffect( () => {
-        if(user.hasAuth('CONTACTS_WINDOWS')){
-            initialize();
-        }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
-            navigate('/404');
-        }
-    }, [contact]);
+        initialize();
+    }, []);
 
 	const initialize = async () => {
 		try {
-            let response;
-            if(contact === 'vendors'){
-                response = await vedorController.fetchAllNonActive();
-            }else {
-                response = await customerController.fetchAllNonActive();
-            }
+            let response = await outpostController.trashedOutpost();
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
-                response.data.forEach( contact => arr.push(new Contact(contact)) );
-				setContacts(arr);
-                setFilteredContacts(arr);
+                response.data.forEach( outpost => arr.push(new Outpost(outpost)) );
+				setOutposts(arr);
+                setFilteredOutposts(arr);
 				setTotalItemsCount(response.data.length);
             }
 		} catch (error) {
@@ -118,8 +106,8 @@ const ContactTrash = () => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                arr = contacts.filter(contact => contact.name.toLowerCase().includes(str));
-                setFilteredContacts(arr);
+                arr = outposts.filter(outpost => outpost.name.toLowerCase().includes(str));
+                setFilteredOutposts(arr);
                 setTotalItemsCount(arr.length);
                 break;
         }
@@ -145,13 +133,13 @@ const ContactTrash = () => {
 				setShowInputModal(true);
                 break;
             case 'showAll':
-                setFilteredContacts(contacts);
-                setTotalItemsCount(contacts.length);
+                setFilteredOutposts(outposts);
+                setTotalItemsCount(outposts.length);
                 break;
             case 'sortByName':
-                filteredContacts.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+                filteredOutposts.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
                 if(currentPage === 1){
-                    setPagedData(filteredContacts.slice(0, 0 + pageSize));
+                    setPagedData(filteredOutposts.slice(0, 0 + pageSize));
                 }
                 setCurrentPage(1);
                 break;
@@ -161,7 +149,7 @@ const ContactTrash = () => {
     const setPageChanged = async (pageNumber) => {
 		setCurrentPage(pageNumber);
     	const startIndex = (pageNumber - 1) * pageSize;
-      	setPagedData(filteredContacts.slice(startIndex, startIndex + pageSize));
+      	setPagedData(filteredOutposts.slice(startIndex, startIndex + pageSize));
     };
 	
 	const handleConfirmOK = async () => {
@@ -170,13 +158,13 @@ const ContactTrash = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    contact === 'vendors' ? await vedorController.restoreVendor(entityToEdit.id) : await customerController.restoreCustomer(entityToEdit.id) ;
+                    await outpostController.restoreOutpost(entityToEdit.id);
 					//	find index position of restored item in items arr
-					let indexPos = filteredContacts.findIndex(i => i.id == entityToEdit.id);
+					let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
 					if(indexPos > -1){
 						//	cut out restored item found at index position
-						filteredContacts.splice(indexPos, 1);
-						setFilteredContacts([...filteredContacts]);
+						filteredOutposts.splice(indexPos, 1);
+						setFilteredOutposts([...filteredOutposts]);
 						/*  MAINTAIN CURRENT PAGE.  */
 						setTotalItemsCount(totalItemsCount - 1);
                         if(pagedData.length <= 1){
@@ -184,14 +172,14 @@ const ContactTrash = () => {
                                 setCurrentPage(currentPage - 1);
                             }
                         }
-						toast.success('Contact successfully restored');
+						toast.success('Outpost successfully restored');
 					}
-                    //  update in contacts arr also
-                    indexPos = contacts.findIndex(i => i.id === data.id);
+                    //  update in outposts arr also
+                    indexPos = outposts.findIndex(i => i.id === data.id);
                     if(indexPos > -1){
                         //	replace old item found at index position in items array with edited one
-                        contacts.splice(indexPos, 1);
-                        setContacts([...contacts]);
+                        outposts.splice(indexPos, 1);
+                        setOutposts([...outposts]);
                     }
 					break;
 			}
@@ -220,9 +208,9 @@ const ContactTrash = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Name', 'Phone No', 'Address', 'E-Mail', 'Card No.', 'Balance', 'Options'],
+        headers: ['Outpost Name', 'Date', 'Creator', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'phoneNo', 'address', 'email', 'loyaltyCardNo', 'ledgerBalance'],
+        objectProps: ['name', 'creationDate', 'username'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -235,16 +223,16 @@ const ContactTrash = () => {
         <div style={{minHeight: '75vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
                 <div>
-                    <OffcanvasMenu menuItems={contactsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                    <OffcanvasMenu menuItems={outpostsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash ({contact === 'vendors' ? 'Vendors' : 'Customers'})</span>
-                        <img src={SVG.customers_filled_white} style={{ width: "50px", height: "50px" }} />
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash (Outposts)</span>
+                        <img src={SVG.branch_colored_two} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View, Restore deleted {contact === 'vendors' ? 'Vendors' : 'Customers'}.
+                    View, Restore deleted Outposts.
                 </span>
             </div>
 
@@ -277,4 +265,4 @@ const ContactTrash = () => {
     );
 };
 
-export default ContactTrash;
+export default OutpostTrash;

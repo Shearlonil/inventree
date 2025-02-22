@@ -333,7 +333,7 @@ const Restock = () => {
 					break;
 				case 'saveRecToSales':
 				case 'saveRecToStore':
-					setDropDownMsg("Please select Outpost")
+					setDropDownMsg("Please select Outpost");
 					setShowDropDownModal(true);
 					break;
 				case "deleteStockRec":

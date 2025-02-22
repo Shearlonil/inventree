@@ -115,23 +115,23 @@ const Dashboard = () => {
                             </div>
                         </div>
 
-                        {user.hasAuth('CREATE_ACCOUNT') && <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('post-a-job')} style={{minHeight: '110px'}}>
+                        <div className="col-md-4 col-sm-12">
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/restock')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
                                             style={{ width: "50px", height: "40px" }}
-                                            src={SVG.add_user}
+                                            src={SVG.stock_rec_monochrome}
                                             alt=""
                                         />
                                     </div>
                                     <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">Add Users</span>
-                                        <span className="text-muted">Create users and add necessary account priviliges.</span>
+                                        <span className="fs-6 noto-sans-font fw-bold">Unverified Restock Entries</span>
+                                        <span className="text-muted">View ongoing/unverified restock records.</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>}
+                        </div>
 
                         {user.hasAuth('USERS_WINDOW') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('/dashboard/users')} style={{minHeight: '110px'}}>
@@ -164,24 +164,6 @@ const Dashboard = () => {
                                     <div className="d-flex flex-column text-start">
                                         <span className="fs-6 noto-sans-font fw-bold">Unverified Dispensary</span>
                                         <span className="text-muted">View ongoing/unverified dispensary records.</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/restock')} style={{minHeight: '110px'}}>
-                                <div className="d-flex align-items-center gap-3">
-                                    <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
-                                        <img
-                                            style={{ width: "50px", height: "40px" }}
-                                            src={SVG.stock_rec_monochrome}
-                                            alt=""
-                                        />
-                                    </div>
-                                    <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">Unverified Restock Entries</span>
-                                        <span className="text-muted">View ongoing/unverified restock records.</span>
                                     </div>
                                 </div>
                             </div>
