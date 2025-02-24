@@ -27,6 +27,8 @@ import ContactTrash from "./Routes/Contacts/ContactTrash";
 import InvoiceWindow from "./Routes/Dashboard/InvoiceWindow";
 import OutpostsWindow from "./Routes/Outposts/OutpostsWindow";
 import OutpostTrash from "./Routes/Outposts/OutpostTrash";
+import UserTrash from "./Routes/Dashboard/Users/UserTrash";
+import UserDetails from "./Routes/Dashboard/Users/UserDetails";
 
 function App() {
 	return (
@@ -67,6 +69,8 @@ function App() {
 				</Route>
 				<Route path="/dashboard" element={<ProtectedRoute />}>
 					<Route path={"users"} element={<UsersWindow />} />
+					<Route path={"users/trash"} element={<UserTrash />} />
+					<Route path={":username/details"} element={<UserDetails />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
 					<Route path={"invoices"} element={<InvoiceWindow />} />
 					<Route path={""} element={<Dashboard />} />

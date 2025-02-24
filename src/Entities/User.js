@@ -3,7 +3,7 @@ const _userProps = new WeakMap();
 export default class User {
     constructor(decodedToken) {
         if (decodedToken) {
-            const { owner, sub, authorities } = decodedToken;
+            const { owner, sub, level, authorities } = decodedToken;
             //  split roles into arrays of authorities first
             const auths = authorities.split(',');
             _userProps.set(this, {
@@ -13,9 +13,12 @@ export default class User {
                 lastName: owner.lastName,
                 status: owner.status,
                 sex: owner.sex,
+                level,
                 regDate: owner.regDate,
                 authorities: auths
             });
+        }else {
+            _userProps.set(this, {});
         }
     }
 
@@ -26,6 +29,10 @@ export default class User {
     get username() { return _userProps.get(this).username }
     
     set username(username) { _userProps.get(this).username = username }
+
+    get password() { return _userProps.get(this).password }
+    
+    set password(password) { _userProps.get(this).password = password }
 
     get firstName() { return _userProps.get(this).firstName }
     
@@ -51,6 +58,14 @@ export default class User {
     
     set regDate(regDate) { _userProps.get(this).regDate = regDate }
 
+    get phoneNo() { return _userProps.get(this).phoneNo }
+    
+    set phoneNo(phoneNo) { _userProps.get(this).phoneNo = phoneNo }
+
+    get email() { return _userProps.get(this).email }
+    
+    set email(email) { _userProps.get(this).email = email }
+
     get level() { return _userProps.get(this).level }
     
     set level(level) { _userProps.get(this).level = level }
@@ -61,5 +76,20 @@ export default class User {
 
     hasAuth(authName){
         return _userProps.get(this).authorities.includes(authName.toUpperCase());
+    }
+
+    toJSON() {
+        return {
+            id: this.id,
+            username: this.username,
+            password: this.password,
+            firstName: this.firstName,
+            lastName: this.lastName,
+            phoneNo: this.phoneNo,
+            email: this.email,
+            status: this.status,
+            sex: this.sex,
+            level: this.level,
+        }
     }
 }

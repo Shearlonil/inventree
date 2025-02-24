@@ -19,6 +19,10 @@ const SVG = {
 	branch_colored_one: new URL("./Svg/branch_colored_one.svg", import.meta.url).href,
 	branch_colored_two: new URL("./Svg/branch_colored_two.svg", import.meta.url).href,
 	literal_branch_colored: new URL("./Svg/literal_branch_colored.svg", import.meta.url).href,
+	profile_lock_white: new URL("./Svg/profile_lock_white.svg", import.meta.url).href,
+	profile_lock_black: new URL("./Svg/profile_lock_black.svg", import.meta.url).href,
+	user_permission_black: new URL("./Svg/user_permission_black.svg", import.meta.url).href,
+	user_permission_white: new URL("./Svg/user_permission_white.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,

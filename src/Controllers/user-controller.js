@@ -12,31 +12,34 @@ const findById = async (id) => {
     });
 }
 
-const trashedUser = async () => {
+const findUserAuths = async (username) => {
+    return await httpService.get(`/api/users/authorities/${username}`, {
+        params: {
+            username,
+        }
+    });
+}
+
+const trashedUsers = async () => {
     return await httpService.get(`/api/trash/users`);
 }
 
-const create = async (name) => {
-    return await httpService.post(`/api/users/create`, null, {
-        params: {
-            name,
-        }
-    });
+const create = async (dtoUser) => {
+    return await httpService.post(`/api/users/create`, dtoUser);
 }
 
-const deleteUser = async (id, destination) => {
+const deleteUser = async (username) => {
     return await httpService.delete(`/api/users/delete`, {
         params: {
-            destination,
-            id
+            username
         }
     });
 }
 
-const restoreUser = async (id) => {
+const restoreUser = async (username) => {
     return await httpService.put(`/api/trash/users/restore`, null, {
         params: {
-            id,
+            username,
         }
     });
 }
@@ -52,7 +55,8 @@ const updatePassword = async (pw) => {
 export default {
     findAllActive,
     findById,
-    trashedUser,
+    findUserAuths,
+    trashedUsers,
     create,
     deleteUser,
     restoreUser,

@@ -3,6 +3,7 @@ import { Modal } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaStoreAlt } from "react-icons/fa";
+import { MdAddBusiness } from "react-icons/md";
 
 import StoreItemRegForm from "../../Components/StoreComp/StoreItemRegForm";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
@@ -60,7 +61,6 @@ const StoreItemReg = () => {
     ];
 
 	const storeItemRegOffCanvasMenu = [
-		{ label: "Input form", onClickParams: {evtName: 'showFormInput'} },
 		{ label: "Save To Sales/Shelf", onClickParams: {evtName: 'saveRecToSales'} },
 		{ label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
 		{ label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
@@ -159,6 +159,8 @@ const StoreItemReg = () => {
 		setEntityToEdit(null);
 		setDestination(null);
 	}
+
+    const handleShowFormModal = () => setShowFormModal(true);
 
 	//	setup table data from fetched stock record
 	const buildTableData = (arr = []) => {
@@ -264,9 +266,6 @@ const StoreItemReg = () => {
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
-            case 'showFormInput':
-				setShowFormModal(true);
-                break;
             case 'saveRecToSales':
 				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''} to Sales/Shelf? Action cannot be undone`);
 				setConfirmDialogEvtName(onclickParams.evtName);
@@ -418,7 +417,7 @@ const StoreItemReg = () => {
     };
 
 	return (
-		<>
+		<div style={{minHeight: '60vh'}}>
 			<div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center ">
 				<div>
 					<OffcanvasMenu menuItems={storeItemRegOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
@@ -429,7 +428,10 @@ const StoreItemReg = () => {
 						<FaStoreAlt className="text-white" size={"30px"} />
 					</h2>
 				</div>
-                <p className='text-center m-2'>New item registration page with full details</p>
+                <p className='text-center m-2'>
+					New item registration page with full details.
+					Please Note: STORE WINDOW PERMISSION IS REQUIRED TO WORK ON THIS PAGE
+				</p>
 			</div>
 			<div className="container-fluid">
 				<div className="row">
@@ -466,6 +468,13 @@ const StoreItemReg = () => {
 				message={dropDownMsg}
 				options={outpostOptions}
 			/>
+			<div className="d-md-none" style={{ position: "fixed", bottom: "40px", right: "30px", cursor: "pointer", zIndex: 999}}>
+				<div variant="dark"
+					style={{ boxShadow: '4px 4px 4px #9E9E9E', maxWidth: '50px' }}
+					className="m-2 p-2 rounded bg-success text-white rounded-5 d-flex justify-content-center" onClick={handleShowFormModal}>
+					<MdAddBusiness className="text-white" size={'25px'} />
+				</div>
+			</div>
 
 			<Modal show={showFormModal} onHide={handleCloseModal}>
 				<Modal.Header closeButton>
@@ -476,7 +485,7 @@ const StoreItemReg = () => {
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>
-		</>
+		</div>
 	);
 };
 

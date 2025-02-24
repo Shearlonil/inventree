@@ -13,6 +13,9 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 const UnvenrifiedDispensary = () => {
     const navigate = useNavigate();
 
+    const { authUser, handleRefresh, logout } = useAuth();
+    const user = authUser();
+
     const [networkRequest, setNetworkRequest] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState(null);
 
@@ -22,9 +25,6 @@ const UnvenrifiedDispensary = () => {
   
     //  data returned from network fetch
     const [data, setData] = useState([]);
-
-    const { authUser, handleRefresh, logout } = useAuth();
-    const user = authUser();
     
     useEffect(() => {
         initialize();

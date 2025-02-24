@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
+import { MdAddBusiness } from "react-icons/md";
 
 import storeController from '../../Controllers/store-controller';
 import genericController from '../../Controllers/generic-controller';
@@ -62,7 +63,6 @@ const Restock = () => {
     ];
 
     const storeItemRegOffCanvasMenu = [
-        { label: "Input form", onClickParams: {evtName: 'showFormInput'} },
         { label: "Save To Sales/Shelf", onClickParams: {evtName: 'saveRecToSales'} },
         { label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
         { label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
@@ -176,6 +176,8 @@ const Restock = () => {
 		setDestination(null);
 	}
 
+    const handleShowFormModal = () => setShowFormModal(true);
+
 	const commitStockRecord = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
@@ -230,9 +232,6 @@ const Restock = () => {
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
-            case 'showFormInput':
-				setShowFormModal(true);
-                break;
             case 'saveRecToSales':
 				setDisplayMsg(`Save record with ${items.length} item${items.length > 1 ? 's' : ''} to Sales/Shelf? Action cannot be undone`);
 				setConfirmDialogEvtName(onclickParams.evtName);
@@ -446,7 +445,10 @@ const Restock = () => {
                         <FaStoreAlt className="text-white" size={"30px"} />
                     </h2>
                 </div>
-                <p className='text-center m-2'>Please note, sales prices set here will reflect on old stock!</p>
+                <p className='text-center m-2'>
+					Please note, sales prices set here will reflect on old stock!
+					ALSO STORE WINDOW PERMISSION IS REQUIRED TO WORK ON THIS PAGE
+				</p>
             </div>
             <div className="container-fluid">
                 <div className="row">
@@ -483,6 +485,13 @@ const Restock = () => {
                 message={dropDownMsg}
                 options={outpostOptions}
             />
+			<div className="d-md-none" style={{ position: "fixed", bottom: "40px", right: "30px", cursor: "pointer", zIndex: 999}}>
+				<div variant="dark"
+					style={{ boxShadow: '4px 4px 4px #9E9E9E', maxWidth: '50px' }}
+					className="m-2 p-2 rounded bg-success text-white rounded-5 d-flex justify-content-center" onClick={handleShowFormModal}>
+					<MdAddBusiness className="text-white" size={'25px'} />
+				</div>
+			</div>
 
             <Modal show={showFormModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>

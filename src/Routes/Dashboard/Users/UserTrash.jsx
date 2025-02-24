@@ -2,20 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import OffcanvasMenu from '../../Components/OffcanvasMenu';
-import SVG from '../../assets/Svg';
-import { useAuth } from '../../app-context/auth-user-context';
-import handleErrMsg from '../../Utils/error-handler';
-import TableMain from '../../Components/TableView/TableMain';
-import PaginationLite from '../../Components/PaginationLite';
-import ReactMenu from '../../Components/ReactMenu';
-import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
-import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import outpostController from '../../Controllers/outpost-controller';
-import { Outpost } from '../../Entities/Outpost';
-import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
+import OffcanvasMenu from '../../../Components/OffcanvasMenu';
+import SVG from '../../../assets/Svg';
+import { useAuth } from '../../../app-context/auth-user-context';
+import handleErrMsg from '../../../Utils/error-handler';
+import userController from '../../../Controllers/user-controller';
+import TableMain from '../../../Components/TableView/TableMain';
+import PaginationLite from '../../../Components/PaginationLite';
+import ReactMenu from '../../../Components/ReactMenu';
+import User from '../../../Entities/User';
+import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
+import InputDialog from '../../../Components/DialogBoxes/InputDialog';
+import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
 
-const OutpostTrash = () => {
+const UserTrash = () => {
     const navigate = useNavigate();
             
     const { handleRefresh, logout, authUser } = useAuth();
@@ -41,32 +41,61 @@ const OutpostTrash = () => {
     const [totalItemsCount, setTotalItemsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     
-    const [outposts, setOutposts] = useState([]);
+    const [users, setUsers] = useState([]);
         
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
-    const [filteredOutposts, setFilteredOutposts] = useState([]);
+    const [filteredUsers, setFilteredUsers] = useState([]);
 
-    const outpostsOffCanvasMenu = [
+    const usersOffCanvasMenu = [
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
+        { label: "Users", onClickParams: {evtName: 'usersPage'} },
     ];
 
     useEffect( () => {
-        initialize();
+        if(user.hasAuth('USERS_WINDOW')){
+            initialize();
+        }else {
+            toast.error("Account doesn't support viewing this page. Please contanct your admin");
+            navigate('/404');
+        }
     }, []);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            let response = await outpostController.trashedOutpost();
+            let response = await userController.trashedUsers();
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
-                response.data.forEach( outpost => arr.push(new Outpost(outpost)) );
-				setOutposts(arr);
-                setFilteredOutposts(arr);
+                response.data.forEach( user => {
+                    const u = new User();
+                    //  u.id = user.id;
+                    u.username = user.username;
+                    u.firstName = user.firstName;
+                    u.lastName = user.lastName;
+                    u.sex = user.sex;
+                    u.phoneNo = user.phoneNo;
+                    u.email = user.email;
+                    u.regDate = user.dateOfReg;
+                    //  u.level = user.level;
+                    switch (user.level) {
+                        case 1:
+                            u.level = 'Admin';
+                            break;
+                        case 2:
+                            u.level = 'Supervisor';
+                            break;
+                        case 3:
+                            u.level = 'Sales Assistant';
+                            break;
+                    }
+                    arr.push(u);
+                } );
+				setUsers(arr);
+                setFilteredUsers(arr);
 				setTotalItemsCount(response.data.length);
             }
             setNetworkRequest(false);
@@ -109,9 +138,14 @@ const OutpostTrash = () => {
 	const handleInputOK = async (str) => {
         let arr = [];
 		switch (confirmDialogEvtName) {
-            case 'searchByName':
-                arr = outposts.filter(outpost => outpost.name.toLowerCase().includes(str));
-                setFilteredOutposts(arr);
+            case 'searchByUsername':
+                arr = users.filter(user => user.username.toLowerCase().includes(str));
+                setFilteredUsers(arr);
+                setTotalItemsCount(arr.length);
+                break;
+            case 'searchByFirstName':
+                arr = users.filter(user => user.firstName.toLowerCase().includes(str));
+                setFilteredUsers(arr);
                 setTotalItemsCount(arr.length);
                 break;
         }
@@ -122,7 +156,7 @@ const OutpostTrash = () => {
             case 'restore':
 				//	ask if sure to delete
 				setEntityToEdit(entity);
-				setDisplayMsg(`Restore ${entity.name}?`);
+				setDisplayMsg(`Restore ${entity.username}?`);
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setShowConfirmModal(true);
                 break;
@@ -131,19 +165,27 @@ const OutpostTrash = () => {
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
-            case 'searchByName':
-                setDisplayMsg("Enter Name");
+            case 'searchByUsername':
+                setDisplayMsg("Enter Username");
 				setConfirmDialogEvtName(onclickParams.evtName);
 				setShowInputModal(true);
                 break;
+            case 'searchByFirstName':
+                setDisplayMsg("Enter First name.");
+				setConfirmDialogEvtName(onclickParams.evtName);
+                setShowInputModal(true);
+                break;
+            case 'usersPage':
+                navigate('/dashboard/users');
+                break;
             case 'showAll':
-                setFilteredOutposts(outposts);
-                setTotalItemsCount(outposts.length);
+                setFilteredUsers(users);
+                setTotalItemsCount(users.length);
                 break;
             case 'sortByName':
-                filteredOutposts.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
+                filteredUsers.sort((a, b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0));
                 if(currentPage === 1){
-                    setPagedData(filteredOutposts.slice(0, 0 + pageSize));
+                    setPagedData(filteredUsers.slice(0, 0 + pageSize));
                 }
                 setCurrentPage(1);
                 break;
@@ -153,7 +195,7 @@ const OutpostTrash = () => {
     const setPageChanged = async (pageNumber) => {
 		setCurrentPage(pageNumber);
     	const startIndex = (pageNumber - 1) * pageSize;
-      	setPagedData(filteredOutposts.slice(startIndex, startIndex + pageSize));
+      	setPagedData(filteredUsers.slice(startIndex, startIndex + pageSize));
     };
 	
 	const handleConfirmOK = async () => {
@@ -162,13 +204,13 @@ const OutpostTrash = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    await outpostController.restoreOutpost(entityToEdit.id);
+                    await userController.restoreUser(entityToEdit.username);
 					//	find index position of restored item in items arr
-					let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
+					let indexPos = filteredUsers.findIndex(o => o.username == entityToEdit.username);
 					if(indexPos > -1){
 						//	cut out restored item found at index position
-						filteredOutposts.splice(indexPos, 1);
-						setFilteredOutposts([...filteredOutposts]);
+						filteredUsers.splice(indexPos, 1);
+						setFilteredUsers([...filteredUsers]);
 						/*  MAINTAIN CURRENT PAGE.  */
 						setTotalItemsCount(totalItemsCount - 1);
                         if(pagedData.length <= 1){
@@ -178,12 +220,12 @@ const OutpostTrash = () => {
                         }
 						toast.success('Outpost successfully restored');
 					}
-                    //  update in outposts arr also
-                    indexPos = outposts.findIndex(i => i.id === data.id);
+                    //  update in users arr also
+                    indexPos = users.findIndex(i => i.username === data.username);
                     if(indexPos > -1){
                         //	replace old item found at index position in items array with edited one
-                        outposts.splice(indexPos, 1);
-                        setOutposts([...outposts]);
+                        users.splice(indexPos, 1);
+                        setUsers([...users]);
                     }
 					break;
 			}
@@ -209,12 +251,12 @@ const OutpostTrash = () => {
 			}
 		}
 	}
-    
+            
     const tableProps = {
         //	table header
-        headers: ['Outpost Name', 'Date', 'Creator', 'Options'],
+        headers: ['User Name', "First Name", "Last Name", "Sex", 'Phone No', 'E-Mail', 'Level', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'creationDate', 'username'],
+        objectProps: ['username', 'firstName', 'lastName', 'sex', 'phoneNo', 'email', 'level'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -227,16 +269,16 @@ const OutpostTrash = () => {
         <div style={{minHeight: '75vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
                 <div>
-                    <OffcanvasMenu menuItems={outpostsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                    <OffcanvasMenu menuItems={usersOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash (Outposts)</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash (users)</span>
                         <img src={SVG.branch_colored_two} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View, Restore deleted Outposts.
+                    View, Restore deleted users.
                 </span>
             </div>
 
@@ -273,4 +315,4 @@ const OutpostTrash = () => {
     );
 };
 
-export default OutpostTrash;
+export default UserTrash;
