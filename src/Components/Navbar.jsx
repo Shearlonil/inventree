@@ -421,13 +421,12 @@ function NavBar() {
 						{user && (
 							<Nav.Link
 								className={`navbar-nav nav-item p-2 link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold ${
-								isLoggingOut && "disabled"
-								}`}
+									isLoggingOut && "disabled"} ${user && 'text-danger'}`}
 								eventKey={8}
 								onClick={() => confirmLogout()}
 							>
 								{isLoggingOut && ( <ThreeDotLoading color="#0000ff" size="small" /> )}
-								{!isLoggingOut && `Logout`}
+								{user && `Logout`}
 							</Nav.Link>
 						)}
 					</Navbar.Collapse>

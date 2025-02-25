@@ -128,7 +128,7 @@ const OutpostsWindow = () => {
                     setConfirmDialogEvtName(onclickParams.evtName);
                     setShowConfirmModal(true);
                 }else {
-                    toast.error("Account doesn't support this operation. Please contanct your supervisor");
+                    toast.error("Account doesn't support this operation. Please contact your supervisor");
                     return;
                 }
                 break;
@@ -143,7 +143,7 @@ const OutpostsWindow = () => {
                     setDisplayMsg(`Enter Unique Outpost name`);
                     setShowInputModal(true);
                 }else {
-                    toast.error("Account doesn't support this operation. Please contanct your supervisor");
+                    toast.error("Account doesn't support this operation. Please contact your supervisor");
                     return;
                 }
                 break;
@@ -180,7 +180,7 @@ const OutpostsWindow = () => {
                     setDisplayMsg(`Enter Unique Outpost name`);
                     setShowInputModal(true);
                 }else {
-                    toast.error("Account doesn't support this operation. Please contanct your supervisor");
+                    toast.error("Account doesn't support this operation. Please contact your supervisor");
                     return;
                 }
                 break;

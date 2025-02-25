@@ -58,7 +58,7 @@ const UserTrash = () => {
         if(user.hasAuth('USERS_WINDOW')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your admin");
+            toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/404');
         }
     }, []);
@@ -274,7 +274,7 @@ const UserTrash = () => {
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash (users)</span>
-                        <img src={SVG.branch_colored_two} style={{ width: "50px", height: "50px" }} />
+                        <img src={SVG.users_slash_filled} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>

@@ -12,6 +12,14 @@ const findById = async (id) => {
     });
 }
 
+const findByUsername = async (username) => {
+    return await httpService.get(`/api/users/find`, {
+        params: {
+            username,
+        }
+    });
+}
+
 const findUserAuths = async (username) => {
     return await httpService.get(`/api/users/authorities/${username}`, {
         params: {
@@ -44,21 +52,38 @@ const restoreUser = async (username) => {
     });
 }
 
+const updateUserAuth = async (username, status, authCode) => {
+    return await httpService.put(`/api/authorities/update`, null, {
+        params: {
+            username,
+            status, 
+            authCode
+        }
+    });
+}
+
 const updateProfile = async (profile) => {
     return await httpService.put(`/api/users/profile/update`, profile);
 }
 
-const updatePassword = async (pw) => {
-    return await httpService.put(`/api/users/password/update`, pw);
+const updatePassword = async (password, confirmPassword, currentPassword) => {
+    return await httpService.put(`/api/users/password/update`, {
+        password,
+        confirmPassword,
+        currentPassword
+    });
 }
 
 export default {
     findAllActive,
     findById,
+    findByUsername,
     findUserAuths,
     trashedUsers,
     create,
     deleteUser,
     restoreUser,
+    updateUserAuth,
     updateProfile,
+    updatePassword,
 }

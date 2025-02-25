@@ -1,12 +1,12 @@
 import * as yup from "yup";
 import React, { useEffect, useState } from "react";
-import logo from "../assets/Img/logo.png";
 import { Form } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
+import logo from "../assets/Img/logo.png";
 import ErrorMessage from "../Components/ErrorMessage";
 import { useAuth } from "../app-context/auth-user-context";
 import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicator";

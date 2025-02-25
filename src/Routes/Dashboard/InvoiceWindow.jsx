@@ -64,6 +64,13 @@ const InvoiceWindow = () => {
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+    
+    useEffect( () => {
+        if(!user.hasAuth('INVOICE_WINDOW')){
+            toast.error("Account doesn't support viewing this page. Please contact your admin");
+            navigate('/404');
+        }
+    }, []);
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {

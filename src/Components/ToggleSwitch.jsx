@@ -1,19 +1,20 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Toggle } from 'rsuite'
 
 const ToggleSwitch = (props) => {
-    const { checkedTxt, unCheckedTxt, ticked = false, data, loading = false, onChangeFn } = props;
+    const { checkedTxt, unCheckedTxt, ticked = false, data, onChangeFn } = props;
 
     const [checked, setChecked] = useState(ticked);
-    
-    useEffect(() => {
-    }, [checked]);
+    const [loading, setLoading] = useState(false);
 
     const toggleChange = async (checked, data) => {
         try {
-            setChecked(checked);
+            setLoading(true);
             await onChangeFn(checked, data);
+            setChecked(checked);
+            setLoading(false);
         } catch (error) {
+            setLoading(false);
             //  do nothing here. just don't set the checked prop
         }
     }

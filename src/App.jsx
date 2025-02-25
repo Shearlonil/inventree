@@ -8,7 +8,6 @@ import Test from "./Routes/Test";
 import PurchasesWindow from "./Routes/PurchasesWindow";
 import Finance from "./Routes/Finance";
 import Login from "./Routes/Login";
-import Dashboard from "./Routes/Dashboard";
 import UnverifiedStockRec from "./Routes/Dashboard/UnverifiedStockRec";
 import Restock from './Routes/Store/Restock';
 import Dispensary from './Routes/Store/Dispensary';
@@ -29,6 +28,9 @@ import OutpostsWindow from "./Routes/Outposts/OutpostsWindow";
 import OutpostTrash from "./Routes/Outposts/OutpostTrash";
 import UserTrash from "./Routes/Dashboard/Users/UserTrash";
 import UserDetails from "./Routes/Dashboard/Users/UserDetails";
+import Dashboard from "./Routes/Dashboard/Dashboard";
+import ChangePassword from "./Routes/Dashboard/Users/ChangePassword";
+import ProfileUpdate from "./Routes/Dashboard/Users/ProfileUPdate";
 
 function App() {
 	return (
@@ -69,6 +71,8 @@ function App() {
 				</Route>
 				<Route path="/dashboard" element={<ProtectedRoute />}>
 					<Route path={"users"} element={<UsersWindow />} />
+					<Route path={":username/profile"} element={<ProfileUpdate />} />
+					<Route path={"users/password/change"} element={<ChangePassword />} />
 					<Route path={"users/trash"} element={<UserTrash />} />
 					<Route path={":username/details"} element={<UserDetails />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />

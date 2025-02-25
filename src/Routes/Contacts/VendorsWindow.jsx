@@ -81,7 +81,7 @@ const VendorsWindow = () => {
         if(user.hasAuth('CONTACTS_WINDOWS')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
     }, []);

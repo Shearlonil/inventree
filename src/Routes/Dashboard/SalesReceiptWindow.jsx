@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
@@ -68,6 +68,13 @@ const SalesReceiptWindow = () => {
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+    
+    useEffect( () => {
+        if(!user.hasAuth('RECEIPT_WINDOW')){
+            toast.error("Account doesn't support viewing this page. Please contact your admin");
+            navigate('/404');
+        }
+    }, []);
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {

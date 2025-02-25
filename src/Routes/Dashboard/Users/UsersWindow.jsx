@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import CryptoJS from 'crypto-js'
 
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
-import DropDownDialog from "../../../Components/DialogBoxes/DropDownDialog";
 import OffcanvasMenu from "../../../Components/OffcanvasMenu";
 import UserForm from "../../../Components/Contacts/UserForm";
 import { useAuth } from "../../../app-context/auth-user-context";
@@ -65,7 +64,7 @@ const UsersWindow = () => {
         if(user.hasAuth('USERS_WINDOW')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your admin");
+            toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/404');
         }
     }, []);

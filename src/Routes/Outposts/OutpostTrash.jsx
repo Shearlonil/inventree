@@ -162,28 +162,33 @@ const OutpostTrash = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    await outpostController.restoreOutpost(entityToEdit.id);
-					//	find index position of restored item in items arr
-					let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
-					if(indexPos > -1){
-						//	cut out restored item found at index position
-						filteredOutposts.splice(indexPos, 1);
-						setFilteredOutposts([...filteredOutposts]);
-						/*  MAINTAIN CURRENT PAGE.  */
-						setTotalItemsCount(totalItemsCount - 1);
-                        if(pagedData.length <= 1){
-                            if(totalItemsCount >= pageSize){
-                                setCurrentPage(currentPage - 1);
+                    if(user.hasAuth('UPDATE_OUTPOST')){
+                        await outpostController.restoreOutpost(entityToEdit.id);
+                        //	find index position of restored item in items arr
+                        let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
+                        if(indexPos > -1){
+                            //	cut out restored item found at index position
+                            filteredOutposts.splice(indexPos, 1);
+                            setFilteredOutposts([...filteredOutposts]);
+                            /*  MAINTAIN CURRENT PAGE.  */
+                            setTotalItemsCount(totalItemsCount - 1);
+                            if(pagedData.length <= 1){
+                                if(totalItemsCount >= pageSize){
+                                    setCurrentPage(currentPage - 1);
+                                }
                             }
+                            toast.success('Outpost successfully restored');
                         }
-						toast.success('Outpost successfully restored');
-					}
-                    //  update in outposts arr also
-                    indexPos = outposts.findIndex(i => i.id === data.id);
-                    if(indexPos > -1){
-                        //	replace old item found at index position in items array with edited one
-                        outposts.splice(indexPos, 1);
-                        setOutposts([...outposts]);
+                        //  update in outposts arr also
+                        indexPos = outposts.findIndex(i => i.id === data.id);
+                        if(indexPos > -1){
+                            //	replace old item found at index position in items array with edited one
+                            outposts.splice(indexPos, 1);
+                            setOutposts([...outposts]);
+                        }
+                    }else {
+                        toast.error("Account doesn't support this operation. Please contact your supervisor");
+                        return;
                     }
 					break;
 			}

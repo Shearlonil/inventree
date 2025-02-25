@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Toggle } from 'rsuite';
 import { object, date, ref } from "yup";
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import SVG from '../../../assets/Svg';
-import { OribitalLoading, ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
+import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
 import { useAuth } from '../../../app-context/auth-user-context';
-import OffcanvasMenu from '../../../Components/OffcanvasMenu';
-import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
 import userController from '../../../Controllers/user-controller';
 import User from '../../../Entities/User';
 import genericController from '../../../Controllers/generic-controller';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
+import handleErrMsg from '../../../Utils/error-handler';
 
 const UserDetails = () => {
     const navigate = useNavigate();
@@ -21,24 +19,8 @@ const UserDetails = () => {
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
-
-	const schema = object().shape(
-		{
-			startDate: date(),
-			endDate: date().min(ref("startDate"), "please update start date"),
-		}
-	);
-
-	const dispensaryOffCanvasMenu = [
-		{ label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
-		{ label: "Rename Ledger", onClickParams: {evtName: 'renameLedger'} },
-		{ label: "Activate Ledger", onClickParams: {evtName: 'activateLedger'} },
-		{ label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
-		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
-	];
       
     const [networkRequest, setNetworkRequest] = useState(false);
-    const [updateRequest, setUpdateRequest] = useState(false);
     
     //  for tracts
     const [userAuths, setUserAuths] = useState([]);
@@ -49,7 +31,7 @@ const UserDetails = () => {
         if(user.hasAuth('AUTH_WINDOW')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
     }, []);
@@ -89,7 +71,6 @@ const UserDetails = () => {
 
             //	check if the request to fetch userAuths doesn't fail
             if(userAuths && userAuths.data){
-                console.log('all authorities', userAuths.data);
                 setUserAuths(userAuths.data);
             }
 
@@ -121,8 +102,33 @@ const UserDetails = () => {
 	};
 
     const toggle = async (checked, auth) => {
-        console.log(checked, auth);
-        setUpdateRequest(true);
+        try {
+            const text = auth.name.split(' ').join('_');
+            if(user.hasAuth(text) && user.hasAuth('EDIT_AUTH')){
+                await userController.updateUserAuth(username, checked, auth.code);
+            }else {
+                toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
+                throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
+            }
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return toggle(checked, auth);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+                // if error while refreshing, logout and delete all cookies
+				logout();
+			}
+            throw error;
+        }
     };
 
     const buildAuths = (userAuths) => allAuths.map(auth => {
@@ -134,7 +140,6 @@ const UserDetails = () => {
                 {text}
                 <ToggleSwitch
                     data={auth}
-                    loading={updateRequest}
                     checkedTxt="Granted" 
                     unCheckedTxt="Revoked" 
                     ticked={found >= 0 ? true : false} 
