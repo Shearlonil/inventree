@@ -34,6 +34,7 @@ import ProfileUpdate from "./Routes/Dashboard/Users/ProfileUPdate";
 import TractsWindow from "./Routes/Tracts/TractsWindow";
 import TractsItemsView from "./Routes/Tracts/TractItemsView";
 import PkgsWindow from "./Routes/Dashboard/Pkg/PkgsWindow";
+import PkgItemsView from "./Routes/Dashboard/Pkg/PkgItemsView";
 
 function App() {
 	return (
@@ -68,7 +69,7 @@ function App() {
 					<Route path={""} element={<TractsWindow />} />
 				</Route>
 				<Route path="/packaging" element={<ProtectedRoute />}>
-					<Route path={":pkgName/items"} element={<TractsItemsView />} />
+					<Route path={":pkgName/items"} element={<PkgItemsView />} />
 					<Route path={""} element={<PkgsWindow />} />
 				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>

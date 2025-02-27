@@ -1,3 +1,5 @@
+import { format } from "date-fns";
+
 import { Tract } from './Tract';
 
 const _itemProps = new WeakMap();
@@ -15,7 +17,7 @@ export class Item {
                 qtyType: jsonObject.qtyType, // for table display in store related activities
                 lowQty: jsonObject.lowQty, //   setting low qty for either unit sales or store
                 //  also for table display in store related activities
-                sectionName: tract ? tract.tractName : jsonObject.sectionName, 
+                tractName: tract ? tract.tractName : jsonObject.sectionName, 
                 //  storeQty: jsonObject.storeQty,
                 storeLowQty: jsonObject.storeLowQty, // store low qty from back end in unit
                 qtyPerPack: jsonObject.qtyPerPack,
@@ -55,8 +57,8 @@ export class Item {
     get lowQty() { return _itemProps.get(this).lowQty }
     set lowQty(lowQty) { _itemProps.get(this).lowQty = lowQty }
     
-    get sectionName() { return _itemProps.get(this).sectionName }
-    set sectionName(sectionName) { _itemProps.get(this).sectionName = sectionName }
+    get tractName() { return _itemProps.get(this).tractName }
+    set tractName(tractName) { _itemProps.get(this).tractName = tractName }
 
     get pkgName() { return _itemProps.get(this).pkgName; }
     set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName }
@@ -70,7 +72,7 @@ export class Item {
     get status() { return _itemProps.get(this).status }
     set status(status) { _itemProps.get(this).status = status }
 
-    get creationDate() { return _itemProps.get(this).creationDate; }
+    get creationDate() { return _itemProps.get(this).creationDate ? format(_itemProps.get(this).creationDate, 'dd/MM/yyyy HH:mm:ss') : ''; }
     set creationDate(creationDate) { _itemProps.get(this).creationDate = creationDate }
     
     get expDate() { return _itemProps.get(this).expDate }

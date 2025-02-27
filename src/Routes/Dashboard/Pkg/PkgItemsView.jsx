@@ -2,21 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-import OffcanvasMenu from '../../Components/OffcanvasMenu';
-import SVG from '../../assets/Svg';
-import { useAuth } from '../../app-context/auth-user-context';
-import handleErrMsg from '../../Utils/error-handler';
-import TableMain from '../../Components/TableView/TableMain';
-import PaginationLite from '../../Components/PaginationLite';
-import { Tract } from '../../Entities/Tract';
-import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
-import tractController from '../../Controllers/tract-controller';
-import { Item } from '../../Entities/Item';
+import OffcanvasMenu from '../../../Components/OffcanvasMenu';
+import SVG from '../../../assets/Svg';
+import { useAuth } from '../../../app-context/auth-user-context';
+import handleErrMsg from '../../../Utils/error-handler';
+import TableMain from '../../../Components/TableView/TableMain';
+import PaginationLite from '../../../Components/PaginationLite';
+import InputDialog from '../../../Components/DialogBoxes/InputDialog';
+import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
+import pkgController from '../../../Controllers/pkg-controller';
+import { Item } from '../../../Entities/Item';
 
-const TractItemsView = () => {
+const PkgItemsView = () => {
     const navigate = useNavigate();
-    const { tractName } = useParams();
+    const { pkgName } = useParams();
             
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -34,13 +33,13 @@ const TractItemsView = () => {
     const [totalItemsCount, setTotalItemsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     
-    const [tracts, setTracts] = useState([]);
+    const [pkgItems, setPkgItems] = useState([]);
         
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
-    const [filteredTracts, setFilteredTracts] = useState([]);
+    const [filteredPkgItems, setFilteredPkgItems] = useState([]);
 
-    const tractsOffCanvasMenu = [
+    const pkgsOffCanvasMenu = [
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
@@ -58,7 +57,7 @@ const TractItemsView = () => {
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await tractController.fetchTractItems(tractName);
+            const response = await pkgController.fetchPkgItems(pkgName);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = response.data.map(item => {
@@ -67,11 +66,11 @@ const TractItemsView = () => {
                     i.creationDate = item.creationDate;
                     i.unitSalesPrice = item.unitSalesPrice;
                     i.packSalesPrice = item.packSalesPrice;
-                    i.pkgName = item.pkgName;
+                    i.tractName = item.tractName;
                     return i;
                 });
-				setTracts(arr);
-                setFilteredTracts(arr);
+				setPkgItems(arr);
+                setFilteredPkgItems(arr);
 				setTotalItemsCount(response.data.length);
             }
             setNetworkRequest(false);
@@ -104,13 +103,13 @@ const TractItemsView = () => {
 				setShowInputModal(true);
                 break;
             case 'showAll':
-                setFilteredTracts(tracts);
-                setTotalItemsCount(tracts.length);
+                setFilteredPkgItems(pkgItems);
+                setTotalItemsCount(pkgItems.length);
                 break;
             case 'sortByName':
-                filteredTracts.sort((a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0));
+                filteredPkgItems.sort((a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0));
                 if(currentPage === 1){
-                    setPagedData(filteredTracts.slice(0, 0 + pageSize));
+                    setPagedData(filteredPkgItems.slice(0, 0 + pageSize));
                 }
                 setCurrentPage(1);
                 break;
@@ -121,8 +120,8 @@ const TractItemsView = () => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                arr = tracts.filter(tract => tract.itemName.toLowerCase().includes(str));
-                setFilteredTracts(arr);
+                arr = pkgItems.filter(tract => tract.itemName.toLowerCase().includes(str));
+                setFilteredPkgItems(arr);
                 setTotalItemsCount(arr.length);
                 setCurrentPage(1);
                 break;
@@ -132,7 +131,7 @@ const TractItemsView = () => {
     const setPageChanged = async (pageNumber) => {
 		setCurrentPage(pageNumber);
     	const startIndex = (pageNumber - 1) * pageSize;
-      	setPagedData(filteredTracts.slice(startIndex, startIndex + pageSize));
+      	setPagedData(filteredPkgItems.slice(startIndex, startIndex + pageSize));
     };
 
     const handleCloseModal = () => {
@@ -142,25 +141,25 @@ const TractItemsView = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Reg. Date', 'Unit Sales Price', 'Unit Pkg Price', 'Pkg'],
+        headers: ['Item Name', 'Reg. Date', 'Unit Sales Price', 'Unit Pkg Price', 'Section'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'creationDate', 'unitSalesPrice', 'packSalesPrice', 'pkgName'],
+        objectProps: ['itemName', 'creationDate', 'unitSalesPrice', 'packSalesPrice', 'tractName'],
     };
 
     return (
         <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
                 <div>
-                    <OffcanvasMenu menuItems={tractsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                    <OffcanvasMenu menuItems={pkgsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>{tractName} Section</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>{pkgName} Packaging</span>
                         <img src={SVG.department} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View items associated with a particular section.
+                    View items associated with a particular packaging.
                 </span>
             </div>
 
@@ -191,4 +190,4 @@ const TractItemsView = () => {
     );
 };
 
-export default TractItemsView;
+export default PkgItemsView;

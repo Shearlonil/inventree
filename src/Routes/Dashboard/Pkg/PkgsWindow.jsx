@@ -142,7 +142,7 @@ const PkgsWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'viewItems':
-                window.open(`/pkgs/${entity.name}/items`, '_blank')?.focus();
+                window.open(`/packaging/${entity.name}/items`, '_blank')?.focus();
                 break;
         }
     };
@@ -399,7 +399,7 @@ const PkgsWindow = () => {
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    Packagings are departments within the organization. Manage Packagings by creating, updating and deleting as needed.
+                    Packaging is the science, art and technology of enclosing or protecting products for distribution, storage, sale, and use.
                 </span>
             </div>
 
