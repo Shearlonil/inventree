@@ -258,6 +258,7 @@ const CustomersWindow = () => {
                 arr = customers.filter(customer => customer.name.toLowerCase().includes(str));
                 setFilteredCustomers(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
             case 'searchByCardNo':
                 /*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
@@ -271,6 +272,7 @@ const CustomersWindow = () => {
                 arr = customers.filter(customer => customer.loyaltyCardNo == str);
                 setFilteredCustomers(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
             case 'addCard':
                 if(!+str){

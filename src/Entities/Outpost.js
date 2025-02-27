@@ -4,10 +4,14 @@ const _outpostProps = new WeakMap();
 
 export class Outpost{
     constructor(jsonObject) {
-        const { id, name, status, creator, creation_date } = jsonObject;
-        _outpostProps.set(this, {
-            id, name, status, creator, creationDate: creation_date
-        });
+        if (jsonObject) {
+            const { id, name, status, creator, creation_date } = jsonObject;
+            _outpostProps.set(this, {
+                id, name, status, creator, creationDate: creation_date
+            });
+        }else {
+            _outpostProps.set(this, {});
+        }
     }
 
     get id() { return _outpostProps.get(this).id; }

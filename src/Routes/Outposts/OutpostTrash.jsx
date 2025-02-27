@@ -113,6 +113,7 @@ const OutpostTrash = () => {
                 arr = outposts.filter(outpost => outpost.name.toLowerCase().includes(str));
                 setFilteredOutposts(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
         }
 	}

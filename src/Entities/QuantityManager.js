@@ -4,18 +4,22 @@ const _qtyManagerProps = new WeakMap();
 
 export class QuantityManager{
     constructor(jsonObject) {
-        const { stockPriceManager, item } = jsonObject;
-        _qtyManagerProps.set(this, {
-            id: jsonObject.id,
-            unitStoreQty: jsonObject.unitStoreQty,
-            unitSalesQty: jsonObject.unitSalesQty,
-            qtyPerPack: jsonObject.qtyPerPack,
-            creationDate: jsonObject.creationDate,
-            expDate: jsonObject.expDate,
-            packStockPrice: stockPriceManager?.packStockPrice,
-            unitStockPrice: stockPriceManager?.unitStockPrice,
-            item: item ? new Item(item) : null
-        });
+        if (jsonObject) {
+            const { stockPriceManager, item } = jsonObject;
+            _qtyManagerProps.set(this, {
+                id: jsonObject.id,
+                unitStoreQty: jsonObject.unitStoreQty,
+                unitSalesQty: jsonObject.unitSalesQty,
+                qtyPerPack: jsonObject.qtyPerPack,
+                creationDate: jsonObject.creationDate,
+                expDate: jsonObject.expDate,
+                packStockPrice: stockPriceManager?.packStockPrice,
+                unitStockPrice: stockPriceManager?.unitStockPrice,
+                item: item ? new Item(item) : null
+            });
+        }else {
+            _qtyManagerProps.set(this, {});
+        }
     }
 
     get id() { return _qtyManagerProps.get(this).id; }

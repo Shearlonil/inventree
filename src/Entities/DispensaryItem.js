@@ -2,14 +2,18 @@ const _itemProps = new WeakMap();
 
 export class DispensaryItem {
     constructor(jsonObject) {
-        _itemProps.set(this, {
-            id: jsonObject.id,
-            name: jsonObject.itemName,
-            unitQty: jsonObject.dtoQtyMgrs.reduce((accumulator, currentValue) => accumulator + currentValue.unitStoreQty, 0),
-            pkgQty: jsonObject.dtoQtyMgrs.reduce((accumulator, currentValue) => accumulator + (currentValue.unitStoreQty / currentValue.qtyPerPkg), 0),
-            qtyType: jsonObject.qtyType,
-            creationDate: jsonObject.creationDate,
-        });
+        if (jsonObject) {
+            _itemProps.set(this, {
+                id: jsonObject.id,
+                name: jsonObject.itemName,
+                unitQty: jsonObject.dtoQtyMgrs.reduce((accumulator, currentValue) => accumulator + currentValue.unitStoreQty, 0),
+                pkgQty: jsonObject.dtoQtyMgrs.reduce((accumulator, currentValue) => accumulator + (currentValue.unitStoreQty / currentValue.qtyPerPkg), 0),
+                qtyType: jsonObject.qtyType,
+                creationDate: jsonObject.creationDate,
+            });
+        }else {
+            _itemProps.set(this, {});
+        }
     }
 
     get id() { return _itemProps.get(this).id; }

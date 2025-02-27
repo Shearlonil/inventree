@@ -4,18 +4,22 @@ const _receiptProps = new WeakMap();
 
 export class Receipt {
     constructor(jsonObject) {
-        const { dtoInvoice } = jsonObject;
-        _receiptProps.set(this, {
-            id: jsonObject.id,
-            cashier: jsonObject.cashier,
-            customerName: jsonObject.customerName,
-            customerId: jsonObject.customerId,
-            ledgerDiscount: jsonObject.ledgerDiscount,
-            transactionDate: jsonObject.transactionDate,
-            reversalStatus: jsonObject.reversalStatus,
-            paymentModes: jsonObject.paymentModes,
-            dtoInvoice: dtoInvoice ? new Invoice(dtoInvoice) : null,
-        });
+        if (jsonObject) {
+            const { dtoInvoice } = jsonObject;
+            _receiptProps.set(this, {
+                id: jsonObject.id,
+                cashier: jsonObject.cashier,
+                customerName: jsonObject.customerName,
+                customerId: jsonObject.customerId,
+                ledgerDiscount: jsonObject.ledgerDiscount,
+                transactionDate: jsonObject.transactionDate,
+                reversalStatus: jsonObject.reversalStatus,
+                paymentModes: jsonObject.paymentModes,
+                dtoInvoice: dtoInvoice ? new Invoice(dtoInvoice) : null,
+            });
+        }else {
+            _receiptProps.set(this, {});
+        }
     }
 
     get id() { return _receiptProps.get(this).id; }

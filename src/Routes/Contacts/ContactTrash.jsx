@@ -121,6 +121,7 @@ const ContactTrash = () => {
                 arr = contacts.filter(contact => contact.name.toLowerCase().includes(str));
                 setFilteredContacts(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
         }
 	}

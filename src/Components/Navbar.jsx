@@ -124,7 +124,7 @@ function NavBar() {
 								>
 									Packaging
 								</NavDropdown.Item>
-								<NavDropdown.Item 
+								{user && user.hasAuth('SECTIONS_WINDOW') && <NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
 										navigate("/sections");
@@ -135,7 +135,7 @@ function NavBar() {
 									}`}
 								>
 									Sections
-								</NavDropdown.Item>
+								</NavDropdown.Item>}
 							</NavDropdown>}
 
 							{user && <NavDropdown title="Store" id="basic-nav-dropdown">

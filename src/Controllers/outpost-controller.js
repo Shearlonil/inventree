@@ -41,7 +41,6 @@ const restoreOutpost = async (id) => {
     });
 }
 
-
 const rename = async (id, name) => {
     return await httpService.put(`/api/outposts/update`, null, {
         params: {

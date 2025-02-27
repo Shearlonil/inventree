@@ -1,33 +1,37 @@
-import { Tract } from './Tracts';
+import { Tract } from './Tract';
 
 const _itemProps = new WeakMap();
 
 export class Item {
     constructor(jsonObject) {
-        const { salesPrice, tract } = jsonObject;
-        _itemProps.set(this, {
-            id: jsonObject.id,
-            uuid: null, //uuid here is used only for creating new items in store and not for items from db
-            itemName: jsonObject.itemName,
-            unitSalesLowQty: jsonObject.unitSalesLowQty, //sales low qty from back end
-            qty: jsonObject.qty,
-            qtyType: jsonObject.qtyType, //for table display in store related activities
-            lowQty: jsonObject.lowQty, //setting low qty for either unit sales or store
-            //also for table display in store related activities
-            sectionName: tract ? tract.tractName : jsonObject.sectionName, 
-            // storeQty: jsonObject.storeQty,
-            storeLowQty: jsonObject.storeLowQty, //store low qty from back end in unit
-            qtyPerPack: jsonObject.qtyPerPack,
-            status: jsonObject.status,
-            creationDate: jsonObject.creationDate,
-            expDate: jsonObject.expDate,
-            packSalesPrice: salesPrice?.packSalesPrice,
-            packStockPrice: salesPrice?.packStockPrice,
-            unitSalesPrice: salesPrice?.unitSalesPrice,
-            unitStockPrice: salesPrice?.unitStockPrice,
-            //incase of store activities, tract will not be available
-            tract: tract ? new Tract(tract) : null,
-        });
+        if (jsonObject) {
+            const { salesPrice, tract } = jsonObject;
+            _itemProps.set(this, {
+                id: jsonObject.id,
+                uuid: null, //  uuid here is used only for creating new items in store and not for items from db
+                itemName: jsonObject.itemName,
+                unitSalesLowQty: jsonObject.unitSalesLowQty, //sales low qty from back end
+                qty: jsonObject.qty,
+                qtyType: jsonObject.qtyType, // for table display in store related activities
+                lowQty: jsonObject.lowQty, //   setting low qty for either unit sales or store
+                //  also for table display in store related activities
+                sectionName: tract ? tract.tractName : jsonObject.sectionName, 
+                //  storeQty: jsonObject.storeQty,
+                storeLowQty: jsonObject.storeLowQty, // store low qty from back end in unit
+                qtyPerPack: jsonObject.qtyPerPack,
+                status: jsonObject.status,
+                creationDate: jsonObject.creationDate,
+                expDate: jsonObject.expDate,
+                packSalesPrice: salesPrice?.packSalesPrice,
+                packStockPrice: salesPrice?.packStockPrice,
+                unitSalesPrice: salesPrice?.unitSalesPrice,
+                unitStockPrice: salesPrice?.unitStockPrice,
+                //  incase of store activities, tract will not be available
+                tract: tract ? new Tract(tract) : null,
+            });
+        }else {
+            _itemProps.set(this, {});
+        }
     }
 
     get id() { return _itemProps.get(this).id; }
@@ -54,8 +58,8 @@ export class Item {
     get sectionName() { return _itemProps.get(this).sectionName }
     set sectionName(sectionName) { _itemProps.get(this).sectionName = sectionName }
 
-    // get storeQty() { return _itemProps.get(this).storeQty; }
-    // set storeQty(storeQty) { _itemProps.get(this).storeQty = storeQty }
+    get pkgName() { return _itemProps.get(this).pkgName; }
+    set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName }
     
     get storeLowQty() { return _itemProps.get(this).storeLowQty }
     set storeLowQty(storeLowQty) { _itemProps.get(this).storeLowQty = storeLowQty }

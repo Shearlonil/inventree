@@ -258,6 +258,7 @@ const VendorsWindow = () => {
                 arr = vendors.filter(vendor => vendor.name.toLowerCase().includes(str));
                 setFilteredVendors(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
         }
 	}

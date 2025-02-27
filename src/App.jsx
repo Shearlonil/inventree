@@ -31,6 +31,9 @@ import UserDetails from "./Routes/Dashboard/Users/UserDetails";
 import Dashboard from "./Routes/Dashboard/Dashboard";
 import ChangePassword from "./Routes/Dashboard/Users/ChangePassword";
 import ProfileUpdate from "./Routes/Dashboard/Users/ProfileUPdate";
+import TractsWindow from "./Routes/Tracts/TractsWindow";
+import TractsItemsView from "./Routes/Tracts/TractItemsView";
+import PkgsWindow from "./Routes/Dashboard/Pkg/PkgsWindow";
 
 function App() {
 	return (
@@ -60,6 +63,14 @@ function App() {
 					<Route path="" element={<PageNotFound />} />
           		</Route>
 				<Route path={"/purchases"} element={<PurchasesWindow />} />
+				<Route path="/sections" element={<ProtectedRoute />}>
+					<Route path={":tractName/items"} element={<TractsItemsView />} />
+					<Route path={""} element={<TractsWindow />} />
+				</Route>
+				<Route path="/packaging" element={<ProtectedRoute />}>
+					<Route path={":pkgName/items"} element={<TractsItemsView />} />
+					<Route path={""} element={<PkgsWindow />} />
+				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>
 					<Route path={"trash"} element={<OutpostTrash />} />
 					<Route path={""} element={<OutpostsWindow />} />

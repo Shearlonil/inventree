@@ -4,15 +4,19 @@ const _itemProps = new WeakMap();
 
 export class TransactionItem {
     constructor(jsonObject) {
-        _itemProps.set(this, {
-            id: jsonObject?.product.value.id,
-            name: jsonObject?.product.value.itemName,
-            unitSalesPrice: jsonObject?.product.value.salesPrice.unitSalesPrice,
-            pkgSalesPrice: jsonObject?.product.value.salesPrice.packSalesPrice,
-            qty: jsonObject?.qty,
-            qtyType: jsonObject?.qty_type,
-            discount: 0,
-        });
+        if (jsonObject) {
+            _itemProps.set(this, {
+                id: jsonObject?.product.value.id,
+                name: jsonObject?.product.value.itemName,
+                unitSalesPrice: jsonObject?.product.value.salesPrice.unitSalesPrice,
+                pkgSalesPrice: jsonObject?.product.value.salesPrice.packSalesPrice,
+                qty: jsonObject?.qty,
+                qtyType: jsonObject?.qty_type,
+                discount: 0,
+            });
+        }else {
+            _itemProps.set(this, {});
+        }
     }
 
     get id() { return _itemProps.get(this).id; }

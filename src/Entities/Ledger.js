@@ -2,10 +2,14 @@ const _ledgerProps = new WeakMap();
 
 export class Ledger {
     constructor(jsonObject) {
-        const { id, name, ledgerBalance, discount, allowCreditSales, creationDate } = jsonObject;
-        _ledgerProps.set(this, {
-            id, name, ledgerBalance, discount, allowCreditSales, creationDate, 
-        });
+        if (jsonObject) {
+            const { id, name, ledgerBalance, discount, allowCreditSales, creationDate } = jsonObject;
+            _ledgerProps.set(this, {
+                id, name, ledgerBalance, discount, allowCreditSales, creationDate, 
+            });
+        }else {
+            _ledgerProps.set(this, {});
+        }
     }
 
     get id() { return _ledgerProps.get(this).id; }

@@ -142,11 +142,13 @@ const UserTrash = () => {
                 arr = users.filter(user => user.username.toLowerCase().includes(str));
                 setFilteredUsers(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
             case 'searchByFirstName':
                 arr = users.filter(user => user.firstName.toLowerCase().includes(str));
                 setFilteredUsers(arr);
                 setTotalItemsCount(arr.length);
+                setCurrentPage(1);
                 break;
         }
 	}
