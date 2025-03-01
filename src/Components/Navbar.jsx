@@ -102,7 +102,7 @@ function NavBar() {
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
-											navigate("/items/sales");
+											navigate("/items/sales/available");
 										}}
 										className={`nav-item ${
 											location.pathname.startsWith("/items/sales") &&

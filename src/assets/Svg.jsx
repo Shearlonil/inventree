@@ -27,6 +27,7 @@ const SVG = {
 	users_slash_filled: new URL("./Svg/users_slash_filled.svg", import.meta.url).href,
 	department: new URL("./Svg/department.svg", import.meta.url).href,
 	packaging: new URL("./Svg/packaging.svg", import.meta.url).href,
+	shopping_items: new URL("./Svg/shopping_items.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,

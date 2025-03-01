@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import numeral from "numeral";
 
 import { Tract } from './Tract';
 
@@ -12,15 +13,12 @@ export class Item {
                 id: jsonObject.id,
                 uuid: null, //  uuid here is used only for creating new items in store and not for items from db
                 itemName: jsonObject.itemName,
-                unitSalesLowQty: jsonObject.unitSalesLowQty, //sales low qty from back end
                 qty: jsonObject.qty,
                 qtyType: jsonObject.qtyType, // for table display in store related activities
-                lowQty: jsonObject.lowQty, //   setting low qty for either unit sales or store
+                restockLevel: jsonObject.restockLevel, //   setting low qty for either unit sales or store
                 //  also for table display in store related activities
                 tractName: tract ? tract.tractName : jsonObject.sectionName, 
-                //  storeQty: jsonObject.storeQty,
-                storeLowQty: jsonObject.storeLowQty, // store low qty from back end in unit
-                qtyPerPack: jsonObject.qtyPerPack,
+                qtyPerPkg: jsonObject.qtyPerPkg,
                 status: jsonObject.status,
                 creationDate: jsonObject.creationDate,
                 expDate: jsonObject.expDate,
@@ -44,30 +42,26 @@ export class Item {
     
     get itemName() { return _itemProps.get(this).itemName }
     set itemName(name) { _itemProps.get(this).itemName = name }
-
-    get unitSalesLowQty() { return _itemProps.get(this).unitSalesLowQty; }
-    set unitSalesLowQty(lowQty) { _itemProps.get(this).unitSalesLowQty = lowQty }
     
     get qty() { return _itemProps.get(this).qty }
     set qty(qty) { _itemProps.get(this).qty = qty }
     
+    get pkgQty() { return numeral(_itemProps.get(this).qty).divide(_itemProps.get(this).qtyPerPkg).format('0,0.00'); }
+
     get qtyType() { return _itemProps.get(this).qtyType }
     set qtyType(qtyType) { _itemProps.get(this).qtyType = qtyType }
 
-    get lowQty() { return _itemProps.get(this).lowQty }
-    set lowQty(lowQty) { _itemProps.get(this).lowQty = lowQty }
+    get restockLevel() { return _itemProps.get(this).restockLevel }
+    set restockLevel(restockLevel) { _itemProps.get(this).restockLevel = restockLevel }
     
     get tractName() { return _itemProps.get(this).tractName }
     set tractName(tractName) { _itemProps.get(this).tractName = tractName }
 
     get pkgName() { return _itemProps.get(this).pkgName; }
     set pkgName(pkgName) { _itemProps.get(this).pkgName = pkgName }
-    
-    get storeLowQty() { return _itemProps.get(this).storeLowQty }
-    set storeLowQty(storeLowQty) { _itemProps.get(this).storeLowQty = storeLowQty }
 
-    get qtyPerPack() { return _itemProps.get(this).qtyPerPack; }
-    set qtyPerPack(qtyPerPack) { _itemProps.get(this).qtyPerPack = qtyPerPack }
+    get qtyPerPkg() { return _itemProps.get(this).qtyPerPkg; }
+    set qtyPerPkg(qtyPerPkg) { _itemProps.get(this).qtyPerPkg = qtyPerPkg }
     
     get status() { return _itemProps.get(this).status }
     set status(status) { _itemProps.get(this).status = status }
@@ -98,13 +92,11 @@ export class Item {
             id: this.id,
             uuid: this.uuid,
             itemName: this.itemName,
-            unitSalesLowQty: this.unitSalesLowQty,
             qty: this.qty,
             qtyType: this.qtyType,
-            lowQty: this.lowQty,
+            restockLevel: this.restockLevel,
             // storeQty: this.storeQty,
-            storeLowQty: this.storeLowQty,
-            qtyPerPack: this.qtyPerPack,
+            qtyPerPkg: this.qtyPerPkg,
             status: this.status,
             creationDate: this.creationDate,
             expDate: this.expDate,
