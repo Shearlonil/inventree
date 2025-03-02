@@ -23,8 +23,10 @@ import numeral from "numeral";
 
 const StoreItemRegForm = (props) => {
 	const { data, fnSave, networkRequest }  = props;
-
+	
 	const navigate = useNavigate();
+	
+	const { handleRefresh, logout } = useAuth();
 
 	// for tracts
 	const [tractOptions, setTractOptions] = useState([]);
@@ -37,15 +39,21 @@ const StoreItemRegForm = (props) => {
 	// for vendors
 	const [vendorOptions, setVendorOptions] = useState([]);
 	const [vendorsLoading, setVendorsLoading] = useState(true);
+	
+	//	for form calculation
+	const [totalQty, setTotalQty] = useState(0);
+	const [qtyType, setQtyType] = useState(null);
+	const [qtyPerPkg, setQtyPerPkg] = useState(0);
+	const [unitStockPrice, setUnitStockPrice] = useState(0);
+	const [markup, setMarkup] = useState(0);
 
-	const { handleRefresh, logout } = useAuth();
 
 	const {
 		register,
 		handleSubmit,
 		control,
 		setValue,
-		reset,
+		resetField,
 		formState: { errors },
 	} = useForm({
 		resolver: yupResolver(storeItemRegSchema),
@@ -58,6 +66,7 @@ const StoreItemRegForm = (props) => {
 			pkg_stock_price: 0,
 			pkg_sales_price: 0,
 			amount_paid: 0,
+			markup: 0,
 			section: null,
 			qty_type: null,
 			vendor: null,
@@ -94,6 +103,7 @@ const StoreItemRegForm = (props) => {
             }
 
 			if(data){
+				const pkgType = {value: data.pkg.id, label: data.pkg.name};
 				setValue("item_name", data.itemName);
 				setValue("total_qty", data.qty);
 				setValue("qty_per_pkg", data.qtyPerPkg);
@@ -103,9 +113,15 @@ const StoreItemRegForm = (props) => {
 				setValue("pkg_sales_price", numeral(data.pkgSalesPrice).value());
 				setValue("amount_paid",numeral( data.cashPurchaseAmount).value());
 				setValue("section", {value: data.tract.id, label: data.tract.name});
-				setValue("qty_type", {value: data.pkg.id, label: data.pkg.name});
+				setValue("qty_type", pkgType);
 				setValue("vendor", {value: data.vendor.id, label: data.vendor.name});
 				setValue("expDate", data.expDate);
+
+				//	update states for calculation
+				setTotalQty(data.qty);
+				setQtyPerPkg(data.qtyPerPkg);
+				setQtyType(pkgType);
+				setUnitStockPrice(data.unitStockPrice);
 			}
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -169,6 +185,151 @@ const StoreItemRegForm = (props) => {
 		tract.name = formData.section.label;
 		item.tract = tract;
 	}
+	
+	const handleTotalQtyChange = (e) => {
+		setTotalQty(e.target.value);
+		if(e.target.value == 0){
+			calcAmountFromTotalQty(0);
+			return;
+		}
+		calcAmountFromTotalQty(e.target.value);
+	}
+
+	const handleQtyPerPkgChange = (e) => {
+		setQtyPerPkg(e.target.value);
+		calcAmountFromQtyPerPkg(e.target.value);
+	}
+
+	const handleQtyTypeChange = (qtyType) => {
+		setQtyType(qtyType);
+		calcAmountFromQtyType(qtyType.label);
+	}
+
+	const handleUnitStockChange = (e) => {
+		setUnitStockPrice(e.target.value);
+		if(totalQty == 0 || qtyPerPkg == 0 || qtyType == null){
+			setValue("pkg_stock_price", 0);
+			return;
+		}
+		calcAmountFromUnitStock(e.target.value);
+	}
+
+	const handleMarkupChange = (e) => {
+		setMarkup(e.target.value);
+		if(unitStockPrice == 0 || e.target.value == 0){
+			calcSalesPricesFromMarkup(0);
+			setValue("markup", 0);
+			return;
+		}
+		calcSalesPricesFromMarkup(e.target.value);
+	}
+	
+	//  private helper function to calculate pkg stock amount from unitStockPrice
+	const calcAmountFromUnitStock = (unitStockPrice) => {
+		const pkgAmount = numeral(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00'); 
+		const amountPaid = qtyType.label.toLowerCase() === "unit" ? 
+			numeral(totalQty).multiply(unitStockPrice).format('₦0,0.00') :
+			numeral(totalQty).multiply(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00'); 
+		setValue("pkg_stock_price", numeral(pkgAmount).value());
+		setValue("amount_paid", numeral(amountPaid).value());
+		calcSalesPricesFromUnitStock(unitStockPrice);
+	}
+	
+	//  private helper function to calculate pkg stock amount and amount paid from totalQty
+	const calcAmountFromTotalQty = (totalQty) => {
+		if(unitStockPrice == 0 || qtyPerPkg == 0 || qtyType == null){
+			setValue("pkg_stock_price", 0);
+			return;
+		}
+		const pkgAmount = numeral(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00'); 
+		const amountPaid = qtyType.label.toLowerCase() === "unit" ? 
+			numeral(totalQty).multiply(unitStockPrice).format('₦0,0.00') :
+			numeral(totalQty).multiply(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00');
+		setValue("pkg_stock_price", numeral(pkgAmount).value());
+		setValue("amount_paid", numeral(amountPaid).value());
+	}
+	
+	//  private helper function to calculate pkg stock amount and amount paid from qtyType
+	const calcAmountFromQtyType = (qtyType) => {
+		if(unitStockPrice == 0 || qtyPerPkg == 0 || totalQty == 0){
+			setValue("pkg_stock_price", 0);
+			return;
+		}
+		const pkgAmount = numeral(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00'); 
+		const amountPaid = qtyType.toLowerCase() === "unit" ? 
+			numeral(totalQty).multiply(unitStockPrice).format('₦0,0.00') :
+			numeral(totalQty).multiply(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00');
+		setValue("pkg_stock_price", numeral(pkgAmount).value());
+		setValue("amount_paid", numeral(amountPaid).value());
+	}
+	
+	//  private helper function to calculate pkg stock amount and amount paid from qtyPerPkg
+	const calcAmountFromQtyPerPkg = (qtyPerPkg) => {
+		if(unitStockPrice == 0 || qtyType == null || totalQty == 0){
+			setValue("pkg_stock_price", 0);
+			return;
+		}
+		const pkgAmount = numeral(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00'); 
+		const amountPaid = qtyType.label.toLowerCase() === "unit" ? 
+			numeral(totalQty).multiply(unitStockPrice).format('₦0,0.00') :
+			numeral(totalQty).multiply(qtyPerPkg).multiply(unitStockPrice).format('₦0,0.00');
+		setValue("pkg_stock_price", numeral(pkgAmount).value());
+		setValue("amount_paid", numeral(amountPaid).value());
+	}
+	
+	//  private helper function to calculate sales prices from markup
+	const calcSalesPricesFromMarkup = (markup) => {
+		if(unitStockPrice == 0 || markup == 0){
+			setValue("unit_sales", 0);
+			setValue("pkg_sales_price", 0);
+			return;
+		}
+		const calcMarkup = numeral(unitStockPrice).multiply(numeral(markup).divide(100).value()).value();
+		/*	round unit sales price to the nearest multiple of 10
+			https://www.geeksforgeeks.org/round-the-given-number-to-nearest-multiple-of-10/
+			https://stackoverflow.com/questions/7948170/convert-number-to-the-nearest-multiple-of-10
+			https://stackoverflow.com/questions/11022488/javascript-using-round-to-the-nearest-10
+		*/
+		const unitSalesPrice = Math.round(numeral(unitStockPrice).add(calcMarkup).value() / 10) * 10;
+		const pkgSalesPrice = numeral(unitSalesPrice).multiply(qtyPerPkg);
+		setValue("unit_sales", unitSalesPrice);
+		setValue("pkg_sales_price", numeral(pkgSalesPrice).value());
+	}
+	
+	//  private helper function to calculate sales prices from unit stock price
+	const calcSalesPricesFromUnitStock = (unitStockPrice) => {
+		if(unitStockPrice == 0 || markup == 0){
+			setValue("unit_sales", 0);
+			setValue("pkg_sales_price", 0);
+			return;
+		}
+		const calcMarkup = numeral(unitStockPrice).multiply(numeral(markup).divide(100).value()).value();
+		/*	round unit sales price to the nearest multiple of 10
+			https://www.geeksforgeeks.org/round-the-given-number-to-nearest-multiple-of-10/
+			https://stackoverflow.com/questions/7948170/convert-number-to-the-nearest-multiple-of-10
+			https://stackoverflow.com/questions/11022488/javascript-using-round-to-the-nearest-10
+		*/
+		const unitSalesPrice = Math.round(numeral(unitStockPrice).add(calcMarkup).value() / 10) * 10;
+		const pkgSalesPrice = numeral(unitSalesPrice).multiply(qtyPerPkg);
+		console.log('unit stock price', unitStockPrice, 'calculated markup', calcMarkup, 'calculated unit sales', unitSalesPrice);
+		setValue("unit_sales", unitSalesPrice);
+		setValue("pkg_sales_price", numeral(pkgSalesPrice).value());
+	}
+
+	const reset = () => {
+		resetField('section');
+		resetField('item_name');
+		resetField('total_qty');
+		resetField('qty_per_pkg');
+		resetField('unit_stock');
+		resetField('unit_sales');
+		resetField('pkg_stock_price');
+		resetField('pkg_sales_price');
+		resetField('amount_paid');
+		resetField('qty_type');
+		resetField('vendor');
+		resetField('expDate');
+	}
 
 	return (
 		<>
@@ -214,10 +375,20 @@ const StoreItemRegForm = (props) => {
 						</Col>
 						<div className="row">
 							<div className="col-6">
-								<Form.Control
-									type="number"
-									placeholder="0"
-									{...register("total_qty")}
+								<Controller
+									name="total_qty"
+									control={control}
+									render={({ field: { onChange, value } }) => (
+										<Form.Control
+											type="number"
+											placeholder="0"
+											onChange={(val) => {
+												handleTotalQtyChange(val);
+												onChange(val);
+											}}
+											value={value}
+										/>
+									)}
 								/>
 								<ErrorMessage source={errors.total_qty} />
 							</div>
@@ -233,7 +404,10 @@ const StoreItemRegForm = (props) => {
 											className="text-dark col-12"
 											options={pkgOptions}
 											isLoading={pkgLoading}
-											onChange={(val) => onChange(val)}
+											onChange={(val) => {
+												handleQtyTypeChange(val);
+												onChange(val);
+											}}
 											value={value}
 										/>
 									)}
@@ -250,10 +424,20 @@ const StoreItemRegForm = (props) => {
 							<Form.Label>Qty/Package</Form.Label>
 						</Col>
 						<Col sm={"12"} md="8">
-							<Form.Control
-								type="number"
-								placeholder="0"
-								{...register("qty_per_pkg")}
+							<Controller
+								name="qty_per_pkg"
+								control={control}
+								render={({ field: { onChange, value } }) => (
+									<Form.Control
+										type="number"
+										placeholder="0"
+										onChange={(val) => {
+											handleQtyPerPkgChange(val);
+											onChange(val);
+										}}
+										value={value}
+									/>
+								)}
 							/>
 							<ErrorMessage source={errors.qty_per_pkg} />
 						</Col>
@@ -304,28 +488,22 @@ const StoreItemRegForm = (props) => {
 							<Form.Label>Unit Stock</Form.Label>
 						</Col>
 						<Col sm={"12"} md="8">
-							<Form.Control
-								type="number"
-								placeholder="0"
-								{...register("unit_stock")}
+							<Controller
+								name="unit_stock"
+								control={control}
+								render={({ field: { onChange, value } }) => (
+									<Form.Control
+										type="number"
+										placeholder="0"
+										onChange={(val) => {
+											handleUnitStockChange(val);
+											onChange(val);
+										}}
+										value={value}
+									/>
+								)}
 							/>
 							<ErrorMessage source={errors.unit_stock} />
-						</Col>
-					</Row>
-				</Form.Group>
-
-				<Form.Group className="mb-3" controlId="unit_sales">
-					<Row>
-						<Col sm={"12"} md="4">
-							<Form.Label>Unit Sales</Form.Label>
-						</Col>
-						<Col sm={"12"} md="8">
-							<Form.Control
-								type="number"
-								placeholder="0"
-								{...register("unit_sales")}
-							/>
-							<ErrorMessage source={errors.unit_sales} />
 						</Col>
 					</Row>
 				</Form.Group>
@@ -342,6 +520,47 @@ const StoreItemRegForm = (props) => {
 								{...register("pkg_stock_price")}
 							/>
 							<ErrorMessage source={errors.pkg_stock_price} />
+						</Col>
+					</Row>
+				</Form.Group>
+
+				<Form.Group className="mb-3" controlId="markup">
+					<Row>
+						<Col sm={"12"} md="4">
+							<Form.Label>Markup (%)</Form.Label>
+						</Col>
+						<Col sm={"12"} md="4">
+							<Controller
+								name="markup"
+								control={control}
+								render={({ field: { onChange } }) => (
+									<Form.Control
+										type="number"
+										placeholder="0"
+										onChange={(val) => {
+											handleMarkupChange(val);
+											onChange(val);
+										}}
+									/>
+								)}
+							/>
+						</Col>
+						<ErrorMessage source={errors.markup} />
+					</Row>
+				</Form.Group>
+
+				<Form.Group className="mb-3" controlId="unit_sales">
+					<Row>
+						<Col sm={"12"} md="4">
+							<Form.Label>Unit Sales</Form.Label>
+						</Col>
+						<Col sm={"12"} md="8">
+							<Form.Control
+								type="number"
+								placeholder="0"
+								{...register("unit_sales")}
+							/>
+							<ErrorMessage source={errors.unit_sales} />
 						</Col>
 					</Row>
 				</Form.Group>

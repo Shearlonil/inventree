@@ -15,11 +15,28 @@ const fetchLowStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales/low`);
 }
 
-const rename = async (id, name) => {
-    return await httpService.put(`/api/item/update`, null, {
+//  Change item status to false: delete mode
+const deleteItem = async (id) => {
+    return await httpService.delete(`/api/items/status/change`, {
         params: {
-            name,
             id
+        }
+    });
+}
+
+//  Change item status to false: delete mode
+const changeTract = async (id, tractId) => {
+    return await httpService.put(`/api/items/tracts/change/${id}`, null, {
+        params: {
+            tractId
+        }
+    });
+}
+
+const changePkg = async (id, pkgId) => {
+    return await httpService.put(`/api/items/pkg/change/${id}`, null, {
+        params: {
+            pkgId
         }
     });
 }
@@ -28,5 +45,7 @@ export default {
     fetchInStockSalesItems,
     fetchOutOfStockSalesItems,
     fetchLowStockSalesItems,
-    rename,
+    deleteItem,
+    changeTract,
+    changePkg,
 }

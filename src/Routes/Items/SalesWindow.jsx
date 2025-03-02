@@ -15,6 +15,7 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import itemController from '../../Controllers/item-controller';
+import genericController from '../../Controllers/generic-controller';
 
 const SalesWindow = () => {
     const navigate = useNavigate();
@@ -25,7 +26,7 @@ const SalesWindow = () => {
 
     //	menus for the react-menu in table
     const menuItems = [
-        { name: 'Edit', onClickParams: {evtName: 'rename' } },
+        { name: 'Edit', onClickParams: {evtName: 'editItem' } },
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Move', onClickParams: {evtName: 'move'} },
         { name: 'Change Packaging', onClickParams: {evtName: 'updatePkg'} },
@@ -42,9 +43,16 @@ const SalesWindow = () => {
     const [entityToEdit, setEntityToEdit] = useState(null);
     //	for confirmation dialog
     const [displayMsg, setDisplayMsg] = useState("");
+    const [dropDownMsg, setDropDownMsg] = useState("");
     //  for drop down dialog
     const [showDropDownModal, setShowDropDownModal] = useState(false);
     const [pkgOptions, setPkgOptions] = useState([]);
+    const [tractOptions, setTractOptions] = useState([]);
+    //  To hold either pkgOptions or tractOptions for DropDownDialog
+    const [options, setOptions] = useState([]);
+    
+    const [pkgLoading, setPkgLoading] = useState(true);
+    const [tractsLoading, setTractsLoading] = useState(true);
         
     //	for pagination
     const [pageSize] = useState(20);
@@ -52,7 +60,7 @@ const SalesWindow = () => {
     const [currentPage, setCurrentPage] = useState(1);
     
     const [items, setItems] = useState([]);
-        
+    
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
     const [filteredItems, setFilteredItems] = useState([]);
@@ -71,6 +79,7 @@ const SalesWindow = () => {
             
     useEffect( () => {
         if(user.hasAuth('SECTIONS_WINDOW')){
+            initialize();
             switch (salesMode) {
                 case 'low':
                     fetchLowStockItems();
@@ -87,6 +96,46 @@ const SalesWindow = () => {
             navigate('/404');
         }
     }, []);
+
+	const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            const urls = [ '/api/pkg/active', '/api/tracts/active' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: pkgRequest, 1: tractRequest } = response;
+
+            //	check if the request to fetch pkg doesn't fail before setting values to display
+            if(pkgRequest){
+                setPkgLoading(false);
+				setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg})));
+            }
+
+            //	check if the request to fetch vendors doesn't fail before setting values to display
+            if(tractRequest){
+				setTractsLoading(false);
+                setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract})));
+            }
+            setNetworkRequest(false);
+		} catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+    };
 
 	const fetchInStockSalesItems = async () => {
 		try {
@@ -113,8 +162,6 @@ const SalesWindow = () => {
 				setItems(arr);
                 setFilteredItems(arr);
 				setTotalItemsCount(response.data.length);
-                //  set pkg options for drop down dialog in case of delete operation
-				setPkgOptions(arr.map( pkg => ({label: pkg.name, value: pkg})));
             }
             setNetworkRequest(false);
 		} catch (error) {
@@ -250,32 +297,50 @@ const SalesWindow = () => {
         setConfirmDialogEvtName(null);
         handleCloseModal();
     };
+    
+    const handleDropDown = async (entity) => {
+        setShowDropDownModal(false);
+        switch (confirmDialogEvtName) {
+            case 'updatePkg':
+                updatePkg(entity);
+                break;
+            case 'move':
+                move(entity);
+                break;
+        }
+    };
 
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'delete':
-                if(entity.isDefault){
-                    toast.error("Operation not allowed on default Item");
-                    return;
-                }
                 //	ask if sure to delete
                 setEntityToEdit(entity);
-                setDisplayMsg(`Delete Item ${entity.name}? You'll be requested to select destination for items in this Item.`);
+                setDisplayMsg(`Move Item ${entity.itemName} to Trash?`);
                 setConfirmDialogEvtName(onclickParams.evtName);
                 setShowConfirmModal(true);
                 break;
-            case 'rename':
-                if(entity && entity.id <= 2){
-                    toast.error("Operation not allowed on default Item");
-                    return;
-                }
+            case 'editItem':
                 setEntityToEdit(entity);
                 setConfirmDialogEvtName(onclickParams.evtName);
                 setDisplayMsg(`Enter Unique Item name`);
                 setShowInputModal(true);
                 break;
+            case 'move':
+                setEntityToEdit(entity);
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setDropDownMsg(`Select destination Section for ${entity.itemName}`);
+                setOptions(tractOptions);
+                setShowDropDownModal(true);
+                break;
+            case 'updatePkg':
+                setEntityToEdit(entity);
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setDropDownMsg(`Select Packaging for ${entity.itemName}`);
+                setOptions(pkgOptions);
+                setShowDropDownModal(true);
+                break;
             case 'viewItems':
-                window.open(`/item/${entity.name}/items`, '_blank')?.focus();
+                window.open(`/item/${entity.itemName}/items`, '_blank')?.focus();
                 break;
         }
     };
@@ -324,7 +389,7 @@ const SalesWindow = () => {
             case 'trash':
                 break;
         }
-	}
+	};
 
     const setPageChanged = async (pageNumber) => {
 		setCurrentPage(pageNumber);
@@ -342,76 +407,29 @@ const SalesWindow = () => {
                 setCurrentPage(1);
                 break;
             case 'create':
-                createPkg(str);
                 break;
-            case 'rename':
-                renameItem(str);
+            case 'editItem':
                 break;
         }
-	}
+	};
 	
 	const handleConfirmOK = async () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'delete':
                 setShowDropDownModal(true);
+                deleteItem();
                 break;
         }
-	}
+	};
     
-    const createPkg = async (name) => {
+    const move = async (tractEntity) => {
         try {
             setNetworkRequest(true);
             //  network request to update data
-            const response = await itemController.create(name);
-            if(response && response.data){
-                const pkg = new Item();
-                pkg.id = response.data.id;
-                pkg.name = response.data.name;
-                pkg.creationDate = response.data.creationDate;
-                pkg.itemsCount = 0;
-                pkg.username = user.username;
-
-                const arr = [...filteredItems, pkg];
-                items.push(pkg);
-                setItems(pkg);
-                setFilteredItems([...arr]);
-                /*  GO TO PAGE WHERE NEW PKG IS.  */
-                setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));
-                setTotalItemsCount(totalItemsCount + 1);
-                toast.success('Pkg creation successful');
-            }
-            resetPage();
-            handleCloseModal();
-            setNetworkRequest(false);
-        } catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return createPkg(name);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-        }
-    };
-    
-    const renameItem = async (name) => {
-        try {
-            setNetworkRequest(true);
-            //  network request to update data
-            const response = await itemController.rename(entityToEdit.id, name);
+            const response = await itemController.changeTract(entityToEdit.id, tractEntity.id);
             if(response && response.status === 200){
-                entityToEdit.name = name;
+                entityToEdit.tractName = tractEntity.name;
                 //	find index position of edited item in filtered items arr
                 let indexPos = filteredItems.findIndex(i => i.id === entityToEdit.id);
                 if(indexPos > -1){
@@ -438,7 +456,7 @@ const SalesWindow = () => {
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
-					return renameItem(name);
+					return move(tractEntity);
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -454,18 +472,63 @@ const SalesWindow = () => {
         }
     };
     
-    const deletePkg = async (destinationPkg) => {
-        setShowDropDownModal(false);
-        if(entityToEdit.id === destinationPkg.id){
-            toast.error('Deleted Item and Destination Item cannot be same');
-            return;
+    const updatePkg = async (pkgEntity) => {
+        try {
+            setNetworkRequest(true);
+            //  network request to update data
+            const response = await itemController.changePkg(entityToEdit.id, pkgEntity.id);
+            if(response && response.status === 200){
+                entityToEdit.pkgName = pkgEntity.name;
+                //	find index position of edited item in filtered items arr
+                let indexPos = filteredItems.findIndex(i => i.id === entityToEdit.id);
+                if(indexPos > -1){
+                    //	replace old item found at index position in items array with edited one
+                    filteredItems.splice(indexPos, 1, entityToEdit);
+                    setFilteredItems([...filteredItems]);
+                    const startIndex = (currentPage - 1) * pageSize;
+                    setPagedData(filteredItems.slice(startIndex, startIndex + pageSize));
+                    toast.success('Update successful');
+                }
+                //  update in items arr also
+                indexPos = items.findIndex(i => i.id === entityToEdit.id);
+                if(indexPos > -1){
+                    //	replace old item found at index position in items array with edited one
+                    items.splice(indexPos, 1, entityToEdit);
+                    setItems([...items]);
+                }
+            }
+            resetPage();
+            handleCloseModal();
+            setNetworkRequest(false);
+        } catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return updatePkg(pkgEntity);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
         }
+    };
+    
+    const deleteItem = async () => {
+        setShowDropDownModal(false);
         try {
             setNetworkRequest(true);
             
-            await itemController.deletePkg(entityToEdit.id, destinationPkg.id);
+            await itemController.deleteItem(entityToEdit.id);
             //	find index position of deleted item in items arr
-            let indexPos = filteredItems.findIndex(t => t.id == entityToEdit.id);
+            let indexPos = filteredItems.findIndex(i => i.id == entityToEdit.id);
             if(indexPos > -1){
                 //	cut out deleted item found at index position
                 filteredItems.splice(indexPos, 1);
@@ -480,26 +543,11 @@ const SalesWindow = () => {
                 toast.success('Delete successful');
             }
             //  update in items arr also
-            indexPos = items.findIndex(t => t.id === entityToEdit.id);
+            indexPos = items.findIndex(i => i.id === entityToEdit.id);
             if(indexPos > -1){
                 //	replace old item found at index position in items array with edited one
                 items.splice(indexPos, 1);
                 setItems([...items]);
-            }
-
-            //  Remove deleted Pkg from Pkg options also, we don't want to have a deleted Pkg as an option where items will be moved to :)
-            indexPos = pkgOptions.findIndex(t => t.value.id === entityToEdit.id);
-            if(indexPos > -1){
-                //	cut out deleted item found at index position
-                pkgOptions.splice(indexPos, 1);
-                setPkgOptions([...pkgOptions]);
-            }
-
-            /*  find destination pkg from filtered items array to update itemsCount for table display. Since both filtered and items arrays hold the same 
-                objects (array from response.data), UPDATING THE itemsCount prop of the object found in filtered items array reflects in the items array  */
-            let item = filteredItems.find(t => t.id == destinationPkg.id);
-            if(item){
-                item.itemsCount += entityToEdit.itemsCount;
             }
 
             resetPage();
@@ -509,7 +557,7 @@ const SalesWindow = () => {
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
-					return deletePkg(destinationPkg);
+					return deleteItem();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -546,7 +594,7 @@ const SalesWindow = () => {
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Items</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Sales/Shelf Items</span>
                         <img src={SVG.shopping_items} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
@@ -588,9 +636,9 @@ const SalesWindow = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={deletePkg}
-                message={'Select destination Section where items will be moved to'}
-                options={pkgOptions}
+                handleConfirm={handleDropDown}
+                message={dropDownMsg}
+                options={options}
             />
         </div>
     );

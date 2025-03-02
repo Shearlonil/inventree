@@ -88,7 +88,7 @@ const UnvenrifiedDispensary = () => {
         return data.map((item) => {
             const { id, user_name, item_count, f_name, l_name, date } = item;
             return (
-                <tr key={id}>
+                <div key={id}>
                     <div className="row mt-2">
                         <div className="col-md-6 col-12">
                             <div className="d-flex">
@@ -124,7 +124,7 @@ const UnvenrifiedDispensary = () => {
                         </div>
                     </div>
                     <hr />
-                </tr>
+                </div>
             );
         });
     };
@@ -181,13 +181,10 @@ const UnvenrifiedDispensary = () => {
             </div>
             <hr />
 
-            <Table className="rounded-2" striped>
-                <tbody>
-                    {!networkRequest && data.length > 0 && buildSummaryCards()}
-                    {networkRequest && buildSkeleton()}
-                </tbody>
-
-            </Table>
+            <div className="rounded-2">
+                {!networkRequest && data.length > 0 && buildSummaryCards()}
+                {networkRequest && buildSkeleton()}
+            </div>
 
             <ConfirmDialog
               show={showConfirmModal}

@@ -28,6 +28,11 @@ const storeItemRegSchema = yup.object().shape({
 		.number()
 		.positive("Pkg Sales Price must be positive")
 		.required("Pkg Sales Price is required"),
+	markup: yup
+		.number()
+		.nullable()
+		.min(0, 'Markup cannot be less than 0')
+		.required("Markup is required"),
 	vendor: yup.object().required("Vendor is required"),
 	amount_paid: yup
 		.number()
@@ -61,6 +66,11 @@ const restockSchema = yup.object().shape({
 		.number()
 		.positive("Pkg Sales Price must be positive")
 		.required("Pkg Sales Price is required"),
+	markup: yup
+		.number()
+		.nullable()
+		.min(0, 'Markup cannot be less than 0')
+		.required("Markup is required"),
 	vendor: yup.object().required("Vendor is required"),
 	amount_paid: yup
 		.number()
