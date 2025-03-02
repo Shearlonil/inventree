@@ -187,11 +187,11 @@ const Dashboard = () => {
 									Update your profile
 								</p>
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									Outpost are like branches & with{" "}
-									<span className="bg-info-subtle px-1 rounded space-mono-regular small">
-										Inventree
+                                    Profile  {" "}
+									<span className="bg-danger-subtle px-1 rounded space-mono-regular small">
+                                        deactivation
 									</span>{" "}
-									you can create.
+									is only allowed by admin or supervisor with granted permission.
 								</p>
 							</div>
                             <Button variant="success" className="mt-3 w-50" onClick={() => navigate(`/dashboard/${user.username}/profile`)}>

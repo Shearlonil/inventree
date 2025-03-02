@@ -21,6 +21,7 @@ import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 import numeral from "numeral";
 
+//	ref:	https://help.nextar.com/tutorial/stock-control
 const StoreItemRegForm = (props) => {
 	const { data, fnSave, networkRequest }  = props;
 	

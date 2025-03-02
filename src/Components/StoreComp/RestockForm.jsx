@@ -21,6 +21,7 @@ import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
 
+//	ref:	https://help.nextar.com/tutorial/stock-control
 const RestockForm = (props) => {
 	const { data, fnSave, dbItemOptions, networkRequest }  = props;
 
