@@ -1,8 +1,6 @@
 import { format } from "date-fns";
 import numeral from "numeral";
 
-import { Tract } from './Tract';
-
 const _itemProps = new WeakMap();
 
 export class Item {
@@ -11,7 +9,6 @@ export class Item {
             const { salesPrice, tract } = jsonObject;
             _itemProps.set(this, {
                 id: jsonObject.id,
-                uuid: null, //  uuid here is used only for creating new items in store and not for items from db
                 itemName: jsonObject.itemName,
                 qty: jsonObject.qty,
                 qtyType: jsonObject.qtyType, // for table display in store related activities
@@ -22,12 +19,10 @@ export class Item {
                 status: jsonObject.status,
                 creationDate: jsonObject.creationDate,
                 expDate: jsonObject.expDate,
-                packSalesPrice: salesPrice?.packSalesPrice,
-                packStockPrice: salesPrice?.packStockPrice,
+                pkgSalesPrice: salesPrice?.pkgSalesPrice,
+                pkgStockPrice: salesPrice?.pkgStockPrice,
                 unitSalesPrice: salesPrice?.unitSalesPrice,
                 unitStockPrice: salesPrice?.unitStockPrice,
-                //  incase of store activities, tract will not be available
-                tract: tract ? new Tract(tract) : null,
             });
         }else {
             _itemProps.set(this, {});
@@ -36,9 +31,6 @@ export class Item {
 
     get id() { return _itemProps.get(this).id; }
     set id(id) { _itemProps.get(this).id = id }
-
-    get uuid() { return _itemProps.get(this).uuid; }
-    set uuid(uuid) { _itemProps.get(this).uuid = uuid }
     
     get itemName() { return _itemProps.get(this).itemName }
     set itemName(name) { _itemProps.get(this).itemName = name }
@@ -72,25 +64,21 @@ export class Item {
     get expDate() { return _itemProps.get(this).expDate }
     set expDate(expDate) { _itemProps.get(this).expDate = expDate }
 
-    get packSalesPrice() { return _itemProps.get(this).packSalesPrice; }
-    set packSalesPrice(packSalesPrice) { _itemProps.get(this).packSalesPrice = packSalesPrice }
+    get pkgSalesPrice() { return _itemProps.get(this).pkgSalesPrice; }
+    set pkgSalesPrice(pkgSalesPrice) { _itemProps.get(this).pkgSalesPrice = pkgSalesPrice }
     
-    get packStockPrice() { return _itemProps.get(this).packStockPrice }
-    set packStockPrice(packStockPrice) { _itemProps.get(this).packStockPrice = packStockPrice }
+    get pkgStockPrice() { return _itemProps.get(this).pkgStockPrice }
+    set pkgStockPrice(pkgStockPrice) { _itemProps.get(this).pkgStockPrice = pkgStockPrice }
 
     get unitSalesPrice() { return _itemProps.get(this).unitSalesPrice; }
     set unitSalesPrice(unitSalesPrice) { _itemProps.get(this).unitSalesPrice = unitSalesPrice }
     
     get unitStockPrice() { return _itemProps.get(this).unitStockPrice }
     set unitStockPrice(unitStockPrice) { _itemProps.get(this).unitStockPrice = unitStockPrice }
-    
-    get tract() { return _itemProps.get(this).tract }
-    set tract(tract) { _itemProps.get(this).tract = tract }
 
     toJSON(){
         return {
             id: this.id,
-            uuid: this.uuid,
             itemName: this.itemName,
             qty: this.qty,
             qtyType: this.qtyType,
@@ -100,11 +88,10 @@ export class Item {
             status: this.status,
             creationDate: this.creationDate,
             expDate: this.expDate,
-            packSalesPrice: this.packSalesPrice,
+            pkgSalesPrice: this.pkgSalesPrice,
             unitSalesPrice: this.unitSalesPrice,
-            packStockPrice: this.packStockPrice,
+            pkgStockPrice: this.pkgStockPrice,
             unitStockPrice: this.unitStockPrice,
-            tractId: this.tract?.id, // => will be null in case of stocking... new stock in Store
         }
     }
 }

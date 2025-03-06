@@ -1,8 +1,22 @@
 import httpService from "../axios/http-service";
 
 //  fetch in stock items for sales/shelf view
+const findById = async (id) => {
+    return await httpService.get(`/api/items/find`, {
+        params: {
+            id
+        }
+    });
+}
+
+//  fetch in stock items for sales/shelf view
 const fetchInStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales`);
+}
+
+//  fetch in stock items for sales/shelf view
+const fetchInStockStoreItems = async () => {
+    return await httpService.get(`/api/items/store`);
 }
 
 //  fetch out of stock items for sales/shelf view
@@ -25,6 +39,11 @@ const deleteItem = async (id) => {
 }
 
 //  Change item status to false: delete mode
+const updateItem = async (item) => {
+    return await httpService.put(`/api/items/update`, item);
+}
+
+//  Change item status to false: delete mode
 const changeTract = async (id, tractId) => {
     return await httpService.put(`/api/items/tracts/change/${id}`, null, {
         params: {
@@ -42,10 +61,13 @@ const changePkg = async (id, pkgId) => {
 }
 
 export default {
+    findById,
     fetchInStockSalesItems,
+    fetchInStockStoreItems,
     fetchOutOfStockSalesItems,
     fetchLowStockSalesItems,
     deleteItem,
+    updateItem,
     changeTract,
     changePkg,
 }

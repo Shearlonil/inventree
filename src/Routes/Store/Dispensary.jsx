@@ -157,7 +157,7 @@ const Dispensary = () => {
 			const unverifiedDispensaryRequest = await storeController.findUnverifiedDispensaryById(dispensary_id);
 
             //  find active outposts, tracts and items with available store qty
-            const urls = [ '/api/items/dispensary/active', '/api/tracts/active', '/api/outposts/active' ];
+            const urls = [ '/api/items/dispensary/active', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
             const { 0: storeItemsRequest, 1: outpostsRequest } = response;
 
@@ -363,7 +363,6 @@ const Dispensary = () => {
 	const dispense = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-            console.log('outpost id', outpostId);
             await storeController.dispense(dispensaryId, outpostId);
             resetPageStates();
             //	navigate back to this page which will cause reset of page states

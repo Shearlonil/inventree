@@ -1,4 +1,5 @@
 
+import numeral from 'numeral';
 import { Item } from './Item';
 const _qtyManagerProps = new WeakMap();
 
@@ -10,7 +11,7 @@ export class QuantityManager{
                 id: jsonObject.id,
                 unitStoreQty: jsonObject.unitStoreQty,
                 unitSalesQty: jsonObject.unitSalesQty,
-                qtyPerPack: jsonObject.qtyPerPack,
+                qtyPerPackage: jsonObject.qtyPerPackage,
                 creationDate: jsonObject.creationDate,
                 expDate: jsonObject.expDate,
                 packStockPrice: stockPriceManager?.packStockPrice,
@@ -31,14 +32,14 @@ export class QuantityManager{
     get unitSalesQty() { return _qtyManagerProps.get(this).unitSalesQty }
     set unitSalesQty(unitSalesQty) { _qtyManagerProps.get(this).unitSalesQty = unitSalesQty }
     
-    get qtyPerPack() { return _qtyManagerProps.get(this).qtyPerPack }
-    set qtyPerPack(qtyPerPack) { _qtyManagerProps.get(this).qtyPerPack = qtyPerPack }
+    get qtyPerPackage() { return _qtyManagerProps.get(this).qtyPerPackage }
+    set qtyPerPackage(qtyPerPackage) { _qtyManagerProps.get(this).qtyPerPackage = qtyPerPackage }
     
-    // calculate sales quantity for pack using unitSalesQty and qtyPerPack
-    get packSalesQty() { return _qtyManagerProps.get(this).unitSalesQty / _qtyManagerProps.get(this).qtyPerPack }
+    // calculate sales quantity for pack using unitSalesQty and qtyPerPackage
+    get packSalesQty() { return numeral(_qtyManagerProps.get(this).unitSalesQty).divide(_qtyManagerProps.get(this).qtyPerPackage).format('₦0,0.00') }
     
-    // calculate store quantity for pack using unitStoreQty and qtyPerPack
-    get packStoreQty() { return _qtyManagerProps.get(this).unitStoreQty / _qtyManagerProps.get(this).qtyPerPack }
+    // calculate store quantity for pack using unitStoreQty and qtyPerPackage
+    get packStoreQty() { return numeral(_qtyManagerProps.get(this).unitStoreQty).divide(_qtyManagerProps.get(this).qtyPerPackage).format('₦0,0.00') }
     
     get creationDate() { return _qtyManagerProps.get(this).creationDate }
     set creationDate(creationDate) { _qtyManagerProps.get(this).creationDate = creationDate }
@@ -52,19 +53,35 @@ export class QuantityManager{
     get unitStockPrice() { return _qtyManagerProps.get(this).unitStockPrice; }
     set unitStockPrice(unitStockPrice) { _qtyManagerProps.get(this).unitStockPrice = unitStockPrice }
     
+    get outpostName() { return _qtyManagerProps.get(this).outpostName }
+    set outpostName(outpostName) { _qtyManagerProps.get(this).outpostName = outpostName }
+    
     get item() { return _qtyManagerProps.get(this).item }
     set item(item) { _qtyManagerProps.get(this).item = item }
+    
+    //  only for the purpose of displaying in tree table
+    get children() { return _qtyManagerProps.get(this).children }
+    set children(children) { _qtyManagerProps.get(this).children = children }
+    
+    //  only for the purpose of displaying in treee table. Indicate if total sum of outpost sales qty equals qty mgr sales qty
+    get faultFlag() { return _qtyManagerProps.get(this).faultFlag }
+    set faultFlag(faultFlag) { _qtyManagerProps.get(this).faultFlag = faultFlag }
 
     toJSON(){
         return {
             id: this.id,
             unitStoreQty: this.unitStoreQty,
             unitSalesQty: this.unitSalesQty,
-            qtyPerPack: this.qtyPerPack,
+            qtyPerPackage: this.qtyPerPackage,
             creationDate: this.creationDate,
             expDate: this.expDate,
             packStockPrice: this.packStockPrice,
             unitStockPrice: this.unitStockPrice,
+            outpostName: this.outpostName,
+            packSalesQty: this.packSalesQty,
+            packStoreQty: this.packStoreQty,
+            children: this.children,
+            faultFlag: this.faultFlag,
         }
     }
 }

@@ -36,6 +36,8 @@ import TractsItemsView from "./Routes/Tracts/TractItemsView";
 import PkgsWindow from "./Routes/Dashboard/Pkg/PkgsWindow";
 import PkgItemsView from "./Routes/Dashboard/Pkg/PkgItemsView";
 import SalesWindow from "./Routes/Items/SalesWindow";
+import SalesItemQtyMgrView from "./Routes/Items/SalesItemQtyMgrView";
+import StoreWindow from "./Routes/Items/StoreWindow";
 
 function App() {
 	return (
@@ -74,8 +76,15 @@ function App() {
 					<Route path={""} element={<PkgsWindow />} />
 				</Route>
 				<Route path="/items" element={<ProtectedRoute />}>
-					<Route path={"sales/:salesMode"} element={<SalesWindow />} />
-					<Route path={"sales"} element={<SalesWindow />} />
+					<Route path="sales" element={<ProtectedRoute />}>
+						<Route path={":salesMode"} element={<SalesWindow />} />
+						<Route path={":id/qty-mgr"} element={<SalesItemQtyMgrView />} />
+						<Route path={""} element={<SalesWindow />} />
+					</Route>
+					<Route path="store" element={<ProtectedRoute />}>
+						<Route path={":storeMode"} element={<StoreWindow />} />
+						<Route path={""} element={<StoreWindow />} />
+					</Route>
 				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>
 					<Route path={"trash"} element={<OutpostTrash />} />

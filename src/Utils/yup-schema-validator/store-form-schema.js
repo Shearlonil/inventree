@@ -77,4 +77,20 @@ const restockSchema = yup.object().shape({
 		.required("Amount Paid is required"),
 });
 
-export { storeItemRegSchema, restockSchema };
+const itemUpdateSchema = yup.object().shape({
+	item_name: yup.string().required("Item name required!"),
+	restock_level: yup
+		.number()
+		.positive("Restock Level must be positive")
+		.required("Restock Level is required"),
+	unit_sales: yup
+		.number()
+		.positive("Unit Sales Price must be positive")
+		.required("Unit Sales Price is required"),
+	pkg_sales_price: yup
+		.number()
+		.positive("Pkg Sales Price must be positive")
+		.required("Pkg Sales Price is required"),
+});
+
+export { storeItemRegSchema, restockSchema, itemUpdateSchema };

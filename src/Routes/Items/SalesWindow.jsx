@@ -16,6 +16,8 @@ import { OribitalLoading } from '../../Components/react-loading-indicators/Indic
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import itemController from '../../Controllers/item-controller';
 import genericController from '../../Controllers/generic-controller';
+import { Modal } from 'react-bootstrap';
+import ItemUpdateForm from '../../Components/Item/ItemUpdateForm';
 
 const SalesWindow = () => {
     const navigate = useNavigate();
@@ -40,6 +42,7 @@ const SalesWindow = () => {
     const [showInputModal, setShowInputModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [showFormModal, setShowFormModal] = useState(false);
     const [entityToEdit, setEntityToEdit] = useState(null);
     //	for confirmation dialog
     const [displayMsg, setDisplayMsg] = useState("");
@@ -50,9 +53,6 @@ const SalesWindow = () => {
     const [tractOptions, setTractOptions] = useState([]);
     //  To hold either pkgOptions or tractOptions for DropDownDialog
     const [options, setOptions] = useState([]);
-    
-    const [pkgLoading, setPkgLoading] = useState(true);
-    const [tractsLoading, setTractsLoading] = useState(true);
         
     //	for pagination
     const [pageSize] = useState(20);
@@ -72,7 +72,7 @@ const SalesWindow = () => {
         { label: "Filter By Section", onClickParams: {evtName: 'filterBySection'} },
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
-        { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
+        // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
         { label: "Trash", onClickParams: {evtName: 'trash'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
@@ -106,13 +106,11 @@ const SalesWindow = () => {
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
             if(pkgRequest){
-                setPkgLoading(false);
 				setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg})));
             }
 
             //	check if the request to fetch vendors doesn't fail before setting values to display
             if(tractRequest){
-				setTractsLoading(false);
                 setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract})));
             }
             setNetworkRequest(false);
@@ -155,8 +153,8 @@ const SalesWindow = () => {
                     item.qty = i.qty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitSalesPrice;
-                    item.packSalesPrice = i.packSalesPrice;
+                    item.unitSalesPrice = i.unitPrice;
+                    item.pkgSalesPrice = i.pkgPrice;
                     arr.push(item);
                 } );
 				setItems(arr);
@@ -203,8 +201,8 @@ const SalesWindow = () => {
                     item.qty = i.qty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitSalesPrice;
-                    item.packSalesPrice = i.packSalesPrice;
+                    item.unitSalesPrice = i.unitPrice;
+                    item.pkgSalesPrice = i.pkgPrice;
                     arr.push(item);
                 } );
 				setItems(arr);
@@ -253,8 +251,8 @@ const SalesWindow = () => {
                     item.qty = i.qty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitSalesPrice;
-                    item.packSalesPrice = i.packSalesPrice;
+                    item.unitSalesPrice = i.unitPrice;
+                    item.pkgSalesPrice = i.pkgPrice;
                     arr.push(item);
                 } );
 				setItems(arr);
@@ -290,6 +288,7 @@ const SalesWindow = () => {
         setShowConfirmModal(false);
 		setShowInputModal(false);
 		setShowDropDownModal(false);
+        setShowFormModal(false);
     };
 
     const resetPage = () => {
@@ -322,8 +321,7 @@ const SalesWindow = () => {
             case 'editItem':
                 setEntityToEdit(entity);
                 setConfirmDialogEvtName(onclickParams.evtName);
-                setDisplayMsg(`Enter Unique Item name`);
-                setShowInputModal(true);
+                setShowFormModal(true);
                 break;
             case 'move':
                 setEntityToEdit(entity);
@@ -340,7 +338,7 @@ const SalesWindow = () => {
                 setShowDropDownModal(true);
                 break;
             case 'viewItems':
-                window.open(`/item/${entity.itemName}/items`, '_blank')?.focus();
+                window.open(`/items/sales/${entity.id}/qty-mgr`, '_blank')?.focus();
                 break;
         }
     };
@@ -572,12 +570,52 @@ const SalesWindow = () => {
 			}
         }
     };
+	
+	const fnSave = async (item) => {
+		try {
+			setNetworkRequest(true);
+            //  add compulsory fields for Java ItemDTO
+            item.status = true;
+            item.qtyType = 'any';
+			await itemController.updateItem(item);
+            //	find index position of edited item in items arr
+            const indexPos = items.findIndex(i => i.id === item.id);
+            if(indexPos > -1){
+                //	replace old item found at index position in items array with edited one
+                items.splice(indexPos, 1, item);
+                setItems([...items]);
+                const startIndex = (currentPage - 1) * pageSize;
+                setPagedData(items.slice(startIndex, startIndex + pageSize));
+                toast.success('Update successful');
+            }
+            handleCloseModal();
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return fnSave(item);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
     
     const tableProps = {
         //	table header
         headers: ['Item Name', 'Restock Level', 'Reg. Date', 'Qty/Pkg', 'Unit Qty', 'Pkg Qty', 'Packaging', 'Section', 'Unit Sales Price', 'Pkg Sales Price', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'packSalesPrice'],
+        objectProps: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'pkgSalesPrice'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -599,7 +637,8 @@ const SalesWindow = () => {
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    Item is the science, art and technology of enclosing or protecting products for distribution, storage, sale, and use.
+                    View, Edit Sales Items. View Item Quantity Managerbr <br />
+                    NOTE: The AVG. Accounting valuation method is used to calculate Qty/Pkg found for all quantity managers
                 </span>
             </div>
 
@@ -640,6 +679,16 @@ const SalesWindow = () => {
                 message={dropDownMsg}
                 options={options}
             />
+
+			<Modal show={showFormModal} onHide={handleCloseModal}>
+				<Modal.Header closeButton>
+					<Modal.Title className='text-success fw-bold'>Update Item</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<ItemUpdateForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
+				</Modal.Body>
+				<Modal.Footer></Modal.Footer>
+			</Modal>
         </div>
     );
 };
