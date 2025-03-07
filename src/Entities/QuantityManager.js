@@ -47,10 +47,10 @@ export class QuantityManager{
     get expDate() { return _qtyManagerProps.get(this).expDate }
     set expDate(expDate) { _qtyManagerProps.get(this).expDate = expDate }
     
-    get packStockPrice() { return _qtyManagerProps.get(this).packStockPrice }
+    get packStockPrice() { return numeral(_qtyManagerProps.get(this).packStockPrice).format('₦0,0.00') }
     set packStockPrice(packStockPrice) { _qtyManagerProps.get(this).packStockPrice = packStockPrice }
 
-    get unitStockPrice() { return _qtyManagerProps.get(this).unitStockPrice; }
+    get unitStockPrice() { return numeral(_qtyManagerProps.get(this).unitStockPrice).format('₦0,0.00'); }
     set unitStockPrice(unitStockPrice) { _qtyManagerProps.get(this).unitStockPrice = unitStockPrice }
     
     get outpostName() { return _qtyManagerProps.get(this).outpostName }

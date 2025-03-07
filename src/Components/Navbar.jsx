@@ -111,6 +111,18 @@ function NavBar() {
 									>
 										Sales/Shelf
 									</NavDropdown.Item>
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
+											navigate("/items/sales");
+										}}
+										className={`nav-item ${
+											location.pathname.startsWith("/items/gross") &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										Gross
+									</NavDropdown.Item>
 								</NavDropdown>
 								<NavDropdown.Item 
 									onClick={() => {
@@ -239,7 +251,7 @@ function NavBar() {
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
-									Unified
+									Pool
 								</NavDropdown.Item>
 							</NavDropdown>}
 

@@ -14,7 +14,7 @@ const fetchInStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales`);
 }
 
-//  fetch in stock items for sales/shelf view
+//  fetch in stock items for store view
 const fetchInStockStoreItems = async () => {
     return await httpService.get(`/api/items/store`);
 }
@@ -24,9 +24,19 @@ const fetchOutOfStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales/nostock`);
 }
 
+//  fetch out of stock items for store view
+const fetchOutOfStockStoreItems = async () => {
+    return await httpService.get(`/api/items/store/nostock`);
+}
+
 //  fetch out of stock items for sales/shelf view
 const fetchLowStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales/low`);
+}
+
+//  fetch out of stock items for store view
+const fetchLowStockStoreItems = async () => {
+    return await httpService.get(`/api/items/store/low`);
 }
 
 //  Change item status to false: delete mode
@@ -65,7 +75,9 @@ export default {
     fetchInStockSalesItems,
     fetchInStockStoreItems,
     fetchOutOfStockSalesItems,
+    fetchOutOfStockStoreItems,
     fetchLowStockSalesItems,
+    fetchLowStockStoreItems,
     deleteItem,
     updateItem,
     changeTract,

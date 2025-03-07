@@ -32,7 +32,7 @@ const StoreWindow = () => {
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Move', onClickParams: {evtName: 'move'} },
         { name: 'Change Packaging', onClickParams: {evtName: 'updatePkg'} },
-        { name: 'View', onClickParams: {evtName: 'viewItems'} },
+        { name: 'View', onClickParams: {evtName: 'viewItem'} },
     ];
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -73,7 +73,7 @@ const StoreWindow = () => {
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
-        { label: "Trash", onClickParams: {evtName: 'trash'} },
+        // { label: "Trash", onClickParams: {evtName: 'trash'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
             
@@ -88,7 +88,7 @@ const StoreWindow = () => {
                     fetchOutOfStockItems();
                     break;
                 default:
-                    fetchInStockSalesItems();
+                    fetchInStockStoreItems();
                     break;
             }
         }else {
@@ -135,7 +135,7 @@ const StoreWindow = () => {
 		}
     };
 
-	const fetchInStockSalesItems = async () => {
+	const fetchInStockStoreItems = async () => {
 		try {
             setNetworkRequest(true);
             const response = await itemController.fetchInStockStoreItems();
@@ -168,7 +168,7 @@ const StoreWindow = () => {
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
-					return fetchInStockSalesItems();
+					return fetchInStockStoreItems();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -186,7 +186,7 @@ const StoreWindow = () => {
 	const fetchLowStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchLowStockSalesItems();
+            const response = await itemController.fetchLowStockStoreItems();
             setMode('Low Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -236,7 +236,7 @@ const StoreWindow = () => {
 	const fetchOutOfStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchOutOfStockSalesItems();
+            const response = await itemController.fetchOutOfStockStoreItems();
             setMode('Out Of Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -306,6 +306,12 @@ const StoreWindow = () => {
             case 'move':
                 move(entity);
                 break;
+            case 'filterBySection':
+                const arr = items.filter(item => item.tractName.toLowerCase() === entity.name.toLowerCase());
+                setFilteredItems(arr);
+                setTotalItemsCount(arr.length);
+                setCurrentPage(1);
+                break;
         }
     };
 
@@ -337,8 +343,8 @@ const StoreWindow = () => {
                 setOptions(pkgOptions);
                 setShowDropDownModal(true);
                 break;
-            case 'viewItems':
-                window.open(`/items/sales/${entity.id}/qty-mgr`, '_blank')?.focus();
+            case 'viewItem':
+                window.open(`/items/store/${entity.id}/qty-mgr`, '_blank')?.focus();
                 break;
         }
     };
@@ -369,7 +375,7 @@ const StoreWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'availableStock':
-                await fetchInStockSalesItems()
+                await fetchInStockStoreItems()
                 setCurrentPage(1);
                 break;
             case 'lowStock':
@@ -381,6 +387,10 @@ const StoreWindow = () => {
                 setCurrentPage(1);
                 break;
             case 'filterBySection':
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setOptions(tractOptions);
+                setDropDownMsg("Select Section");
+                setShowDropDownModal(true);
                 break;
             case 'salesPriceMarkup':
                 break;
@@ -399,7 +409,8 @@ const StoreWindow = () => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                arr = items.filter(item => item.itemName.toLowerCase().includes(str));
+                console.log('search string', str);
+                arr = items.filter(item => item.itemName.toLowerCase().includes(str.toLowerCase()));
                 setFilteredItems(arr);
                 setTotalItemsCount(arr.length);
                 setCurrentPage(1);
@@ -613,9 +624,9 @@ const StoreWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Restock Level', 'Reg. Date', 'Qty/Pkg', 'Unit Qty', 'Pkg Qty', 'Packaging', 'Section', 'Unit Sales Price', 'Pkg Sales Price', 'Options'],
+        headers: ['Item Name', 'Restock Level', 'Reg. Date', 'Qty/Pkg', 'Unit Qty', 'Pkg Qty', 'Packaging', 'Section', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'pkgSalesPrice'],
+        objectProps: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -632,12 +643,12 @@ const StoreWindow = () => {
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Sales/Shelf Items</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Store Items</span>
                         <img src={SVG.shopping_items} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View, Edit Sales Items. View Item Quantity Managerbr <br />
+                    View, Edit Store Items. View Item Quantity Managers <br />
                     NOTE: The AVG. Accounting valuation method is used to calculate Qty/Pkg found for all quantity managers
                 </span>
             </div>

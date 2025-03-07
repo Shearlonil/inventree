@@ -38,6 +38,7 @@ import PkgItemsView from "./Routes/Dashboard/Pkg/PkgItemsView";
 import SalesWindow from "./Routes/Items/SalesWindow";
 import SalesItemQtyMgrView from "./Routes/Items/SalesItemQtyMgrView";
 import StoreWindow from "./Routes/Items/StoreWindow";
+import StoreItemQtyMgrView from "./Routes/Items/StoreItemQtyMgrView";
 
 function App() {
 	return (
@@ -83,6 +84,7 @@ function App() {
 					</Route>
 					<Route path="store" element={<ProtectedRoute />}>
 						<Route path={":storeMode"} element={<StoreWindow />} />
+						<Route path={":id/qty-mgr"} element={<StoreItemQtyMgrView />} />
 						<Route path={""} element={<StoreWindow />} />
 					</Route>
 				</Route>

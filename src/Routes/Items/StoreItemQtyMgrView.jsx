@@ -13,7 +13,7 @@ import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import numeral from 'numeral';
 
-const SalesItemQtyMgrView = () => {
+const StoreItemQtyMgrView = () => {
     const navigate = useNavigate();
     const { id } = useParams();
                 
@@ -24,8 +24,8 @@ const SalesItemQtyMgrView = () => {
     const [item, setItem] = useState(null);
     const [data, setData] = useState([]);
 
-    const headerTitle = ['ID', 'Outpost', 'Unit Qty', 'Pkg Qty', 'Qty/Package', 'Exp. Date', 'Purchase Date'];
-    const objProps = ["id", "outpostName", "unitSalesQty", "packSalesQty", "qtyPerPackage", "expDate", "creationDate"];
+    const headerTitle = ['ID', 'Unit Qty', 'Pkg Qty', 'Qty/Package',"Unit Stock Price", "Pkg Stock Price", 'Exp. Date', 'Purchase Date'];
+    const objProps = ["id", "unitStoreQty", "packStoreQty", "qtyPerPackage", "unitStockPrice", "packStockPrice", "expDate", "creationDate"];
 
     const columns = Array.from({ length: 7 }).map((_, index) => {
         return {
@@ -61,38 +61,21 @@ const SalesItemQtyMgrView = () => {
             if(response && response.data){
                 setItem(response.data);
             }
-            response = await qtyMgrController.findItemSalesQtyMgr(id);
+            response = await qtyMgrController.findItemStoreQtyMgr(id);
             if(response && response.data){
                 const data = [];
-                for (const key in response.data) {
+                response.data.forEach(qtyManager => {
                     const qtyMgr = new QuantityManager();
-                    qtyMgr.id = key;
-                    qtyMgr.qtyPerPackage = response.data[key][0].qtyPerPkg;
-                    qtyMgr.expDate = response.data[key][0].expDate;
-                    qtyMgr.creationDate = format(response.data[key][0].creationDate, 'dd/MM/yyyy HH:mm:ss');
-                    qtyMgr.unitSalesQty = response.data[key][0].totalUnitQty;
-                    //  using stock prices in qtyMgr to represent sales prices :)
-                    qtyMgr.packStockPrice = response.data[key][0].packStock;
-                    qtyMgr.unitStockPrice = response.data[key][0].unitStock;
+                    qtyMgr.id = qtyManager.id;
+                    qtyMgr.qtyPerPackage = qtyManager.qtyPerPkg;
+                    qtyMgr.expDate = qtyManager.expDate;
+                    qtyMgr.creationDate = format(qtyManager.creationDate, 'dd/MM/yyyy HH:mm:ss');
+                    qtyMgr.unitStoreQty = qtyManager.totalUnitQty;
+                    qtyMgr.packStockPrice = qtyManager.packStock;
+                    qtyMgr.unitStockPrice = qtyManager.unitStock;
 
-                    //  to serve as children prop of qtyMgr to display in rsuite tree table
-                    const arr = [];
-                    let total = 0;
-                    response.data[key].forEach(child => {
-                        const mgr = new QuantityManager();
-                        mgr.id = key + ' - ' + child.outpostSalesId;
-                        mgr.qtyPerPackage = child.qtyPerPkg;
-                        mgr.outpostName = child.outpostName;
-                        mgr.unitSalesQty = child.outpostSalesQty;
-                        total = numeral(total).add(child.outpostSalesQty).value();
-                        arr.push(mgr.toJSON());
-                    });
-                    qtyMgr.children = arr;
-                    if(numeral(total).difference(qtyMgr.unitSalesQty)){
-                        qtyMgr.faultFlag = true;
-                    }
                     data.push(qtyMgr.toJSON());
-                }
+                });
                 setData(data);
             }
             setNetworkRequest(false);
@@ -173,7 +156,7 @@ const SalesItemQtyMgrView = () => {
             </div>
 
             <div className={`container mt-4 p-3 shadow-sm border border-2 rounded-1 ${networkRequest ? 'disabledDiv' : ''}`}>
-                <h4 className='fw-bold text-success'>Sales Quantities</h4>
+                <h4 className='fw-bold text-success'>Store Quantities</h4>
                 <Table data={data} isTree rowKey="id" height={400} className='mt-3' bordered cellBordered >
                     {data.length > 0 && columns.map((column, index) => {
                         return (
@@ -190,4 +173,4 @@ const SalesItemQtyMgrView = () => {
     )
 }
 
-export default SalesItemQtyMgrView;
+export default StoreItemQtyMgrView;

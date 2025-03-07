@@ -73,7 +73,7 @@ const SalesWindow = () => {
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
-        { label: "Trash", onClickParams: {evtName: 'trash'} },
+        // { label: "Trash", onClickParams: {evtName: 'trash'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
             
@@ -306,6 +306,12 @@ const SalesWindow = () => {
             case 'move':
                 move(entity);
                 break;
+            case 'filterBySection':
+                const arr = items.filter(item => item.tractName.toLowerCase() === entity.name.toLowerCase());
+                setFilteredItems(arr);
+                setTotalItemsCount(arr.length);
+                setCurrentPage(1);
+                break;
         }
     };
 
@@ -381,6 +387,10 @@ const SalesWindow = () => {
                 setCurrentPage(1);
                 break;
             case 'filterBySection':
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setOptions(tractOptions);
+                setDropDownMsg("Select Section");
+                setShowDropDownModal(true);
                 break;
             case 'salesPriceMarkup':
                 break;
@@ -399,7 +409,7 @@ const SalesWindow = () => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                arr = items.filter(item => item.itemName.toLowerCase().includes(str));
+                arr = items.filter(item => item.itemName.toLowerCase().includes(str.toLowerCase()));
                 setFilteredItems(arr);
                 setTotalItemsCount(arr.length);
                 setCurrentPage(1);
@@ -637,7 +647,7 @@ const SalesWindow = () => {
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View, Edit Sales Items. View Item Quantity Managerbr <br />
+                    View, Edit Sales Items. View Item Quantity Managers <br />
                     NOTE: The AVG. Accounting valuation method is used to calculate Qty/Pkg found for all quantity managers
                 </span>
             </div>
