@@ -11,7 +11,7 @@ export class QuantityManager{
                 id: jsonObject.id,
                 unitStoreQty: jsonObject.unitStoreQty,
                 unitSalesQty: jsonObject.unitSalesQty,
-                qtyPerPackage: jsonObject.qtyPerPackage,
+                qtyPerPkg: jsonObject.qtyPerPkg,
                 creationDate: jsonObject.creationDate,
                 expDate: jsonObject.expDate,
                 packStockPrice: stockPriceManager?.packStockPrice,
@@ -32,14 +32,14 @@ export class QuantityManager{
     get unitSalesQty() { return _qtyManagerProps.get(this).unitSalesQty }
     set unitSalesQty(unitSalesQty) { _qtyManagerProps.get(this).unitSalesQty = unitSalesQty }
     
-    get qtyPerPackage() { return _qtyManagerProps.get(this).qtyPerPackage }
-    set qtyPerPackage(qtyPerPackage) { _qtyManagerProps.get(this).qtyPerPackage = qtyPerPackage }
+    get qtyPerPkg() { return _qtyManagerProps.get(this).qtyPerPkg }
+    set qtyPerPkg(qtyPerPkg) { _qtyManagerProps.get(this).qtyPerPkg = qtyPerPkg }
     
-    // calculate sales quantity for pack using unitSalesQty and qtyPerPackage
-    get packSalesQty() { return numeral(_qtyManagerProps.get(this).unitSalesQty).divide(_qtyManagerProps.get(this).qtyPerPackage).format('₦0,0.00') }
+    // calculate sales quantity for pack using unitSalesQty and qtyPerPkg
+    get packSalesQty() { return numeral(_qtyManagerProps.get(this).unitSalesQty).divide(_qtyManagerProps.get(this).qtyPerPkg).format('₦0,0.00') }
     
-    // calculate store quantity for pack using unitStoreQty and qtyPerPackage
-    get packStoreQty() { return numeral(_qtyManagerProps.get(this).unitStoreQty).divide(_qtyManagerProps.get(this).qtyPerPackage).format('₦0,0.00') }
+    // calculate store quantity for pack using unitStoreQty and qtyPerPkg
+    get packStoreQty() { return numeral(_qtyManagerProps.get(this).unitStoreQty).divide(_qtyManagerProps.get(this).qtyPerPkg).format('₦0,0.00') }
     
     get creationDate() { return _qtyManagerProps.get(this).creationDate }
     set creationDate(creationDate) { _qtyManagerProps.get(this).creationDate = creationDate }
@@ -72,7 +72,7 @@ export class QuantityManager{
             id: this.id,
             unitStoreQty: this.unitStoreQty,
             unitSalesQty: this.unitSalesQty,
-            qtyPerPackage: this.qtyPerPackage,
+            qtyPerPkg: this.qtyPerPkg,
             creationDate: this.creationDate,
             expDate: this.expDate,
             packStockPrice: this.packStockPrice,

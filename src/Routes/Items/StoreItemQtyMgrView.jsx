@@ -25,7 +25,7 @@ const StoreItemQtyMgrView = () => {
     const [data, setData] = useState([]);
 
     const headerTitle = ['ID', 'Unit Qty', 'Pkg Qty', 'Qty/Package',"Unit Stock Price", "Pkg Stock Price", 'Exp. Date', 'Purchase Date'];
-    const objProps = ["id", "unitStoreQty", "packStoreQty", "qtyPerPackage", "unitStockPrice", "packStockPrice", "expDate", "creationDate"];
+    const objProps = ["id", "unitStoreQty", "packStoreQty", "qtyPerPkg", "unitStockPrice", "packStockPrice", "expDate", "creationDate"];
 
     const columns = Array.from({ length: 7 }).map((_, index) => {
         return {
@@ -67,7 +67,7 @@ const StoreItemQtyMgrView = () => {
                 response.data.forEach(qtyManager => {
                     const qtyMgr = new QuantityManager();
                     qtyMgr.id = qtyManager.id;
-                    qtyMgr.qtyPerPackage = qtyManager.qtyPerPkg;
+                    qtyMgr.qtyPerPkg = qtyManager.qtyPerPkg;
                     qtyMgr.expDate = qtyManager.expDate;
                     qtyMgr.creationDate = format(qtyManager.creationDate, 'dd/MM/yyyy HH:mm:ss');
                     qtyMgr.unitStoreQty = qtyManager.totalUnitQty;

@@ -409,7 +409,6 @@ const StoreWindow = () => {
         let arr = [];
 		switch (confirmDialogEvtName) {
             case 'searchByName':
-                console.log('search string', str);
                 arr = items.filter(item => item.itemName.toLowerCase().includes(str.toLowerCase()));
                 setFilteredItems(arr);
                 setTotalItemsCount(arr.length);
