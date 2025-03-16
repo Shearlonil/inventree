@@ -39,6 +39,8 @@ import SalesWindow from "./Routes/Items/SalesWindow";
 import SalesItemQtyMgrView from "./Routes/Items/SalesItemQtyMgrView";
 import StoreWindow from "./Routes/Items/StoreWindow";
 import StoreItemQtyMgrView from "./Routes/Items/StoreItemQtyMgrView";
+import GrossWindow from "./Routes/Items/GrossWindow";
+import Trash from "./Routes/Items/Trash";
 
 function App() {
 	return (
@@ -87,6 +89,11 @@ function App() {
 						<Route path={":id/qty-mgr"} element={<StoreItemQtyMgrView />} />
 						<Route path={""} element={<StoreWindow />} />
 					</Route>
+					<Route path="gross" element={<ProtectedRoute />}>
+						<Route path={":grossMode"} element={<GrossWindow />} />
+						<Route path={""} element={<GrossWindow />} />
+					</Route>
+					<Route path={"trash"} element={<Trash />} />
 				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>
 					<Route path={"trash"} element={<OutpostTrash />} />

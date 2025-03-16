@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { Modal } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -17,32 +16,28 @@ import { OribitalLoading } from '../../Components/react-loading-indicators/Indic
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import itemController from '../../Controllers/item-controller';
 import genericController from '../../Controllers/generic-controller';
-import ItemUpdateForm from '../../Components/Item/ItemUpdateForm';
 
-const SalesWindow = () => {
+const GrossWindow = () => {
     const navigate = useNavigate();
-    const { salesMode } = useParams();
+    const { grossMode } = useParams();
             
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
 
     //	menus for the react-menu in table
     const menuItems = [
-        { name: 'Edit', onClickParams: {evtName: 'editItem' } },
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Move', onClickParams: {evtName: 'move'} },
         { name: 'Change Packaging', onClickParams: {evtName: 'updatePkg'} },
-        { name: 'View', onClickParams: {evtName: 'viewItems'} },
     ];
     
     const [networkRequest, setNetworkRequest] = useState(false);
-    const [mode, setMode] = useState(salesMode);
+    const [mode, setMode] = useState(grossMode);
 
     //	for input dialog
     const [showInputModal, setShowInputModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [showFormModal, setShowFormModal] = useState(false);
     const [entityToEdit, setEntityToEdit] = useState(null);
     //	for confirmation dialog
     const [displayMsg, setDisplayMsg] = useState("");
@@ -72,14 +67,13 @@ const SalesWindow = () => {
         { label: "Filter By Section", onClickParams: {evtName: 'filterBySection'} },
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
-        // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
             
     useEffect( () => {
         if(user.hasAuth('SECTIONS_WINDOW')){
             initialize();
-            switch (salesMode) {
+            switch (grossMode) {
                 case 'low':
                     fetchLowStockItems();
                     break;
@@ -87,7 +81,7 @@ const SalesWindow = () => {
                     fetchOutOfStockItems();
                     break;
                 default:
-                    fetchInStockSalesItems();
+                    fetchInStockGrossItems();
                     break;
             }
         }else {
@@ -96,7 +90,7 @@ const SalesWindow = () => {
         }
     }, []);
 
-	const initialize = async () => {
+    const initialize = async () => {
         try {
             setNetworkRequest(true);
             const urls = [ '/api/pkg/active', '/api/tracts/active' ];
@@ -105,7 +99,7 @@ const SalesWindow = () => {
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
             if(pkgRequest){
-				setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg})));
+                setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg})));
             }
 
             //	check if the request to fetch vendors doesn't fail before setting values to display
@@ -113,31 +107,31 @@ const SalesWindow = () => {
                 setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract})));
             }
             setNetworkRequest(false);
-		} catch (error) {
+        } catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-		}
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
     };
 
-	const fetchInStockSalesItems = async () => {
+	const fetchInStockGrossItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchInStockSalesItems();
+            const response = await itemController.fetchInStockGrossItems();
             setMode('Available Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -150,6 +144,7 @@ const SalesWindow = () => {
                     item.creationDate = i.creationDate;
                     item.qtyPerPkg = i.qtyPerPkg;
                     item.qty = i.qty;
+                    item.storeQty = i.storeQty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
                     item.unitSalesPrice = i.unitPrice;
@@ -167,7 +162,7 @@ const SalesWindow = () => {
 			try {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
-					return fetchInStockSalesItems();
+					return fetchInStockGrossItems();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -185,7 +180,7 @@ const SalesWindow = () => {
 	const fetchLowStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchLowStockSalesItems();
+            const response = await itemController.fetchLowStockGrossItems();
             setMode('Low Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -198,6 +193,7 @@ const SalesWindow = () => {
                     item.creationDate = i.creationDate;
                     item.qtyPerPkg = i.qtyPerPkg;
                     item.qty = i.qty;
+                    item.storeQty = i.storeQty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
                     item.unitSalesPrice = i.unitPrice;
@@ -235,7 +231,7 @@ const SalesWindow = () => {
 	const fetchOutOfStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchOutOfStockSalesItems();
+            const response = await itemController.fetchOutOfStockGrossItems();
             setMode('Out Of Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -248,6 +244,7 @@ const SalesWindow = () => {
                     item.creationDate = i.creationDate;
                     item.qtyPerPkg = i.qtyPerPkg;
                     item.qty = i.qty;
+                    item.storeQty = i.storeQty;
                     item.pkgName = i.pkgName;
                     item.tractName = i.tractName;
                     item.unitSalesPrice = i.unitPrice;
@@ -287,7 +284,6 @@ const SalesWindow = () => {
         setShowConfirmModal(false);
 		setShowInputModal(false);
 		setShowDropDownModal(false);
-        setShowFormModal(false);
     };
 
     const resetPage = () => {
@@ -322,11 +318,6 @@ const SalesWindow = () => {
                 setDisplayMsg(`Move Item ${entity.itemName} to Trash?`);
                 setConfirmDialogEvtName(onclickParams.evtName);
                 setShowConfirmModal(true);
-                break;
-            case 'editItem':
-                setEntityToEdit(entity);
-                setConfirmDialogEvtName(onclickParams.evtName);
-                setShowFormModal(true);
                 break;
             case 'move':
                 setEntityToEdit(entity);
@@ -374,7 +365,7 @@ const SalesWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'availableStock':
-                await fetchInStockSalesItems()
+                await fetchInStockGrossItems()
                 setCurrentPage(1);
                 break;
             case 'lowStock':
@@ -390,8 +381,6 @@ const SalesWindow = () => {
                 setOptions(tractOptions);
                 setDropDownMsg("Select Section");
                 setShowDropDownModal(true);
-                break;
-            case 'salesPriceMarkup':
                 break;
             case 'trash':
                 break;
@@ -622,9 +611,9 @@ const SalesWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Restock Level', 'Reg. Date', 'Qty/Pkg', 'Unit Qty', 'Pkg Qty', 'Packaging', 'Section', 'Unit Sales Price', 'Pkg Sales Price', 'Options'],
+        headers: ['Item Name', 'Restock Level', 'Sales Qty (Unit)', 'Store Qty (Unit)', 'Packaging', 'Section', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'pkgSalesPrice'],
+        objectProps: ['itemName', 'restockLevel', 'qty', 'storeQty', 'pkgName', 'tractName'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -641,12 +630,12 @@ const SalesWindow = () => {
                 </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Sales/Shelf Items</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Gross Items</span>
                         <img src={SVG.shopping_items} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    View, Edit Sales Items. View Item Quantity Managers <br />
+                    Sales/Shelf + Store Items <br />
                     NOTE: The AVG. Accounting valuation method is used to calculate Qty/Pkg found for all quantity managers
                 </span>
             </div>
@@ -688,18 +677,8 @@ const SalesWindow = () => {
                 message={dropDownMsg}
                 options={options}
             />
-
-			<Modal show={showFormModal} onHide={handleCloseModal}>
-				<Modal.Header closeButton>
-					<Modal.Title className='text-success fw-bold'>Update Item</Modal.Title>
-				</Modal.Header>
-				<Modal.Body>
-					<ItemUpdateForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
-				</Modal.Body>
-				<Modal.Footer></Modal.Footer>
-			</Modal>
         </div>
-    );
-};
+    )
+}
 
-export default SalesWindow;
+export default GrossWindow;

@@ -121,7 +121,7 @@ const OutpostTrash = () => {
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'restore':
-				//	ask if sure to delete
+				//	ask if sure to restore
 				setEntityToEdit(entity);
 				setDisplayMsg(`Restore ${entity.name}?`);
 				setConfirmDialogEvtName(onclickParams.evtName);

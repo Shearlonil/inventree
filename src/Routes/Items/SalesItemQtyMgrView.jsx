@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { format } from "date-fns";
 import { VscEdit, VscSave, VscRemove } from 'react-icons/vsc';
-import { Table, Button, IconButton, Input, DatePicker, InputNumber } from 'rsuite';
+import numeral from 'numeral';
+import { Table, IconButton, Input, DatePicker, InputNumber } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 
 import { useAuth } from '../../app-context/auth-user-context';
@@ -12,7 +13,6 @@ import itemController from '../../Controllers/item-controller';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
-import numeral from 'numeral';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 
 const styles = `
@@ -256,7 +256,7 @@ const SalesItemQtyMgrView = () => {
                 return arr[1].trim() === entityToEdit.id.trim();
             });
 
-            child.packSalesQty = numeral(child.unitSalesQty).divide(child.qtyPerPkg).format('₦0,0.00')
+            child.packSalesQty = numeral(child.unitSalesQty).divide(child.qtyPerPkg).format('₦0,0.00');
             setData(temp);
 
             toast.info('Update successful');
@@ -295,7 +295,7 @@ const SalesItemQtyMgrView = () => {
             temp.unitStockPrice = numeral(entityToEdit.unitStockPrice).value();
             //  not needed but added for Spring validation
             temp.unitStoreQty = 0;
-            await qtyMgrController.updateQtyMgr(temp);
+            await qtyMgrController.updateSalesQtyMgr(temp);
             //  in case of qty/pkg, update all children
             const nextData = Object.assign([], data);
             const parent = nextData.find(item => item.id === entityToEdit.id );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -16,7 +17,6 @@ import { OribitalLoading } from '../../Components/react-loading-indicators/Indic
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import itemController from '../../Controllers/item-controller';
 import genericController from '../../Controllers/generic-controller';
-import { Modal } from 'react-bootstrap';
 import ItemUpdateForm from '../../Components/Item/ItemUpdateForm';
 
 const StoreWindow = () => {
@@ -73,7 +73,6 @@ const StoreWindow = () => {
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
-        // { label: "Trash", onClickParams: {evtName: 'trash'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
     ];
             

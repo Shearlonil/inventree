@@ -19,6 +19,11 @@ const fetchInStockStoreItems = async () => {
     return await httpService.get(`/api/items/store`);
 }
 
+//  fetch in stock gross items for gross view
+const fetchInStockGrossItems = async () => {
+    return await httpService.get(`/api/items/gross`);
+}
+
 //  fetch out of stock items for sales/shelf view
 const fetchOutOfStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales/nostock`);
@@ -27,6 +32,11 @@ const fetchOutOfStockSalesItems = async () => {
 //  fetch out of stock items for store view
 const fetchOutOfStockStoreItems = async () => {
     return await httpService.get(`/api/items/store/nostock`);
+}
+
+//  fetch out of stock gross items for gross view
+const fetchOutOfStockGrossItems = async () => {
+    return await httpService.get(`/api/items/gross/nostock`);
 }
 
 //  fetch out of stock items for sales/shelf view
@@ -39,9 +49,23 @@ const fetchLowStockStoreItems = async () => {
     return await httpService.get(`/api/items/store/low`);
 }
 
+//  fetch out of stock items for store view
+const fetchLowStockGrossItems = async () => {
+    return await httpService.get(`/api/items/gross/low`);
+}
+
 //  Change item status to false: delete mode
 const deleteItem = async (id) => {
     return await httpService.delete(`/api/items/status/change`, {
+        params: {
+            id
+        }
+    });
+}
+
+//  Change item status to true: restore mode
+const restoreItem = async (id) => {
+    return await httpService.put(`/api/trash/items/restore`, null, {
         params: {
             id
         }
@@ -62,6 +86,10 @@ const changeTract = async (id, tractId) => {
     });
 }
 
+const fetchTrashedItems = async () => {
+    return await httpService.get(`/api/trash/items`);
+}
+
 const changePkg = async (id, pkgId) => {
     return await httpService.put(`/api/items/pkg/change/${id}`, null, {
         params: {
@@ -74,12 +102,17 @@ export default {
     findById,
     fetchInStockSalesItems,
     fetchInStockStoreItems,
+    fetchInStockGrossItems,
     fetchOutOfStockSalesItems,
     fetchOutOfStockStoreItems,
+    fetchOutOfStockGrossItems,
     fetchLowStockSalesItems,
     fetchLowStockStoreItems,
+    fetchLowStockGrossItems,
     deleteItem,
+    restoreItem,
     updateItem,
     changeTract,
+    fetchTrashedItems,
     changePkg,
 }

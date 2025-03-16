@@ -19,8 +19,13 @@ const findItemStoreQtyMgr = async (itemId) => {
 }
 
 //  update outpost sales qty from sales qty mgr view window
-const updateQtyMgr = async (qtyMgr) => {
+const updateSalesQtyMgr = async (qtyMgr) => {
     return await httpService.put(`/api/qtymgrs/update/sales`, qtyMgr);
+}
+
+//  update outpost sales qty from sales qty mgr view window
+const updateStoreQtyMgr = async (qtyMgr) => {
+    return await httpService.put(`/api/qtymgrs/update/store`, qtyMgr);
 }
 
 //  update outpost sales qty from sales qty mgr view window
@@ -42,7 +47,8 @@ const deleteOutpostSalesQty = async (outpostSalesQtyId, qtyMgrId) => {
 export default {
     findItemSalesQtyMgr,
     findItemStoreQtyMgr,
-    updateQtyMgr,
+    updateSalesQtyMgr,
+    updateStoreQtyMgr,
     updateOutpostSalesQty,
     deleteOutpostSalesQty,
 }

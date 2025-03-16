@@ -38,6 +38,10 @@ export class Item {
     get qty() { return _itemProps.get(this).qty }
     set qty(qty) { _itemProps.get(this).qty = qty }
     
+    //  useful when displaying gross items
+    get storeQty() { return _itemProps.get(this).storeQty }
+    set storeQty(storeQty) { _itemProps.get(this).storeQty = storeQty }
+    
     get pkgQty() { return numeral(_itemProps.get(this).qty).divide(_itemProps.get(this).qtyPerPkg).format('0,0.00'); }
 
     get qtyType() { return _itemProps.get(this).qtyType }
@@ -83,7 +87,7 @@ export class Item {
             qty: this.qty,
             qtyType: this.qtyType,
             restockLevel: this.restockLevel,
-            // storeQty: this.storeQty,
+            storeQty: this.storeQty,
             qtyPerPkg: this.qtyPerPkg,
             status: this.status,
             creationDate: this.creationDate,
