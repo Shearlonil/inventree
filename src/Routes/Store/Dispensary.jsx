@@ -17,7 +17,7 @@ import { useAuth } from '../../app-context/auth-user-context';
 import genericController from '../../Controllers/generic-controller';
 import { DispensaryItem } from '../../Entities/DispensaryItem';
 import PaginationLite from '../../Components/PaginationLite';
-import storeController from '../../Controllers/store-controller';
+import inventoryController from '../../Controllers/inventory-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import DispensaryForm from '../../Components/StoreComp/DispensaryForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
@@ -154,7 +154,7 @@ const Dispensary = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const unverifiedDispensaryRequest = await storeController.findUnverifiedDispensaryById(dispensary_id);
+			const unverifiedDispensaryRequest = await inventoryController.findUnverifiedDispensaryById(dispensary_id);
 
             //  find active outposts, tracts and items with available store qty
             const urls = [ '/api/items/dispensary/active', '/api/outposts/active' ];
@@ -324,7 +324,7 @@ const Dispensary = () => {
                 qtyType: data.dispense_qty_type,
             };
             //  network request to save data
-            const response = await storeController.dispensary(dispensaryId, dispensedItem);
+            const response = await inventoryController.dispensary(dispensaryId, dispensedItem);
             if(response && response.status === 200){
                 dispensedItem.id = response.data[0].id;
                 dispensedItem.itemDetailId = response.data[0].itemDetailId;
@@ -363,7 +363,7 @@ const Dispensary = () => {
 	const dispense = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-            await storeController.dispense(dispensaryId, outpostId);
+            await inventoryController.dispense(dispensaryId, outpostId);
             resetPageStates();
             //	navigate back to this page which will cause reset of page states
             navigate("/store/item/dispensary/0");
@@ -396,7 +396,7 @@ const Dispensary = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'deleteItem':
-					await storeController.deleteDispensedItemDetail(entityToEdit.itemDetailId);
+					await inventoryController.deleteDispensedItemDetail(entityToEdit.itemDetailId);
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.itemId == entityToEdit.itemId);
 					if(indexPos > -1){
@@ -414,13 +414,13 @@ const Dispensary = () => {
 					setShowDropDownModal(true);
 					break;
 				case "deleteDispensary":
-					await storeController.deleteDispensary(dispensaryId);
+					await inventoryController.deleteDispensary(dispensaryId);
                     resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/store/item/dispensary/0");
 					break;
 				case "pdfExport":
-					await storeController.pdfExport(dispensaryId);
+					await inventoryController.pdfExport(dispensaryId);
 					break;
 			}
 			setNetworkRequest(false);
@@ -449,7 +449,7 @@ const Dispensary = () => {
         try {
             setNetworkRequest(true);
             //  network request to update data
-            const response = await storeController.updateDispensedItem(data);
+            const response = await inventoryController.updateDispensedItem(data);
             if(response && response.status === 200){
                 //	find index position of edited item in items arr
                 const indexPos = items.findIndex(i => i.itemId === data.itemId);

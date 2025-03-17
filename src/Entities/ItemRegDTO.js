@@ -61,6 +61,9 @@ export class ItemRegDTO {
     
     get expDate() { return _itemProps.get(this).expDate; }
     set expDate(expDate) { _itemProps.get(this).expDate = expDate; }
+    
+    get creationDate() { return _itemProps.get(this).creationDate; }
+    set creationDate(creationDate) { _itemProps.get(this).creationDate = creationDate; }
 
     get cashPurchaseAmount() { return numeral(_itemProps.get(this).cashPurchaseAmount).format('₦0,0.00'); }
     set cashPurchaseAmount(cashPurchaseAmount) { _itemProps.get(this).cashPurchaseAmount = cashPurchaseAmount; }
@@ -118,13 +121,17 @@ export class ItemRegDTO {
             pkgId: this.pkgId,
             vendorId: this.vendorId,
             tractId: this.tractId,
+            tractName: this.tractName,
+            vendorName: this.vendorName,
             status: this.status,
             cashPurchaseAmount: numeral(this.cashPurchaseAmount).value(),
             expDate: this.expDate,
+            creationDate: this.creationDate,
             pkgSalesPrice: numeral(this.pkgSalesPrice).value(),
             unitSalesPrice: numeral(this.unitSalesPrice).value(),
             pkgStockPrice: numeral(this.pkgStockPrice).value(),
             unitStockPrice: numeral(this.unitStockPrice).value(),
+            purchaseAmount: this.purchaseAmount,
         }
     }
 }

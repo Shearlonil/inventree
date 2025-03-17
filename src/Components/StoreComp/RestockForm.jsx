@@ -300,7 +300,6 @@ const RestockForm = (props) => {
 		*/
 		const unitSalesPrice = Math.round(numeral(unitStockPrice).add(calcMarkup).value() / 10) * 10;
 		const pkgSalesPrice = numeral(unitSalesPrice).multiply(qtyPerPkg);
-		console.log('unit stock price', unitStockPrice, 'calculated markup', calcMarkup, 'calculated unit sales', unitSalesPrice);
 		setValue("unit_sales", unitSalesPrice);
 		setValue("pkg_sales_price", numeral(pkgSalesPrice).value());
 	}
@@ -457,6 +456,10 @@ const RestockForm = (props) => {
 						</Col>
 					</Row>
 				</Form.Group>
+				
+				<h6 className="fw-bold text-primary mb-0">Stock Prices</h6>
+				<hr className="mt-0" />
+				
 				<Form.Group className="mb-3" controlId="unit_stock">
 					<Row>
 						<Col sm={"12"} md="4">
@@ -525,6 +528,9 @@ const RestockForm = (props) => {
 					</Row>
 				</Form.Group>
 
+				<h6 className="fw-bold text-primary mb-0">Sales Prices</h6>
+				<hr className="mt-0" />
+
 				<Form.Group className="mb-3" controlId="unit_sales">
 					<Row>
 						<Col sm={"12"} md="4">
@@ -557,7 +563,7 @@ const RestockForm = (props) => {
 					</Row>
 				</Form.Group>
 
-				<h5 className="mt-3">Vendor</h5>
+				<h5 className="mt-3 text-primary">Vendor</h5>
 
 				<Controller
 					name="vendor"

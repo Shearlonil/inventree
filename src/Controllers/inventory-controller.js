@@ -2,7 +2,7 @@ import httpService from "../axios/http-service";
 
 //  Stock Record (New and Restock)
 const findUnverifiedStockRecById = async (stockRecId) => {
-    return await httpService.get(`/api/store/stock-record`, {
+    return await httpService.get(`/api/inventory/stock-record`, {
         params: {
             stockRecId,
         }
@@ -10,7 +10,7 @@ const findUnverifiedStockRecById = async (stockRecId) => {
 }
 
 const unverifiedStockRec = async (type) => {
-    return await httpService.get(`/api/store/sales/unverified`, {
+    return await httpService.get(`/api/inventory/sales/unverified`, {
         params: {
             type,
         }
@@ -18,7 +18,7 @@ const unverifiedStockRec = async (type) => {
 }
 
 const deleteStockRec = async (stockRecId) => {
-    return await httpService.delete(`/api/store/delete/stock-rec`, {
+    return await httpService.delete(`/api/inventory/delete/stock-rec`, {
         params: {
             stockRecId,
         }
@@ -26,7 +26,7 @@ const deleteStockRec = async (stockRecId) => {
 }
 
 const commitStockRecById = async (stockRecId, outpostId, destination) => {
-    return await httpService.post(`/api/store/commit`, {
+    return await httpService.post(`/api/inventory/commit`, {
         id: stockRecId,
         outpost_id: outpostId
     },
@@ -38,7 +38,7 @@ const commitStockRecById = async (stockRecId, outpostId, destination) => {
 }
 
 const persistStockRecItem = async (stock_rec_id, item) => {
-    return await httpService.post(`/api/store/new/sales`, [item], {
+    return await httpService.post(`/api/inventory/new/sales`, [item], {
         params: {
             stock_rec_id,
         }
@@ -46,7 +46,7 @@ const persistStockRecItem = async (stock_rec_id, item) => {
 }
 
 const restock = async (stock_rec_id, item) => {
-    return await httpService.post(`/api/store/restock/sales`, [item], {
+    return await httpService.post(`/api/inventory/restock/sales`, [item], {
         params: {
             stock_rec_id,
         }
@@ -54,7 +54,7 @@ const restock = async (stock_rec_id, item) => {
 }
 
 const updateStockRecItem = async (item) => {
-    return await httpService.put(`/api/store/update/stock-rec-item`, item, {
+    return await httpService.put(`/api/inventory/update/stock-rec-item`, item, {
         params: {
             stockRecItemDetailId: item.itemDetailId,
         }
@@ -62,7 +62,7 @@ const updateStockRecItem = async (item) => {
 }
 
 const deleteStockRecItem = async (itemDetailId) => {
-    return await httpService.delete(`/api/store/delete/stock-rec-item`, {
+    return await httpService.delete(`/api/inventory/delete/stock-rec-item`, {
         params: {
             stockRecItemDetailId: itemDetailId,
         }
@@ -70,7 +70,7 @@ const deleteStockRecItem = async (itemDetailId) => {
 }
 
 const pdfExport = async (stockRecId) => {
-    return await httpService.get(`/api/store/stock-record/pdf`, {
+    return await httpService.get(`/api/inventory/stock-record/pdf`, {
         params: {
             stockRecId,
         }
@@ -79,7 +79,7 @@ const pdfExport = async (stockRecId) => {
 
 //  DISPENSARY
 const findUnverifiedDispensaryById = async (dispensaryId) => {
-    return await httpService.get(`/api/store/id/dispensary`, {
+    return await httpService.get(`/api/inventory/id/dispensary`, {
         params: {
             dispensaryId,
         }
@@ -87,11 +87,11 @@ const findUnverifiedDispensaryById = async (dispensaryId) => {
 }
 
 const unverifiedDispensary = async () => {
-    return await httpService.get(`/api/store/dispensary/unverified`);
+    return await httpService.get(`/api/inventory/dispensary/unverified`);
 }
 
 const dispense = async (dispensaryId, outpostId) => {
-    return await httpService.post(`/api/store/dispensary/dispense/${dispensaryId}`, null, {
+    return await httpService.post(`/api/inventory/dispensary/dispense/${dispensaryId}`, null, {
         params: {
             outpostId,
         }
@@ -99,7 +99,7 @@ const dispense = async (dispensaryId, outpostId) => {
 }
 
 const dispensary = async (dispensaryId, item) => {
-    return await httpService.post(`/api/store/dispensary`, [item], {
+    return await httpService.post(`/api/inventory/dispensary`, [item], {
         params: {
             dispensaryId,
         }
@@ -107,11 +107,11 @@ const dispensary = async (dispensaryId, item) => {
 }
 
 const updateDispensedItem = async (item) => {
-    return await httpService.put(`/api/store/dispensary/update/item`, item);
+    return await httpService.put(`/api/inventory/dispensary/update/item`, item);
 }
 
 const deleteDispensedItemDetail = async (itemDetailId) => {
-    return await httpService.delete(`/api/store/dispensary/delete/item`, {
+    return await httpService.delete(`/api/inventory/dispensary/delete/item`, {
         params: {
             dispensedItemDetailId: itemDetailId,
         }
@@ -119,7 +119,7 @@ const deleteDispensedItemDetail = async (itemDetailId) => {
 }
 
 const deleteDispensary = async (dispensaryId) => {
-    return await httpService.delete(`/api/store/delete/dispensary`, {
+    return await httpService.delete(`/api/inventory/delete/dispensary`, {
         params: {
             dispensaryId,
         }
@@ -128,19 +128,19 @@ const deleteDispensary = async (dispensaryId) => {
 
 //  PURCHASES
 const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {
-    return await httpService.post(`/api/store/purchases`,  { startDate, endDate }, {
+    return await httpService.post(`/api/inventory/purchases`,  { startDate, endDate }, {
         params: {
             offset, pageSize
         }
     });
 }
 
-const paginatePurchasesIdSearch = async (id, offset, pageSize) => {
-    return await httpService.post(`/api/store/purchases/${id}`, null, {
-        params: {
-            offset, pageSize
-        }
-    });
+const paginatePurchasesIdSearch = async (dtoItem) => {
+    return await httpService.post(`/api/inventory/purchases/${id}`, dtoItem);
+}
+
+const updatePurchasedItem = async (item) => {
+    return await httpService.put(`/api/inventory/purchases/item/update`, item);
 }
 
 export default {
@@ -162,4 +162,5 @@ export default {
     pdfExport,
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
+    updatePurchasedItem,
 }

@@ -7,7 +7,7 @@ import { Table } from 'react-bootstrap';
 
 import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import storeController from '../../Controllers/store-controller';
+import inventoryController from '../../Controllers/inventory-controller';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 
 const UnvenrifiedDispensary = () => {
@@ -34,7 +34,7 @@ const UnvenrifiedDispensary = () => {
         try {
             setNetworkRequest(true);
     
-            const response = await storeController.unverifiedDispensary();
+            const response = await inventoryController.unverifiedDispensary();
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {

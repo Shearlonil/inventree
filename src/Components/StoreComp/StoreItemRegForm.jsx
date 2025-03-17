@@ -312,7 +312,6 @@ const StoreItemRegForm = (props) => {
 		*/
 		const unitSalesPrice = Math.round(numeral(unitStockPrice).add(calcMarkup).value() / 10) * 10;
 		const pkgSalesPrice = numeral(unitSalesPrice).multiply(qtyPerPkg);
-		console.log('unit stock price', unitStockPrice, 'calculated markup', calcMarkup, 'calculated unit sales', unitSalesPrice);
 		setValue("unit_sales", unitSalesPrice);
 		setValue("pkg_sales_price", numeral(pkgSalesPrice).value());
 	}
@@ -335,6 +334,10 @@ const StoreItemRegForm = (props) => {
 	return (
 		<>
 			<Form className="d-flex flex-column gap-2">
+
+				<h5 className="mt-1 text-primary mb-0">Item Properties</h5>
+				<hr className="mt-0" />
+
 				<Controller
 					name="section"
 					control={control}
@@ -342,7 +345,7 @@ const StoreItemRegForm = (props) => {
 						<Select
 							required
 							placeholder="Choose Section..."
-							className="text-dark col-12"
+							className="text-dark col-12 mb-3"
 							options={tractOptions}
 							isLoading={tractsLoading}
 							onChange={(val) => onChange(val)}
@@ -351,8 +354,6 @@ const StoreItemRegForm = (props) => {
 					)}
 				/>
 				<ErrorMessage source={errors.section} />
-
-				<h5 className="mt-3">Item Properties</h5>
 
 				<Form.Group className="mb-3" controlId="item_name">
 					<Row>
@@ -483,6 +484,10 @@ const StoreItemRegForm = (props) => {
 						</Col>
 					</Row>
 				</Form.Group>
+
+				<h6 className="fw-bold text-primary mb-0">Stock Prices</h6>
+				<hr className="mt-0" />
+				
 				<Form.Group className="mb-3" controlId="unit_stock">
 					<Row>
 						<Col sm={"12"} md="4">
@@ -550,6 +555,9 @@ const StoreItemRegForm = (props) => {
 					</Row>
 				</Form.Group>
 
+				<h6 className="fw-bold text-primary mb-0">Sales Prices</h6>
+				<hr className="mt-0" />
+
 				<Form.Group className="mb-3" controlId="unit_sales">
 					<Row>
 						<Col sm={"12"} md="4">
@@ -582,7 +590,7 @@ const StoreItemRegForm = (props) => {
 					</Row>
 				</Form.Group>
 
-				<h5 className="mt-3">Vendor</h5>
+				<h5 className="mt-3 text-primary">Vendor</h5>
 
 				<Controller
 					name="vendor"

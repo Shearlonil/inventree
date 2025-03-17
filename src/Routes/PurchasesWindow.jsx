@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "react-datetime/css/react-datetime.css";
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Button, Col, Form, Row } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 import Datetime from 'react-datetime';
 import { toast } from "react-toastify";
@@ -14,7 +14,7 @@ import TableMain from "../Components/TableView/TableMain";
 import PaginationLite from "../Components/PaginationLite";
 import ConfirmDialog from "../Components/DialogBoxes/ConfirmDialog";
 import ErrorMessage from '../Components/ErrorMessage';
-import storeController from "../Controllers/store-controller";
+import inventoryController from "../Controllers/inventory-controller";
 import { useAuth } from "../app-context/auth-user-context";
 import handleErrMsg from "../Utils/error-handler";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,7 @@ import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicato
 import InputDialog from "../Components/DialogBoxes/InputDialog";
 import vendorController from "../Controllers/vendor-controller";
 import DropDownDialog from "../Components/DialogBoxes/DropDownDialog";
+import PurchasesUpdateForm from "../Components/StoreComp/PurchasesUpdateForm";
 
 const PurchasesWindow = () => {
 	const navigate = useNavigate();
@@ -62,6 +63,7 @@ const PurchasesWindow = () => {
 	const [displayMsg, setDisplayMsg] = useState("");
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+	const [showFormModal, setShowFormModal] = useState(false);
 	//	for input dialog
 	const [showInputModal, setShowInputModal] = useState(false);
 	//	for vendor drop down dialog
@@ -80,9 +82,9 @@ const PurchasesWindow = () => {
 
     //	menus for the react-menu in table
     const menuItems = [
+        { name: 'Edit', onClickParams: {evtName: 'edit' } },
         { name: 'Delete', onClickParams: {evtName: 'deleteItem'} },
         { name: 'Edit Vendor', onClickParams: {evtName: 'updateVendor' } },
-        { name: 'View Quantity Mgr', onClickParams: {evtName: 'viewQtyMgr' } },
     ];
 
 	const purchasesOffCanvasMenu = [
@@ -150,7 +152,7 @@ const PurchasesWindow = () => {
 			setPagedData([]);
 			const offset = pageNumber - 1;	//	offset always one less current page
 	
-			const response = await storeController.paginatePurchasesIdSearch(
+			const response = await inventoryController.paginatePurchasesIdSearch(
 				searchedId,
 				offset,
 				pageSize,
@@ -189,7 +191,7 @@ const PurchasesWindow = () => {
 			setPagedData([]);
 			const offset = pageNumber - 1;	//	offset always one less current page
 			
-			const response = await storeController.paginatePurchasesDateSearch(
+			const response = await inventoryController.paginatePurchasesDateSearch(
 				searchedDate.startDate.toISOString(), 
 				searchedDate.endDate.toISOString(),
 				offset,
@@ -226,6 +228,8 @@ const PurchasesWindow = () => {
 	const handleCloseModal = () => {
 		setShowConfirmModal(false);
 		setShowInputModal(false);
+		setShowFormModal(false);
+		setEntityToEdit(null);
 	};
 	
 	const handleDropDownCloseModal = () => {
@@ -248,6 +252,10 @@ const PurchasesWindow = () => {
             case 'updateVendor':
 				setDropDownMsg("Please select Vendor")
 				setShowDropDownModal(true);
+                break;
+            case 'edit':
+				setEntityToEdit(entity);
+				setShowFormModal(true);
                 break;
         }
     };
@@ -308,7 +316,7 @@ const PurchasesWindow = () => {
 			setValue('startDate', null);
 			setValue('endDate', null);
 	
-			const response = await storeController.paginatePurchasesIdSearch(
+			const response = await inventoryController.paginatePurchasesIdSearch(
 				id,
 				0,
 				pageSize,
@@ -360,7 +368,7 @@ const PurchasesWindow = () => {
 				setSearchedId(0);
 				setSearchedDate(data);
 	
-				const response = await storeController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString(), 0, pageSize);
+				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString(), 0, pageSize);
 				if(response && response.data){
 					setPagedData(buildTableData(response.data.content));
 					setTotalItemsCount(response.data.page.totalElements);
@@ -387,6 +395,41 @@ const PurchasesWindow = () => {
 			}
 		}
 	}
+	
+	const fnSave = async (item) => {
+		try {
+			setNetworkRequest(true);
+			//	if data has id, then update mode
+			await inventoryController.updatePurchasedItem(item);
+			//	find index position of edited item in items arr
+			const indexPos = pagedData.findIndex(i => i.id === item.id);
+			if(indexPos > -1){
+				//	replace old item found at index position in items array with edited one
+				pagedData.splice(indexPos, 1, item);
+				setPagedData([...pagedData]);
+				toast.success('Update successful');
+			}
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return fnSave(item);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
 		
 	//	setup table data from fetched stock record
 	const buildTableData = (arr = []) => {
@@ -398,11 +441,11 @@ const PurchasesWindow = () => {
 			dtoItem.itemName = item.itemName;
 			dtoItem.qty = item.qty;
 			dtoItem.qtyType = item.qtyType;
-			dtoItem.expDate = item.expDate;
+			dtoItem.creationDate = item.creationDate;
 			dtoItem.qtyPerPkg = item.qtyPerPkg;
 			dtoItem.unitStockPrice = item.unitStockPrice;
 			dtoItem.pkgStockPrice = item.pkgStockPrice;
-			dtoItem.sectionName = item.tractName;
+			dtoItem.tractName = item.tractName;
 			dtoItem.cashPurchaseAmount = item.cashPurchaseAmount;
 	
 			const vendor = new Vendor();
@@ -425,7 +468,7 @@ const PurchasesWindow = () => {
 		headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Unit Stock', 'Pkg Stock', 'Date', "Total", 'Dept.', 
 			"Vendor", "Cash", "Credit", 'Purchase No.', 'Options'],
 		//	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-		objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'unitStockPrice', 'pkgStockPrice', 'expDate', "purchaseAmount", 'sectionName', 
+		objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'unitStockPrice', 'pkgStockPrice', 'creationDate', "purchaseAmount", 'tractName', 
 			"vendorName", "cashPurchaseAmount", "creditPurchaseAmount", 'id'],
 		//	React Menu
 		menus: {
@@ -553,26 +596,36 @@ const PurchasesWindow = () => {
 						/>
 					</span>
 				</div>
-				<ConfirmDialog
-					show={showConfirmModal}
-					handleClose={handleCloseModal}
-					handleConfirm={handleConfirmOK}
-					message={displayMsg}
-				/>
-				<InputDialog
-					show={showInputModal}
-					handleClose={handleCloseModal}
-					handleConfirm={idSearch}
-					message={displayMsg}
-				/>
-				<DropDownDialog
-					show={showDropDownModal}
-					handleClose={handleDropDownCloseModal}
-					handleConfirm={updateVendor}
-					message={dropDownMsg}
-					options={vendorOptions}
-				/>
 			</div>
+			<ConfirmDialog
+				show={showConfirmModal}
+				handleClose={handleCloseModal}
+				handleConfirm={handleConfirmOK}
+				message={displayMsg}
+			/>
+			<InputDialog
+				show={showInputModal}
+				handleClose={handleCloseModal}
+				handleConfirm={idSearch}
+				message={displayMsg}
+			/>
+			<DropDownDialog
+				show={showDropDownModal}
+				handleClose={handleDropDownCloseModal}
+				handleConfirm={updateVendor}
+				message={dropDownMsg}
+				options={vendorOptions}
+			/>
+
+			<Modal show={showFormModal} onHide={handleCloseModal}>
+				<Modal.Header closeButton>
+					<Modal.Title>Edit Item</Modal.Title>
+				</Modal.Header>
+				<Modal.Body>
+					<PurchasesUpdateForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
+				</Modal.Body>
+				<Modal.Footer></Modal.Footer>
+			</Modal>
 		</>
 	);
 };

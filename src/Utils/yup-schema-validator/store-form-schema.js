@@ -93,4 +93,24 @@ const itemUpdateSchema = yup.object().shape({
 		.required("Pkg Sales Price is required"),
 });
 
-export { storeItemRegSchema, restockSchema, itemUpdateSchema };
+//	used in PurchasesUpdateForm
+const purchasesUpdateSchema = yup.object().shape({
+	qty_per_pkg: yup
+		.number()
+		.positive("Qty/Pkg must be positive")
+		.required("Qty/Pkg is required"),
+	total_qty: yup
+		.number()
+		.positive("Quantity must be positive")
+		.required("Quantity is required"),
+	qty_type: yup.object().required("Select a packaging option"),
+	unit_stock: yup
+		.number()
+		.positive("Unit Stock Price must be positive")
+		.required("Unit Stock Price is required"),
+	amount_paid: yup
+		.number()
+		.required("Amount Paid is required"),
+});
+
+export { storeItemRegSchema, restockSchema, itemUpdateSchema, purchasesUpdateSchema };

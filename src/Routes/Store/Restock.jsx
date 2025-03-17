@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
 import { MdAddBusiness } from "react-icons/md";
 
-import storeController from '../../Controllers/store-controller';
+import inventoryController from '../../Controllers/inventory-controller';
 import genericController from '../../Controllers/generic-controller';
 import handleErrMsg from '../../Utils/error-handler';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -122,7 +122,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const unverifiedStockRequest = await storeController.findUnverifiedStockRecById(stock_rec_id);
+			const unverifiedStockRequest = await inventoryController.findUnverifiedStockRecById(stock_rec_id);
             
             const urls = [ '/api/items/transactions/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
@@ -181,7 +181,7 @@ const Restock = () => {
 	const commitStockRecord = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-			await storeController.commitStockRecById(stockRecId, outpostId, destination);
+			await inventoryController.commitStockRecById(stockRecId, outpostId, destination);
 			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
 			navigate("/store/item/restock/0");
@@ -264,7 +264,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			if(item.itemDetailId){
 				//	if data has itemDetailId, then update mode
-				await storeController.updateStockRecItem(item);
+				await inventoryController.updateStockRecItem(item);
 				//	find index position of edited item in items arr
 				const indexPos = items.findIndex(i => i.id === item.id);
 				if(indexPos > -1){
@@ -277,7 +277,7 @@ const Restock = () => {
 				}
 			}else {
 				// 	else, create new item
-				let response = await storeController.restock(stockRecId, item);
+				let response = await inventoryController.restock(stockRecId, item);
 				if(response && response.status === 200){
 					item.id = response.data.items[0].id;
 					item.itemDetailId = response.data.items[0].itemDetailId;
@@ -317,7 +317,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'delete':
-					await storeController.deleteStockRecItem(entityToEdit.itemDetailId);
+					await inventoryController.deleteStockRecItem(entityToEdit.itemDetailId);
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -336,13 +336,13 @@ const Restock = () => {
 					setShowDropDownModal(true);
 					break;
 				case "deleteStockRec":
-					await storeController.deleteStockRec(stockRecId);
+					await inventoryController.deleteStockRec(stockRecId);
 					resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/store/item/reg/0");
 					break;
 				case "exportToPDF":
-					await storeController.exportToPDF(stockRecId);
+					await inventoryController.exportToPDF(stockRecId);
 					break;
 			}
 			setNetworkRequest(false);
