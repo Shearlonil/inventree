@@ -128,7 +128,7 @@ const deleteDispensary = async (dispensaryId) => {
 
 //  PURCHASES
 const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {
-    return await httpService.post(`/api/inventory/purchases`,  { startDate, endDate }, {
+    return await httpService.post(`/api/inventory/purchases`, { startDate, endDate }, {
         params: {
             offset, pageSize
         }

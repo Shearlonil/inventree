@@ -41,6 +41,7 @@ import StoreWindow from "./Routes/Items/StoreWindow";
 import StoreItemQtyMgrView from "./Routes/Items/StoreItemQtyMgrView";
 import GrossWindow from "./Routes/Items/GrossWindow";
 import Trash from "./Routes/Items/Trash";
+import SalesReport from "./Routes/SalesReport";
 
 function App() {
 	return (
@@ -48,6 +49,7 @@ function App() {
 			<Routes>
 				<Route index path={"/"} element={<Home />} />
 				<Route index path={"/login"} element={<Login />} />
+				<Route index path={"/sales/report"} element={<SalesReport />} />
 				<Route path="/transaction" element={<ProtectedRoute />}>
 					<Route path="cashier" element={<CashierWindow />} />
 					<Route path="section" element={<SectionTransaction />} />

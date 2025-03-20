@@ -99,6 +99,9 @@ const findInvoiceByNo = async (id) => {
     });
 }
 
+const summarizeSalesRecords = async (startDate, endDate) => {
+    return await httpService.post(`/api/transactions/sales/summary`, { startDate, endDate });
+}
 
 export default {
     monoTransaction,
@@ -116,4 +119,5 @@ export default {
     findPurchaseReceiptByNo,
     searchInvoicesByDate,
     findInvoiceByNo,
+    summarizeSalesRecords,
 }

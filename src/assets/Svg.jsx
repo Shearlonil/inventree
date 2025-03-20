@@ -28,6 +28,14 @@ const SVG = {
 	department: new URL("./Svg/department.svg", import.meta.url).href,
 	packaging: new URL("./Svg/packaging.svg", import.meta.url).href,
 	shopping_items: new URL("./Svg/shopping_items.svg", import.meta.url).href,
+	summary: new URL("./Svg/summary.svg", import.meta.url).href,
+	dashboard_colored: new URL("./Svg/dashboard_colored.svg", import.meta.url).href,
+	dashboard_white: new URL("./Svg/dashboard_white.svg", import.meta.url).href,
+	dashboard_black: new URL("./Svg/dashboard_black.svg", import.meta.url).href,
+	report_colored: new URL("./Svg/report_colored.svg", import.meta.url).href,
+	monitoring_white: new URL("./Svg/monitoring_white.svg", import.meta.url).href,
+	monitoring_black: new URL("./Svg/monitoring_black.svg", import.meta.url).href,
+	monitoring_colored: new URL("./Svg/monitoring_colored.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,
