@@ -362,32 +362,18 @@ function NavBar() {
 									</NavDropdown.Item>
 								</NavDropdown>
 
-								<NavDropdown title="Ledgers" className="ms-2" drop="end">
-									<NavDropdown.Item 
-										onClick={() => {
-											handleNavSelect();
-											navigate("/finance/ledgers/create");
-										}}
-										className={`nav-item ${
-											location.pathname === "/finance/ledgers/create" &&
-											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-										}`}
-									>
-										Create
-									</NavDropdown.Item>
-									<NavDropdown.Item 
-										onClick={() => {
-											handleNavSelect();
-											navigate("/finance/ledgers/view");
-										}}
-										className={`nav-item ${
-											location.pathname === "/finance/vouchers/view" &&
-											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-										}`}
-									>
-										View
-									</NavDropdown.Item>
-								</NavDropdown>
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/finance/ledgers");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/ledgers" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Ledgers
+								</NavDropdown.Item>
 							</NavDropdown>}
 
 							{user && <Nav.Link

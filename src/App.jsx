@@ -17,7 +17,7 @@ import UnvenrifiedDispensary from "./Routes/Dashboard/UnvenrifiedDispensary";
 import UsersWindow from "./Routes/Dashboard/Users/UsersWindow";
 import CustomersWindow from './Routes/Contacts/CustomersWindow';
 import SalesReceiptWindow from './Routes/Dashboard/SalesReceiptWindow';
-import LedgerDisplay from './Routes/LedgerDisplay';
+import LedgerDisplay from './Routes/Finance/Legers/LedgerDisplay';
 import CashierWindow from "./Routes/SalesTransaction/CashierWindow";
 import SectionTransaction from "./Routes/SalesTransaction/SectionTransaction";
 import VendorsWindow from "./Routes/Contacts/VendorsWindow";
@@ -42,6 +42,8 @@ import StoreItemQtyMgrView from "./Routes/Items/StoreItemQtyMgrView";
 import GrossWindow from "./Routes/Items/GrossWindow";
 import Trash from "./Routes/Items/Trash";
 import SalesReport from "./Routes/SalesReport";
+import LedgersView from "./Routes/Finance/Legers/LedgersView";
+import TrashedLedgers from "./Routes/Finance/Legers/TrashedLedgers";
 
 function App() {
 	return (
@@ -103,7 +105,9 @@ function App() {
 				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
-					<Route path={"ledgers/view"} element={<LedgerDisplay />} />
+					<Route path={"ledgers/:id/view"} element={<LedgerDisplay />} />
+					<Route path={"ledgers"} element={<LedgersView />} />
+					<Route path={"ledgers/trash"} element={<TrashedLedgers />} />
 					<Route path="" element={<PageNotFound />} />
 				</Route>
 				<Route path="/dashboard" element={<ProtectedRoute />}>

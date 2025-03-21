@@ -493,10 +493,7 @@ const PurchasesWindow = () => {
                 <p className='text-center m-2'>Search purchases by date or number to view, update, delete etc</p>
 			</div>
 			<div className="container-fluid" style={{minHeight: '65vh'}}>
-				<div
-					className="border py-4 px-5 bg-white-subtle rounded-4"
-					style={{ boxShadow: "black 3px 2px 5px" }}
-				>
+				<div className="border py-4 px-5 bg-white-subtle rounded-4" style={{ boxShadow: "black 3px 2px 5px" }}>
 					<Row className="align-items-center">
 						<Col sm lg="4" className="mt-3 mt-md-0">
 							<Form.Label className="fw-bold">Start Date</Form.Label>

@@ -36,6 +36,7 @@ const SVG = {
 	monitoring_white: new URL("./Svg/monitoring_white.svg", import.meta.url).href,
 	monitoring_black: new URL("./Svg/monitoring_black.svg", import.meta.url).href,
 	monitoring_colored: new URL("./Svg/monitoring_colored.svg", import.meta.url).href,
+	ledger: new URL("./Svg/ledger.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,

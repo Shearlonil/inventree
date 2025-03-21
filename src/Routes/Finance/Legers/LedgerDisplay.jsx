@@ -6,26 +6,32 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
-import SVG from '../assets/Svg';
-import ErrorMessage from '../Components/ErrorMessage';
-import { ThreeDotLoading } from '../Components/react-loading-indicators/Indicator';
-import { useAuth } from '../app-context/auth-user-context';
-import OffcanvasMenu from '../Components/OffcanvasMenu';
-import DropDownDialog from '../Components/DialogBoxes/DropDownDialog';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import SVG from '../../../assets/Svg';
+import ErrorMessage from '../../../Components/ErrorMessage';
+import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
+import { useAuth } from '../../../app-context/auth-user-context';
+import OffcanvasMenu from '../../../Components/OffcanvasMenu';
+import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
+import handleErrMsg from '../../../Utils/error-handler';
+import genericController from '../../../Controllers/generic-controller';
+import ledgerController from '../../../Controllers/ledger-controller';
+import { Ledger } from '../../../Entities/Ledger';
+import InputDialog from '../../../Components/DialogBoxes/InputDialog';
+import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 
 const LedgerDisplay = () => {
     const navigate = useNavigate();
+    const { id } = useParams();
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
 
-	const schema = object().shape(
-		{
-			startDate: date(),
-			endDate: date().min(ref("startDate"), "please update start date"),
-		}
-	);
+	const schema = object().shape({
+        startDate: date(),
+        endDate: date().min(ref("startDate"), "please update start date"),
+	});
 
 	const {
 		handleSubmit,
@@ -39,32 +45,88 @@ const LedgerDisplay = () => {
 	const startDate = watch("startDate");
 
 	const dispensaryOffCanvasMenu = [
-		{ label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
+		// { label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
 		{ label: "Rename Ledger", onClickParams: {evtName: 'renameLedger'} },
 		{ label: "Activate Ledger", onClickParams: {evtName: 'activateLedger'} },
 		{ label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
+		{ label: "Adjust Discount", onClickParams: {evtName: 'adjustDiscount'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
+		{ label: "Export to Excel", onClickParams: {evtName: 'xlsExport'} },
 	];
       
     const [networkRequest, setNetworkRequest] = useState(false);
         
+    const [showInputModal, setShowInputModal] = useState(false);
     const [displayMsg, setDisplayMsg] = useState("");
     const [dropDownMsg, setDropDownMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState("");
     const [showDropDownModal, setShowDropDownModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     
-    //  for tracts
+    const [ledger, setLedger] = useState({});
+    const [transactions, setTransactions] = useState([]);
+
+    //  for ledgers
     const [ledgerOptions, setLedgerOptions] = useState([]);
-    const [ledgersLoading, setLedgerssLoading] = useState(true);
+    const [ledgersLoading, setLedgersLoading] = useState(true);
                 
     useEffect( () => {
         if(user.hasAuth('FINANCE')){
+            initialize();
         }else {
             toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
             navigate('/404');
         }
     }, []);
+    
+    const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            const urls = [ `/api/ledgers/find/${id}`, '/api/ledgers/active' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: ledgerRequest, 1: ledgersRequest } = response;
+
+            if (ledgersRequest && ledgersRequest.data && ledgersRequest.data.length > 0) {
+				setLedgerOptions(ledgersRequest.data.map(ledger => ({label: ledger.name, value: ledger})));
+                setLedgersLoading(false);
+            }
+
+            if (ledgerRequest && ledgerRequest.data) {
+                const l = new Ledger(ledgerRequest.data);
+                l.creator = ledgerRequest.data.creator.username;
+                setLedger(l);
+            }
+            const startDate = new Date();
+            startDate.setHours(0, 0, 0);
+            const endDate = new Date();
+            endDate.setHours(0, 0, 0);
+    
+            const dayTransactions = await ledgerController.ledgerTransactions(id, startDate.toISOString(), endDate.toISOString());
+            if(dayTransactions && dayTransactions.data){
+                setTransactions(dayTransactions.data.map(datum => new LedgerTransaction(datum)));
+            }
+
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -82,15 +144,59 @@ const LedgerDisplay = () => {
                 break;
             case 'moveLedger':
                 break;
+            case 'adjustDiscount':
+                break;
         }
 	}
 
     const handleCloseModal = () => {
         setShowConfirmModal(false);
         setShowDropDownModal(false);
+        setShowInputModal(false);
     };
 
 	const handleLedgerSelected = async (ledger) => {
+    };
+    
+    const handleInputOK = async (str) => {};
+        
+    const onsubmit = async (data) => {
+        try {
+            if (data.startDate && data.endDate) {
+                setNetworkRequest(true);
+                data.startDate.setHours(0);
+                data.startDate.setMinutes(0);
+                data.startDate.setSeconds(0);
+    
+                data.endDate.setHours(23);
+                data.endDate.setMinutes(59);
+                data.endDate.setSeconds(59);
+    
+                const response = await ledgerController.ledgerTransactions(id, data.startDate.toISOString(), data.endDate.toISOString());
+                if(response && response.data){
+                    setTransactions(response.data.map(datum => new LedgerTransaction(datum)));
+                }
+                setNetworkRequest(false);
+            }
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return onsubmit(data);
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
     }
 
     return (
@@ -102,8 +208,8 @@ const LedgerDisplay = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Ledgers</span>
-						<img src={SVG.dispensary_filled_white} style={{ width: "50px", height: "50px" }} />
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Ledger</span>
+						<img src={SVG.ledger} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
                 <span className='text-center m-1'>
@@ -113,26 +219,37 @@ const LedgerDisplay = () => {
 			</div>
             <div className="shadow p-4 border border-light rounded-3 bg-warning-subtle my-4">
                 <div className="row g-4"> {/* Adds gap between sections */}
-                    {[
-                        { label: "Name", value: "ELBE PHARMA LTD (LEKAN) ELBE PHARMA LTD (LEKAN) ELBE PHARMA LTD (LEKAN)" },
-                        { label: "Creator", value: "pharmQAY" },
-                        { label: "Date", value: "10-08-2022 09:35:32" },
-                        { label: "Parent", value: "VENDORS" },
-                        { label: "Status", value: "Active" }
-                    ].map((item, index) => (
-                        <div key={index} className="col-12 col-md-6">
-                            <div className="p-3 shadow rounded-4 bg-light d-flex justify-content-between">
-                                <span className="fw-bold text-md-end h5 me-2">{item.label}:</span>
-                                <span>{item.value}</span>
-                            </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Name:</span>
+                            <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>{ledger?.name}</span>
                         </div>
-                    ))}
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Creator:</span>
+                            <span style={{overflow: 'scroll', textAlign: "right" }} className='pe-2 text-primary fw-bold'>{ledger?.creator}</span>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Date:</span>
+                            <span className='pe-2 text-primary fw-bold'>
+                                {ledger?.creationDate}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Discount:</span>
+                            <span className='pe-2 text-primary fw-bold'>
+                                {ledger?.discount} %
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div
-                className="border py-4 px-5 bg-white-subtle rounded-4"
-                style={{ boxShadow: "black 3px 2px 5px" }}
-            >
+            <div className="border py-4 px-5 bg-white-subtle rounded-4" style={{ boxShadow: "black 3px 2px 5px" }}>
                 <Row className="align-items-center">
                     <Col sm lg="4" className="mt-3 mt-md-0">
                         <Form.Label className="fw-bold">Start Date</Form.Label>
@@ -217,62 +334,47 @@ const LedgerDisplay = () => {
                     </Col>
                 </Row>
             </div>
-            {/* <div className="bg-info-subtle shadow my-4 p-3 rounded-4">
-                <h3 className="fw-bold h5">Date Range:</h3> <br />
-                <div className=' d-flex flex-column flex-md-row gap-3 justify-content-center'>
-                    <div className='p-3 rounded-4 w-100 bg-light'>
-                        <p><span className='fw-bold'>Start</span>: Tue Nov 12:00:00:00 CAT 2024</p>
-                    </div>
-                    <div className='p-3 rounded-4 w-100 bg-light'>
-                        <p><span className='fw-bold'>End</span>: Tue Nov 12:00:00:00 CAT 2024</p>
-                    </div>
-                </div>
-            </div> */}
+            
             <div className="p-3 rounded-3 p-3 overflow-md-auto bg-secondary-subtle my-4" style={{ minHeight: "700px" }}>
-                <div className="border border rounded-3 p-1 bg-light my-3 shadow">
+                <div className="border border rounded-3 p-1 bg-light my-3 shadow" style={{ maxHeight: "750px", minHeight: "750px", overflow: 'scroll' }}>
                     <Table id="myTable" className="rounded-2" striped hover responsive>
                         <thead>
                             <tr className="shadow-sm">
-                                <th>First Name</th>
-                                <th>Last</th>
-                                <th>Phone No.:</th>
-                                <th>Gender</th>
-                                <th>Role</th>
-                                <th>Username</th>
-                                <th>Status</th>
+                                <th>Description</th>
+                                <th>Dr</th>
+                                <th>Cr</th>
+                                <th>Date</th>
+                                <th>Balance</th>
+                                <th>Vch No.</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {/* <p>No content in table</p> */}
-                            {Array.from({ length: 10 }).map((_, index) => (
+                            {transactions.map((_datum, index) => (
                                 <tr className='' key={index}>
-                                    <td>Joy</td>
-                                    <td>Samuel</td>
-                                    <td>7012345678</td>
-                                    <td>F</td>
-                                    <td>Sales Assistant</td>
-                                    <td>Joy</td>
-                                    <td className='text-center'>
-                                        <span className='fw-bold'>Active</span>
-                                    </td>
+                                    <td>{_datum.description}</td>
+                                    <td>{_datum.drAmount}</td>
+                                    <td>{_datum.crAmount}</td>
+                                    <td>{_datum.date}</td>
+                                    <td>{_datum.balance}</td>
+                                    <td>{_datum.ledgerVchId}</td>
                                 </tr>
                             ))}
                         </tbody>
                     </Table>
-                    <div className='container my-3 p-3'>
-                        <div className='d-flex flex-wrap gap-3 justify-content-between align-items-center mx-auto'>
-                            <div className="">
-                                <p className='fw-bold h5 text-success'>Balance:</p>
-                                <h5><span>$680000</span></h5>
-                            </div>
-                            <div className="">
-                                <p className='fw-bold h5 text-danger'>Dr.:</p>
-                                <h5><span>$680000</span></h5>
-                            </div>
-                            <div className="">
-                                <p className='fw-bold h5 text-warning'>Cr.:</p>
-                                <h5><span>$680000</span></h5>
-                            </div>
+                </div>
+                <div className='container my-3 p-3'>
+                    <div className='d-flex flex-wrap gap-3 justify-content-between align-items-center mx-auto'>
+                        <div className="">
+                            <p className='fw-bold h5 text-success'>Balance:</p>
+                            <h5><span>$680000</span></h5>
+                        </div>
+                        <div className="">
+                            <p className='fw-bold h5 text-danger'>Dr.:</p>
+                            <h5><span>$680000</span></h5>
+                        </div>
+                        <div className="">
+                            <p className='fw-bold h5 text-primary'>Cr.:</p>
+                            <h5><span>$680000</span></h5>
                         </div>
                     </div>
                 </div>
@@ -284,6 +386,12 @@ const LedgerDisplay = () => {
                 message={dropDownMsg}
                 optionsLoading={ledgersLoading}
                 options={ledgerOptions}
+            />
+            <InputDialog
+                show={showInputModal}
+                handleClose={handleCloseModal}
+                handleConfirm={handleInputOK}
+                message={displayMsg}
             />
         </div>
     );
