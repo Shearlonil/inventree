@@ -49,6 +49,8 @@ const SalesReport = () => {
         
     const [networkRequest, setNetworkRequest] = useState(false);
     const [data, setData] = useState([]);
+    
+    const [filename, setFilename] = useState("");
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -92,7 +94,7 @@ const SalesReport = () => {
         const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
         const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         const finalData = new Blob([excelBuffer], { type: fileType });
-        FileSaver.saveAs(finalData, 'sales_summary' + fileExtension);
+        FileSaver.saveAs(finalData, `${filename}` + fileExtension);
     };
 
     const exportPDF = () => {
@@ -103,6 +105,7 @@ const SalesReport = () => {
         const unit = "pt";
         const size = "A4"; // Use A1, A2, A3 or A4
         const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
 
         const marginLeft = 40;
         const doc = new jsPDF(orientation, unit, size);
@@ -125,8 +128,8 @@ const SalesReport = () => {
                 { header: 'Qty Sold', dataKey: 'soldOutQty' },
             ],
         });
-          
-        doc.save("sales_summary.pdf")
+        
+        doc.save(`${filename}` + fileExtension);
     }
 
 	const onsubmit = async (data) => {
@@ -141,6 +144,8 @@ const SalesReport = () => {
 				data.endDate.setHours(23);
 				data.endDate.setMinutes(59);
 				data.endDate.setSeconds(59);
+
+                setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
 
 				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
 				if(response && response.data){

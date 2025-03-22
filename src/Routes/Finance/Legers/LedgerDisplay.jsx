@@ -7,6 +7,10 @@ import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import { autoTable } from 'jspdf-autotable'
 
 import SVG from '../../../assets/Svg';
 import ErrorMessage from '../../../Components/ErrorMessage';
@@ -20,6 +24,7 @@ import ledgerController from '../../../Controllers/ledger-controller';
 import { Ledger } from '../../../Entities/Ledger';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
+import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 
 const LedgerDisplay = () => {
     const navigate = useNavigate();
@@ -47,8 +52,8 @@ const LedgerDisplay = () => {
 	const dispensaryOffCanvasMenu = [
 		// { label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
 		{ label: "Rename Ledger", onClickParams: {evtName: 'renameLedger'} },
-		{ label: "Activate Ledger", onClickParams: {evtName: 'activateLedger'} },
 		{ label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
+		{ label: "Remove Discount", onClickParams: {evtName: 'removeDiscount'} },
 		{ label: "Adjust Discount", onClickParams: {evtName: 'adjustDiscount'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
 		{ label: "Export to Excel", onClickParams: {evtName: 'xlsExport'} },
@@ -59,6 +64,7 @@ const LedgerDisplay = () => {
     const [showInputModal, setShowInputModal] = useState(false);
     const [displayMsg, setDisplayMsg] = useState("");
     const [dropDownMsg, setDropDownMsg] = useState("");
+    const [inputStr, setInputStr] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState("");
     const [showDropDownModal, setShowDropDownModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
@@ -69,6 +75,8 @@ const LedgerDisplay = () => {
     //  for ledgers
     const [ledgerOptions, setLedgerOptions] = useState([]);
     const [ledgersLoading, setLedgersLoading] = useState(true);
+
+    const [filename, setFilename] = useState("");
                 
     useEffect( () => {
         if(user.hasAuth('FINANCE')){
@@ -100,6 +108,8 @@ const LedgerDisplay = () => {
             startDate.setHours(0, 0, 0);
             const endDate = new Date();
             endDate.setHours(0, 0, 0);
+
+            setFilename(`${ledger.name} ${startDate} - ${endDate}`);
     
             const dayTransactions = await ledgerController.ledgerTransactions(id, startDate.toISOString(), endDate.toISOString());
             if(dayTransactions && dayTransactions.data){
@@ -137,28 +147,223 @@ const LedgerDisplay = () => {
                 setShowDropDownModal(true);
                 break;
             case 'renameLedger':
+                setDisplayMsg("Enter unique ledger name");
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setShowInputModal(true);
                 break;
             case 'pdfExport':
                 break;
-            case 'activateLedger':
+            case 'xlsExport':
+                if(transactions.length > 0){
+                    exportToCSV();
+                }
                 break;
-            case 'moveLedger':
+            case 'removeDiscount':
+                setInputStr(0);
+                setDisplayMsg(`Remove discount?`);
+                setShowConfirmModal(true);
                 break;
             case 'adjustDiscount':
+                setDisplayMsg("Enter discount value in %");
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setShowInputModal(true);
                 break;
         }
 	}
 
     const handleCloseModal = () => {
-        setShowConfirmModal(false);
-        setShowDropDownModal(false);
         setShowInputModal(false);
+    };
+
+    const handleCloseConfirmModal = () => {
+        setShowConfirmModal(false);
     };
 
 	const handleLedgerSelected = async (ledger) => {
     };
     
-    const handleInputOK = async (str) => {};
+    const handleInputOK = async (str) => {
+        switch (confirmDialogEvtName) {
+            case 'renameLedger':
+                setInputStr(str);
+                setDisplayMsg(`set new ledger name from ${ledger.name} to ${str}?`);
+                setShowConfirmModal(true);
+                break;
+            case 'adjustDiscount':
+                if(!+str){
+                    toast.error('Please enter a valid number');
+                    return;
+                }
+                setInputStr(str);
+                setDisplayMsg(`Update discount to ${str}?`);
+                setShowConfirmModal(true);
+                break;
+        }
+    };
+	
+	const handleConfirmOK = async () => {
+		setShowConfirmModal(false);
+		switch (confirmDialogEvtName) {
+            case 'renameLedger':
+				if(ledger.isDefault){
+                    toast.error('Operation not allowed on default ledgers');
+                    return;
+                }
+                renameLedger();
+                break;
+            case 'adjustDiscount':
+				if(ledger.isDefault){
+                    toast.error('Operation not allowed on default ledgers');
+                    return;
+                }
+                updateDiscount();
+                break;
+            case 'removeDiscount':
+				if(ledger.isDefault){
+                    toast.error('Operation not allowed on default ledgers');
+                    return;
+                }
+                updateDiscount();
+                break;
+        }
+	}
+
+    const renameLedger = async () => {
+        try {
+            setNetworkRequest(true);
+            await ledgerController.rename(ledger.id, inputStr);
+            const temp = new Ledger(ledger);
+            temp.name = inputStr;
+            temp.creator = ledger.creator;
+            setLedger(temp);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return renameLedger();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
+
+    const updateDiscount = async () => {
+        try {
+            setNetworkRequest(true);
+            await ledgerController.setDiscount(ledger.id, inputStr);
+            const temp = new Ledger(ledger);
+            temp.discount = inputStr;
+            temp.creator = ledger.creator;
+            setLedger(temp);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return updateDiscount();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
+    
+    const exportToCSV = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+
+        const Heading = [ {date: "Date", description: "Description", ledgerVchId: "Voucher No.", drAmount: "DR", crAmount: "CR", balance: "Balance" } ];
+
+        const temp = transactions.map(t => ({
+            description: t.description, 
+            drAmount: t.drAmount,
+            ledgerVchId: t.ledgerVchId,
+            balance: t.balance,
+            crAmount: t.crAmount,
+            date: t.date
+        }));
+        
+        const wscols = [
+            { wch: 20 },
+            { wch: 40 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["date", "description", "ledgerVchId", "drAmount", "crAmount", "balance"],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["date", "description", "ledgerVchId", "drAmount", "crAmount", "balance"],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${filename}` + fileExtension);
+    };
+
+    const exportPDF = () => {
+        /*  ref:
+            *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
+            *   https://www.npmjs.com/package/jspdf-autotable
+            *   https://www.npmjs.com/package/jspdf */
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(15);
+
+        const title = "Sales Summary";
+
+        doc.text(title, marginLeft, 40);
+        autoTable(doc, {
+            styles: { theme: 'striped' },
+            margin: { top: 50 },
+            // head: [['Name', 'Email']],
+            body: data,
+            columns: [
+                { header: 'Item Name', dataKey: 'itemName' },
+                { header: 'Store Qty', dataKey: 'storeQty' },
+                { header: 'Sales Qty', dataKey: 'salesQty' },
+                { header: 'Total Qty', dataKey: 'totalQty' },
+                { header: 'Qty Sold', dataKey: 'soldOutQty' },
+            ],
+        });
+        
+        doc.save(`${filename}` + fileExtension);
+    }
         
     const onsubmit = async (data) => {
         try {
@@ -171,6 +376,8 @@ const LedgerDisplay = () => {
                 data.endDate.setHours(23);
                 data.endDate.setMinutes(59);
                 data.endDate.setSeconds(59);
+
+                setFilename(`${ledger.name} ${data.startDate} - ${data.endDate}`);
     
                 const response = await ledgerController.ledgerTransactions(id, data.startDate.toISOString(), data.endDate.toISOString());
                 if(response && response.data){
@@ -340,23 +547,23 @@ const LedgerDisplay = () => {
                     <Table id="myTable" className="rounded-2" striped hover responsive>
                         <thead>
                             <tr className="shadow-sm">
+                                <th>Date</th>
                                 <th>Description</th>
+                                <th>Vch No.</th>
                                 <th>Dr</th>
                                 <th>Cr</th>
-                                <th>Date</th>
                                 <th>Balance</th>
-                                <th>Vch No.</th>
                             </tr>
                         </thead>
                         <tbody>
                             {transactions.map((_datum, index) => (
                                 <tr className='' key={index}>
+                                    <td>{_datum.date}</td>
                                     <td>{_datum.description}</td>
+                                    <td>{_datum.ledgerVchId}</td>
                                     <td>{_datum.drAmount}</td>
                                     <td>{_datum.crAmount}</td>
-                                    <td>{_datum.date}</td>
                                     <td>{_datum.balance}</td>
-                                    <td>{_datum.ledgerVchId}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -393,6 +600,12 @@ const LedgerDisplay = () => {
                 handleConfirm={handleInputOK}
                 message={displayMsg}
             />
+			<ConfirmDialog
+				show={showConfirmModal}
+				handleClose={handleCloseConfirmModal}
+				handleConfirm={handleConfirmOK}
+				message={displayMsg}
+			/>
         </div>
     );
 };
