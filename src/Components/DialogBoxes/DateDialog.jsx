@@ -5,13 +5,14 @@ import ErrorMessage from '../ErrorMessage';
 import { yupResolver } from '@hookform/resolvers/yup';
 import "react-datetime/css/react-datetime.css";
 import Datetime from 'react-datetime';
-import { object, date, ref } from "yup";
+import { object, date, ref, string, boolean } from "yup";
 
-const DateDialog = ({ show, handleClose, handleConfirm, message }) => {
+const DateDialog = ({ show, handleClose, handleConfirm, message, showRadio }) => {
 
 	const schema = object().shape({
         startDate: date(),
         endDate: date().min(ref("startDate"), "please update start date"),
+        reversal_status: boolean(),
 	});
 
 	const {
@@ -19,6 +20,7 @@ const DateDialog = ({ show, handleClose, handleConfirm, message }) => {
 		control,
 		setValue,
 		watch,
+        register,
 		formState: { errors },
 	} = useForm({
 		resolver: yupResolver(schema),
@@ -118,6 +120,28 @@ const DateDialog = ({ show, handleClose, handleConfirm, message }) => {
                             )}
                         />
                         <ErrorMessage source={errors.endDate} />
+
+                        {/* reversal status */}
+                        {showRadio && <div>
+                            <div className="d-flex gap-3">
+                                <Form.Check
+                                    type="radio"
+                                    label="Active"
+                                    value={false}
+                                    checked
+                                    {...register("reversal_status")}
+                                    name="reversal_status"
+                                />
+                                <Form.Check
+                                    type="radio"
+                                    label="Reversed"
+                                    value={true}
+                                    {...register("reversal_status")}
+                                    name="reversal_status"
+                                />
+                            </div>
+                            <ErrorMessage source={errors.gender} />
+                        </div>}
                     </div>
                 </Modal.Body>
                 <Modal.Footer>

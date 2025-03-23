@@ -5,6 +5,10 @@ import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { format, parseISO } from 'date-fns';
 import numeral from 'numeral';
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import ErrorMessage from '../../Components/ErrorMessage';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -22,6 +26,7 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 
 const SalesReceiptWindow = () => {
+    applyPlugin(jsPDF);
     //  format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -58,6 +63,8 @@ const SalesReceiptWindow = () => {
     const [salesRecords, setSalesRecords] = useState([]);
     const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
     
+    const [filename, setFilename] = useState("");
+    
     //	for payment dialog
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     //	for date dialog
@@ -83,6 +90,7 @@ const SalesReceiptWindow = () => {
 				setShowInputModal(true);
                 break;
             case 'exportToPDF':
+                pdfExport();
                 break;
             case 'searchByDate':
 				setShowDateModal(true);
@@ -153,7 +161,6 @@ const SalesReceiptWindow = () => {
     };
 
     const paymentModeSet = (payments) => {
-        console.log(payments);
         const paymentModes = [];
 		if(payments.atm){
 			paymentModes.push({
@@ -211,6 +218,8 @@ const SalesReceiptWindow = () => {
 			setSearchedDate(null);
 			setValue('startDate', null);
 			setValue('endDate', null);
+
+            setFilename(`Receipt ID - ${id}`);
 	
 			const response = await transactionsController.findPurchaseReceiptByNo(id);
             if(response && response.data){
@@ -256,8 +265,10 @@ const SalesReceiptWindow = () => {
 				setSearchedId(0);
                 setSearchMode(0);
 				setSearchedDate(date);
+
+                setFilename(`Receipts ${date.startDate} - ${date.endDate}`);
                 
-				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate.toISOString(), date.endDate.toISOString());
+				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate.toISOString(), date.endDate.toISOString(), date.reversal_status);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -340,6 +351,96 @@ const SalesReceiptWindow = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return reverseReceipt();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
+    
+    const pdfExport = async () => {
+        try {
+            setNetworkRequest(true);
+            let response;
+            if(searchMode === 0){
+                response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate.toISOString(), searchedDate.endDate.toISOString(), 
+                    searchedDate.reversal_status);
+                if(response && response.data){
+                    console.log(response.data);
+                    const unit = "pt";
+                    const size = "A4"; // Use A1, A2, A3 or A4
+                    const orientation = "landscape"; // portrait or landscape
+                    const fileExtension = ".pdf";
+
+                    const marginLeft = 40;
+                    const doc = new jsPDF(orientation, unit, size);
+
+                    doc.setFontSize(10);
+
+                    const title = "Receipts Summary";
+
+                    doc.text(title, marginLeft, 40);
+                    for (const key in response.data) {
+                        /*  ref:
+                        *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
+                        *   https://www.npmjs.com/package/jspdf-autotable
+                        *   https://www.npmjs.com/package/jspdf */
+                        autoTable(doc, {
+                            styles: { theme: 'striped' },
+                            margin: { top: 100 },
+                            showHead: 'firstPage',
+                            footStyles: {textColor: 'black', fillColor: 'white',},
+                            foot: [
+                                [
+                                    {
+                                        content: `Receipt No. ${key} | Date: ${response.data[key][0].transaction_date} | Payment Mode: ${response.data[key][0].paymentModes}`,
+                                        colSpan: 8,
+                                    }
+                                ],
+                                [
+                                    {
+                                        content: `Receipt No. ${key} | Date: ${response.data[key][0].transaction_date}`,
+                                        colSpan: 8,
+                                    }
+                                ],
+                            ],
+                            body: response.data[key],
+                            columns: [
+                                // { header: 'Receipt No.', dataKey: 'receipt_id' },
+                                { header: 'Description', dataKey: 'item_name' },
+                                { header: 'Qty', dataKey: 'qty' },
+                                { header: 'Type', dataKey: 'qty_type' },
+                                { header: 'Stock Price', dataKey: 'unit_stock' },
+                                { header: 'Sales Price', dataKey: 'price' },
+                                { header: 'Discount x1', dataKey: 'item_discount' },
+                                { header: 'Invoice Discount', dataKey: 'invoice_discount' },
+                                { header: 'Amount', dataKey: 'amount' },
+                            ],
+                        });
+                    }
+                    //  sort
+                    // response.data.sort((a, b) => a.receipt_id - b.receipt_id);
+                        
+                    doc.save(`${filename}` + fileExtension);
+                }
+            }
+            setNetworkRequest(false);
+            
+        } catch (error) {
+            console.log(error);
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return pdfExport();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -531,6 +632,7 @@ const SalesReceiptWindow = () => {
                 message={displayMsg}
             />
             <DateDialog
+                showRadio={true}
                 show={showDateModal}
                 handleClose={handleCloseModal}
                 handleConfirm={dateSearch}

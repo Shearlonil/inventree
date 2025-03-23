@@ -547,12 +547,12 @@ const LedgerDisplay = () => {
                     <Table id="myTable" className="rounded-2" striped hover responsive>
                         <thead>
                             <tr className="shadow-sm">
-                                <th>Date</th>
-                                <th>Description</th>
-                                <th>Vch No.</th>
-                                <th>Dr</th>
-                                <th>Cr</th>
-                                <th>Balance</th>
+                                <th className='text-danger'>Date</th>
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Vch No.</th>
+                                <th className='text-danger'>Dr</th>
+                                <th className='text-danger'>Cr</th>
+                                <th className='text-danger'>Balance</th>
                             </tr>
                         </thead>
                         <tbody>
