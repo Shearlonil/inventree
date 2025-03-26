@@ -21,7 +21,7 @@ export const useCookieStorage = (keyName, defaultValue) => {
     });
     const setValue = (newValue) => {
         try {
-            Cookies.set(keyName, newValue, { secure: true, sameSite: 'strict', expires: 7 });
+            Cookies.set(keyName, newValue, { secure: true, sameSite: 'strict',expires: 7 });
         } catch (err) { }
         setStoredValue(newValue);
     };

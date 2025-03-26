@@ -3,14 +3,14 @@ import { ToastContainer } from "react-toastify";
 import Home from "./Routes/Home";
 import AcctVoucherCreation from "./Routes/AcctVoucherCreation";
 import MonoTransaction from "./Routes/SalesTransaction/MonoTransaction";
-import StoreItemReg from "./Routes/Store/StoreItemReg";
+import StoreItemReg from "./Routes/Inventory/StoreItemReg";
 import Test from "./Routes/Test";
-import PurchasesWindow from "./Routes/PurchasesWindow";
+import PurchasesWindow from "./Routes/Inventory/PurchasesWindow";
 import Finance from "./Routes/Finance";
 import Login from "./Routes/Login";
 import UnverifiedStockRec from "./Routes/Dashboard/UnverifiedStockRec";
-import Restock from './Routes/Store/Restock';
-import Dispensary from './Routes/Store/Dispensary';
+import Restock from './Routes/Inventory/Restock';
+import Dispensary from './Routes/Inventory/Dispensary';
 import PageNotFound from './Routes/PageNotFound';
 import { ProtectedRoute } from './Routes/ProtectedRoute';
 import UnvenrifiedDispensary from "./Routes/Dashboard/UnvenrifiedDispensary";
@@ -41,9 +41,10 @@ import StoreWindow from "./Routes/Items/StoreWindow";
 import StoreItemQtyMgrView from "./Routes/Items/StoreItemQtyMgrView";
 import GrossWindow from "./Routes/Items/GrossWindow";
 import Trash from "./Routes/Items/Trash";
-import SalesReport from "./Routes/SalesReport";
 import LedgersView from "./Routes/Finance/Legers/LedgersView";
 import TrashedLedgers from "./Routes/Finance/Legers/TrashedLedgers";
+import SalesReport from "./Routes/Dashboard/SalesReport";
+import StockSummary from "./Routes/Inventory/StockSummary";
 
 function App() {
 	return (
@@ -51,7 +52,6 @@ function App() {
 			<Routes>
 				<Route index path={"/"} element={<Home />} />
 				<Route index path={"/login"} element={<Login />} />
-				<Route index path={"/sales/report"} element={<SalesReport />} />
 				<Route path="/transaction" element={<ProtectedRoute />}>
 					<Route path="cashier" element={<CashierWindow />} />
 					<Route path="section" element={<SectionTransaction />} />
@@ -65,7 +65,7 @@ function App() {
 					<Route path={":contact/trash"} element={<ContactTrash />} />
 					<Route path="" element={<PageNotFound />} />
           		</Route>
-				<Route path="/store/item" element={<ProtectedRoute />}>
+				<Route path="/inventory/item" element={<ProtectedRoute />}>
 					<Route path={"reg/:stock_rec_id"} element={<StoreItemReg />} />
 					<Route path={"restock/:stock_rec_id"} element={<Restock />} />
 					<Route path={"dispensary/:dispensary_id"} element={<Dispensary />} />
@@ -73,7 +73,10 @@ function App() {
 					<Route path={"unverified/dispensary"} element={<UnvenrifiedDispensary />} />
 					<Route path="" element={<PageNotFound />} />
           		</Route>
-				<Route path={"/purchases"} element={<PurchasesWindow />} />
+				<Route path="/inventory" element={<ProtectedRoute />}>
+					<Route path={"purchases"} element={<PurchasesWindow />} />
+					<Route path={"stock-summary"} element={<StockSummary />} />
+				</Route>
 				<Route path="/sections" element={<ProtectedRoute />}>
 					<Route path={":tractName/items"} element={<TractsItemsView />} />
 					<Route path={""} element={<TractsWindow />} />
@@ -118,6 +121,7 @@ function App() {
 					<Route path={":username/details"} element={<UserDetails />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
 					<Route path={"invoices"} element={<InvoiceWindow />} />
+					<Route index path={"sales/report"} element={<SalesReport />} />
 					<Route path={""} element={<Dashboard />} />
           		</Route>
 				<Route path={"/test"} element={<Test />} />

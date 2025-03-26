@@ -184,7 +184,7 @@ const Restock = () => {
 			await inventoryController.commitStockRecById(stockRecId, outpostId, destination);
 			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
-			navigate("/store/item/restock/0");
+			navigate("/inventory/item/restock/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
@@ -339,7 +339,7 @@ const Restock = () => {
 					await inventoryController.deleteStockRec(stockRecId);
 					resetPageStates();
 					//	navigate back to this page which will cause reset of page states
-					navigate("/store/item/reg/0");
+					navigate("/inventory/item/reg/0");
 					break;
 				case "exportToPDF":
 					await inventoryController.exportToPDF(stockRecId);

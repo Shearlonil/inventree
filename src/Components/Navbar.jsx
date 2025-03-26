@@ -166,10 +166,10 @@ function NavBar() {
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/store/item/reg/0");
+										navigate("/inventory/item/reg/0");
 									}}
 									className={`nav-item ${
-										location.pathname.startsWith("/store/item/reg") &&
+										location.pathname.startsWith("/inventory/item/reg") &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
@@ -178,10 +178,10 @@ function NavBar() {
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/store/item/restock/0");
+										navigate("/inventory/item/restock/0");
 									}}
 									className={`nav-item ${
-										location.pathname.startsWith("/store/item/restock") &&
+										location.pathname.startsWith("/inventory/item/restock") &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
@@ -191,10 +191,10 @@ function NavBar() {
 								{user.hasAuth('DISPENSE') && <NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/store/item/dispensary/0");
+										navigate("/inventory/item/dispensary/0");
 									}}
 									className={`nav-item ${
-										location.pathname.startsWith("/store/item/dispensary") &&
+										location.pathname.startsWith("/inventory/item/dispensary") &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
@@ -204,14 +204,26 @@ function NavBar() {
 								{user.hasAuth('REPORT_WINDOW') && <NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/purchases");
+										navigate("/inventory/purchases");
 									}}
 									className={`nav-item ${
-										location.pathname === "/purchases" &&
+										location.pathname === "/inventory/purchases" &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
-									Purchases
+									Purchases History
+								</NavDropdown.Item>}
+								{<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/inventory/stock-summary");
+									}}
+									className={`nav-item ${
+										location.pathname === "/inventory/stock-summary" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Stock Summary
 								</NavDropdown.Item>}
 							</NavDropdown>}
 

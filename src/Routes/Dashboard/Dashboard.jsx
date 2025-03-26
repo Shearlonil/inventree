@@ -62,7 +62,7 @@ const Dashboard = () => {
                         </div>}
 
                         <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('/sales/report')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('sales/report')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
@@ -98,7 +98,7 @@ const Dashboard = () => {
                         </div>
 
                         <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/new')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/inventory/item/unverified/new')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
@@ -116,7 +116,7 @@ const Dashboard = () => {
                         </div>
 
                         <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/restock')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/inventory/item/unverified/restock')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img
@@ -152,7 +152,7 @@ const Dashboard = () => {
                         </div>}
 
                         <div className="col-md-4 col-sm-12">
-                            <div className="btn p-3 border w-100" onClick={() => navigate('/store/item/unverified/dispensary')} style={{minHeight: '110px'}}>
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/inventory/item/unverified/dispensary')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-primary-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
                                         <img

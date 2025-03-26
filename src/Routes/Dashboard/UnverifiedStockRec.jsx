@@ -74,10 +74,10 @@ const UnverifiedStockRec = () => {
         }
         switch(mode){
             case 'restock':
-                navigate(`/store/item/restock/${item.id}`);
+                navigate(`/inventory/item/restock/${item.id}`);
                 break;
             case 'new':
-                navigate(`/store/item/reg/${item.id}`);
+                navigate(`/inventory/item/reg/${item.id}`);
                 break
         }
     };
@@ -86,12 +86,12 @@ const UnverifiedStockRec = () => {
     const handleConfirmAction = async () => {
         switch(mode){
             case 'restock':
-                navigate(`/store/item/restock/${selectedEntry.id}`);
+                navigate(`/inventory/item/restock/${selectedEntry.id}`);
                 setSelectedEntry(null);
                 setShowConfirmModal(false);
                 break;
             case 'new':
-                navigate(`/store/item/reg/${selectedEntry.id}`);
+                navigate(`/inventory/item/reg/${selectedEntry.id}`);
                 setSelectedEntry(null);
                 setShowConfirmModal(false);
                 break

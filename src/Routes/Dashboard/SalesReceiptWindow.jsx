@@ -24,6 +24,7 @@ import { TransactionItem } from '../../Entities/TransactionItem';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
+import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -45,7 +46,7 @@ const SalesReceiptWindow = () => {
         //	table header
         headers: ['Item Name', 'Qty', 'Type', "Price (x1)", "Discount", "Amount"],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'itemSoldOutPrice', 'discount', 'totalAmount'],
+        objectProps: ['name', 'qty', 'qtyType', 'itemSoldOutPrice', 'discount', 'totalAmount'],
     };
 
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -137,9 +138,17 @@ const SalesReceiptWindow = () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'activateReceipt':
+                if(!user.hasAuth('REVERSAL')){
+                    toast.error("Account doesn't support this feature. Please contact your admin");
+                    return;
+                }
 				activateReceipt();
                 break;
             case 'reverseReceipt':
+                if(!user.hasAuth('REVERSAL')){
+                    toast.error("Account doesn't support this feature. Please contact your admin");
+                    return;
+                }
 				reverseReceipt();
                 break;
         }
@@ -373,68 +382,25 @@ const SalesReceiptWindow = () => {
                 response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate.toISOString(), searchedDate.endDate.toISOString(), 
                     searchedDate.reversal_status);
                 if(response && response.data){
-                    console.log(response.data);
-                    const unit = "pt";
-                    const size = "A4"; // Use A1, A2, A3 or A4
-                    const orientation = "landscape"; // portrait or landscape
-                    const fileExtension = ".pdf";
-
-                    const marginLeft = 40;
-                    const doc = new jsPDF(orientation, unit, size);
-
-                    doc.setFontSize(10);
-
-                    const title = "Receipts Summary";
-
-                    doc.text(title, marginLeft, 40);
-                    for (const key in response.data) {
-                        /*  ref:
-                        *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
-                        *   https://www.npmjs.com/package/jspdf-autotable
-                        *   https://www.npmjs.com/package/jspdf */
-                        autoTable(doc, {
-                            styles: { theme: 'striped' },
-                            margin: { top: 100 },
-                            showHead: 'firstPage',
-                            footStyles: {textColor: 'black', fillColor: 'white',},
-                            foot: [
-                                [
-                                    {
-                                        content: `Receipt No. ${key} | Date: ${response.data[key][0].transaction_date} | Payment Mode: ${response.data[key][0].paymentModes}`,
-                                        colSpan: 8,
-                                    }
-                                ],
-                                [
-                                    {
-                                        content: `Receipt No. ${key} | Date: ${response.data[key][0].transaction_date}`,
-                                        colSpan: 8,
-                                    }
-                                ],
-                            ],
-                            body: response.data[key],
-                            columns: [
-                                // { header: 'Receipt No.', dataKey: 'receipt_id' },
-                                { header: 'Description', dataKey: 'item_name' },
-                                { header: 'Qty', dataKey: 'qty' },
-                                { header: 'Type', dataKey: 'qty_type' },
-                                { header: 'Stock Price', dataKey: 'unit_stock' },
-                                { header: 'Sales Price', dataKey: 'price' },
-                                { header: 'Discount x1', dataKey: 'item_discount' },
-                                { header: 'Invoice Discount', dataKey: 'invoice_discount' },
-                                { header: 'Amount', dataKey: 'amount' },
-                            ],
-                        });
+                    if(user.hasAuth('PROFIT_VIEW')){
+                        generateProfitPDF(response.data);
+                    }else {
+                        generatePDF(response.data);
                     }
-                    //  sort
-                    // response.data.sort((a, b) => a.receipt_id - b.receipt_id);
-                        
-                    doc.save(`${filename}` + fileExtension);
+                }
+            }else {
+                response = await transactionsController.pdfPurchaseReceiptsByNoForExport(searchedId);
+                if(response && response.data){
+                    if(user.hasAuth('PROFIT_VIEW')){
+                        generateProfitPDF(response.data);
+                    }else {
+                        generatePDF(response.data);
+                    }
                 }
             }
             setNetworkRequest(false);
             
         } catch (error) {
-            console.log(error);
             setNetworkRequest(false);
 			//	Incase of 500 (Invalid Token received!), perform refresh
 			try {
@@ -462,7 +428,7 @@ const SalesReceiptWindow = () => {
             const dtoItem = new TransactionItem();
             dtoItem.id = item.id;
             dtoItem.itemSoldOutPrice = item.itemSoldOutPrice;
-            dtoItem.itemName = item.itemName;
+            dtoItem.name = item.name;
             dtoItem.qty = item.qty;
             dtoItem.qtyType = item.qtyType;
             dtoItem.discount = item.discount ? item.discount : '0';
@@ -472,6 +438,133 @@ const SalesReceiptWindow = () => {
         setTotalTransactionAmount(tableArr.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0));
         return tableArr;
     };
+
+    const generateProfitPDF = (receiptData) => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "landscape"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(20);
+
+        const title = "Receipts Summary";
+
+        doc.text(title, marginLeft, 40);
+        const receipts = [];
+        for (const key in receiptData) {
+            receipts.push(new ReceiptSummary(receiptData[key]));
+        }
+        let totalGrossAmount = numeral(0);
+        let totalNetAmount = numeral(0);
+        let totalNetProfit = numeral(0);
+        receipts.forEach(receipt => {
+            totalGrossAmount = numeral(totalGrossAmount).add(receipt.grossAmount);
+            totalNetAmount = numeral(totalNetAmount).add(receipt.netAmount);
+            totalNetProfit = numeral(totalNetProfit).add(receipt.netProfit);
+            doc.autoTable({
+                styles: { theme: 'striped' },
+                margin: { top: 60 },
+                showHead: 'firstPage',
+                footStyles: {textColor: 'black', fillColor: 'white',},
+                foot: [
+                    [
+                        {
+                            content: `Receipt No. ${receipt.id} | Date: ${receipt.transactionDate} | Payment Mode: ${receipt.toStringPaymentModes}`,
+                            colSpan: 8,
+                        }
+                    ],
+                    [
+                        {
+                            content: "Gross Amount " + `${numeral(receipt.grossAmount).format('₦0,0.00')} | Invoice Discount: ` + 
+                                `${numeral(receipt.invoiceDiscount).format('₦0,0.00')} | Net Amount: ${numeral(receipt.netAmount).format('₦0,0.00')} | ` + 
+                                `Net Profit: ${numeral(receipt.netProfit).format('₦0,0.00')}`,
+                            colSpan: 8,
+                        }
+                    ],
+                ],
+                body: receipt.items,
+                columns: [
+                    // { header: 'Receipt No.', dataKey: 'receipt_id' },
+                    { header: 'Description', dataKey: 'itemName' },
+                    { header: 'Qty', dataKey: 'qty' },
+                    { header: 'Type', dataKey: 'qtyType' },
+                    { header: 'Stock Price (x1)', dataKey: 'unitStockPrice' },
+                    { header: 'Sales Price (x1)', dataKey: 'price' },
+                    { header: 'Discount x1', dataKey: 'itemDiscount' },
+                    { header: 'Amount', dataKey: 'totalAmount' },
+                    { header: 'Profit Margin', dataKey: 'profit' },
+                ],
+            });
+        });
+        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).value()} | Total Net Amount: ${numeral(totalNetAmount).value()}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Net Profit: ${numeral(totalNetProfit).value()}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+            
+        doc.save(`${filename}` + fileExtension);
+    }
+
+    const generatePDF = (receiptData) => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "landscape"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(20);
+
+        const title = "Receipts Summary";
+
+        doc.text(title, marginLeft, 40);
+        const receipts = [];
+        for (const key in receiptData) {
+            receipts.push(new ReceiptSummary(receiptData[key]));
+        }
+        let totalGrossAmount = numeral(0);
+        let totalNetAmount = numeral(0);
+        let totalNetProfit = numeral(0);
+        receipts.forEach(receipt => {
+            totalGrossAmount = numeral(totalGrossAmount).add(receipt.grossAmount);
+            totalNetAmount = numeral(totalNetAmount).add(receipt.netAmount);
+            totalNetProfit = numeral(totalNetProfit).add(receipt.netProfit);
+            doc.autoTable({
+                styles: { theme: 'striped' },
+                margin: { top: 60 },
+                showHead: 'firstPage',
+                footStyles: {textColor: 'black', fillColor: 'white',},
+                foot: [
+                    [
+                        {
+                            content: `Receipt No. ${receipt.id} | Date: ${receipt.transactionDate} | Payment Mode: ${receipt.toStringPaymentModes}`,
+                            colSpan: 8,
+                        }
+                    ],
+                    [
+                        {
+                            content: "Gross Amount " + `${numeral(receipt.grossAmount).format('₦0,0.00')} | Invoice Discount: ` + 
+                                `${numeral(receipt.invoiceDiscount).format('₦0,0.00')} | Net Amount: ${numeral(receipt.netAmount).format('₦0,0.00')} | `, colSpan: 8,
+                        }
+                    ],
+                ],
+                body: receipt.items,
+                columns: [
+                    // { header: 'Receipt No.', dataKey: 'receipt_id' },
+                    { header: 'Description', dataKey: 'itemName' },
+                    { header: 'Qty', dataKey: 'qty' },
+                    { header: 'Type', dataKey: 'qtyType' },
+                    { header: 'Sales Price (x1)', dataKey: 'price' },
+                    { header: 'Discount x1', dataKey: 'itemDiscount' },
+                    { header: 'Amount', dataKey: 'totalAmount' },
+                ],
+            });
+        });
+        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).value()} | Total Net Amount: ${numeral(totalNetAmount).value()}`, marginLeft, doc.lastAutoTable.finalY + 40);
+            
+        doc.save(`${filename}` + fileExtension);
+    }
 
     return (
         <div>

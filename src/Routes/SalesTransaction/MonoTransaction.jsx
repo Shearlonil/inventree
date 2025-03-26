@@ -21,6 +21,7 @@ import { TransactionItem } from "../../Entities/TransactionItem";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import transactionsController from "../../Controllers/transactions-controller";
+import printerController from "../../Controllers/printer-controller";
 
 const MonoTransaction = () => {
 	const navigate = useNavigate();
@@ -184,11 +185,12 @@ const MonoTransaction = () => {
 
 	const onSubmit = (data) => {
 		//	detect if item already exists in the list
-		const indexPos = transactionItems.findIndex(i => i.id == data.product.value.id);
-		if(indexPos > -1){
-			toast.error('Item already added to list, consider updating quantity');
+		const found = transactionItems.find(i => i.id === data.product.value.id);
+		if(found){
+			increment(found, data.qty);
 			return;
 		}
+		
 		const item = new TransactionItem(data);
 		item.discount = 0;
 		if(data.item_disc > 0){
@@ -230,17 +232,17 @@ const MonoTransaction = () => {
 		setCustomerCardNo(selectedCustomer.value.loyaltyCardNo === null ? '0': selectedCustomer.value.loyaltyCardNo);
     };
 
-	const increment = (data) => {
+	const increment = (data, qty) => {
 		setUpdating(true);
-		data.qty++;
+		data.qty += qty;
 		updateTransactionAmount();
 		setUpdating(false);
 	};
   
-	const decrement = (data) => {
+	const decrement = (data, qty) => {
 		setUpdating(true);
 		if (data.qty > 1) {
-			data.qty--;
+			data.qty -= qty;
 			updateTransactionAmount();
 		}
 		setUpdating(false);
@@ -305,7 +307,16 @@ const MonoTransaction = () => {
     const commitTransaction = async (dtoReceipt) => {
 		try {
 			setNetworkRequest(true);
-			const receipt = await transactionsController.monoTransaction(dtoReceipt);
+			const response = await transactionsController.monoTransaction(dtoReceipt);
+			
+            // const startDate = new Date();
+            // startDate.setHours(0, 0, 0);
+            // const endDate = new Date();
+            // endDate.setHours(0, 0, 0);
+			// dtoReceipt.transactionDate =  startDate.toISOString();
+			// dtoReceipt.customerName = 'Customer';
+
+			await printerController.print(response.data);
 			resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
@@ -581,7 +592,7 @@ const MonoTransaction = () => {
 
 										<div className="col-md-2 col-4">
 										<span
-											onClick={() => increment(item)}
+											onClick={() => increment(item, 1)}
 											className={`btn btn-outline-dark py-1 px-2 rounded-circle ${
 											updating ? "disabled" : ""
 											}`}
@@ -590,7 +601,7 @@ const MonoTransaction = () => {
 										</span>
 										<span className="ms-2 me-2">{qty}</span>
 										<button
-											onClick={() => decrement(item)}
+											onClick={() => decrement(item, 1)}
 											className={`btn btn-outline-danger py-1 px-2 rounded-circle ${
 											updating ? "disabled" : ""
 											}`}

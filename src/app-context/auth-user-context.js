@@ -1,11 +1,12 @@
 import { jwtDecode } from "jwt-decode";
 import { createContext, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCookieStorage } from "./useCookies";
 import { getYear } from "date-fns";
 
 import User from "../Entities/User";
 import httpService from "../axios/http-service";
+import { useCookieStorage } from "./useCookies";
+import { useLocalStorage } from "./useLocalStorage";
 
 const AuthContext = createContext();
 const jwtStorageTitle = "authorization";
@@ -13,14 +14,16 @@ const TOKEN_PREFIX = "Bearer ";
 
 // ref: https://blog.logrocket.com/authentication-react-router-v6/
 export const AuthProvider = ({ children }) => {
-    const [jwtToken, setJwtToken] = useCookieStorage(jwtStorageTitle, null);
+    //  const [jwtToken, setJwtToken] = useCookieStorage(jwtStorageTitle, null);
+    const [jwtToken, setJwtToken] = useLocalStorage(jwtStorageTitle, null);
     const navigate = useNavigate();
 
     // call this function when you want to authenticate the user
     const login = async (loginDetails) => {
         const response = await httpService.post("/login", loginDetails);
         //  remove the token prefix from the token for jwtDecode to decode the token
-        const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
+        // const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
+        const jwt = response.headers[jwtStorageTitle];
         setJwtToken(jwt);
     };
 

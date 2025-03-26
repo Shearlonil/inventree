@@ -366,7 +366,7 @@ const Dispensary = () => {
             await inventoryController.dispense(dispensaryId, outpostId);
             resetPageStates();
             //	navigate back to this page which will cause reset of page states
-            navigate("/store/item/dispensary/0");
+            navigate("/inventory/item/dispensary/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
@@ -417,7 +417,7 @@ const Dispensary = () => {
 					await inventoryController.deleteDispensary(dispensaryId);
                     resetPageStates();
 					//	navigate back to this page which will cause reset of page states
-					navigate("/store/item/dispensary/0");
+					navigate("/inventory/item/dispensary/0");
 					break;
 				case "pdfExport":
 					await inventoryController.pdfExport(dispensaryId);

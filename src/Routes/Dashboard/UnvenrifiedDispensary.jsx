@@ -71,12 +71,12 @@ const UnvenrifiedDispensary = () => {
             setSelectedEntry(item);
             return;
         }
-        navigate(`/store/item/dispensary/${item.id}`);
+        navigate(`/inventory/item/dispensary/${item.id}`);
     };
 
     //  confirmation for updating item details and updating item imgs
     const handleConfirmAction = async () => {
-        navigate(`/store/item/dispensary/${selectedEntry.id}`);
+        navigate(`/inventory/item/dispensary/${selectedEntry.id}`);
     };
   
     const closeConfirmModal = () => {

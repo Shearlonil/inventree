@@ -143,6 +143,10 @@ const updatePurchasedItem = async (item) => {
     return await httpService.put(`/api/inventory/purchases/item/update`, item);
 }
 
+const stockSummary = async (startDate) => {
+    return await httpService.post(`/api/inventory/stock/summary`, { startDate, endDate: startDate });
+};
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -163,4 +167,5 @@ export default {
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
     updatePurchasedItem,
+    stockSummary
 }

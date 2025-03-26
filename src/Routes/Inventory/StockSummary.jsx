@@ -12,35 +12,31 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable'
 
-import ErrorMessage from '../Components/ErrorMessage';
-import SVG from '../assets/Svg';
-import OffcanvasMenu from '../Components/OffcanvasMenu';
-import { useAuth } from '../app-context/auth-user-context';
-import handleErrMsg from '../Utils/error-handler';
-import transactionsController from '../Controllers/transactions-controller';
-import { ThreeDotLoading } from '../Components/react-loading-indicators/Indicator';
+import SVG from '../../assets/Svg';
+import OffcanvasMenu from '../../Components/OffcanvasMenu';
+import { useAuth } from '../../app-context/auth-user-context';
+import handleErrMsg from '../../Utils/error-handler';
+import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
+import ErrorMessage from '../../Components/ErrorMessage';
+import inventoryController from '../../Controllers/inventory-controller';
 
-const SalesReport = () => {
+const StockSummary = () => {
     const navigate = useNavigate();
         
     const { handleRefresh, logout } = useAuth();
 
     const schema = object().shape({
         startDate: date(),
-        endDate: date().min(ref("startDate"), "please update start date"),
     });
     
     const {
         handleSubmit,
         control,
         setValue,
-        watch,
         formState: { errors },
     } = useForm({
         resolver: yupResolver(schema)
     });
-    
-    const startDate = watch("startDate");
 
     const dispensaryOffCanvasMenu = [
         { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
@@ -69,7 +65,7 @@ const SalesReport = () => {
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
 
-        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty" } ];
+        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", soldOutQty: "Amount" } ];
 
         const temp = [...data];
         temp.forEach(t => delete t.id);
@@ -134,20 +130,17 @@ const SalesReport = () => {
 
 	const onsubmit = async (data) => {
 		try {
-			if (data.startDate && data.endDate) {
+			if (data.startDate) {
 				setNetworkRequest(true);
                 setData([]);
-				data.startDate.setHours(0);
-				data.startDate.setMinutes(0);
-				data.startDate.setSeconds(0);
-	
-				data.endDate.setHours(23);
-				data.endDate.setMinutes(59);
-				data.endDate.setSeconds(59);
 
-                setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
+				data.startDate.setHours(23);
+				data.startDate.setMinutes(59);
+				data.startDate.setSeconds(59);
 
-				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
+                setFilename(`sales_summary_${data.startDate}`);
+
+				const response = await inventoryController.stockSummary(data.startDate.toISOString());
 				if(response && response.data){
                     //  filter out items with sales qty and sort by name
                     const sold = response.data
@@ -194,19 +187,19 @@ const SalesReport = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Sales Summary</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Stock Summary</span>
 						<img src={SVG.report_colored} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
                 <span className='text-center m-1'>
-                    Generate Item sales report with custom dates and export to Excel/PDF and also monitor stock levels
+                    Generate Stock summary report with custom dates and export to Excel/PDF. View closing stock at any given date
                 </span>
 			</div>
             
             <div className="border py-4 px-5 bg-white-subtle rounded-4 my-4" style={{ boxShadow: "black 3px 2px 5px" }} >
                 <Row className="align-items-center">
                     <Col sm lg="4" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">Start Date</Form.Label>
+                        <Form.Label className="fw-bold">Date</Form.Label>
                         <Controller
                             name="startDate"
                             control={control}
@@ -221,10 +214,7 @@ const SalesReport = () => {
                                         className: "form-control",
                                         readOnly: true, // Optional: makes input read-only
                                     }}
-                                    onChange={(date) => {
-                                        setValue("endDate", date.toDate());
-                                        field.onChange(date ? date.toDate() : null);
-                                    }}
+                                    onChange={(date) => field.onChange(date ? date.toDate() : null) }
                                     /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
                                         refs:
                                             *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
@@ -240,46 +230,6 @@ const SalesReport = () => {
                         />
                         <ErrorMessage source={errors.startDate} />
                     </Col>
-                    <Col sm lg="4" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">End Date</Form.Label>
-                        <Controller
-                            name="endDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Datetime
-                                    {...field}
-                                    timeFormat={false}
-                                    closeOnSelect={true}
-                                    dateFormat="DD/MM/YYYY"
-                                    inputProps={{
-                                        placeholder: "Choose end date",
-                                        className: "form-control",
-                                        readOnly: true, // Optional: makes input read-only
-                                    }}
-                                    onChange={(date) =>
-                                        field.onChange(date ? date.toDate() : null)
-                                    }
-                                    isValidDate={(current) => {
-                                        // Ensure end date is after start date
-                                        return (
-                                        !startDate || current.isSameOrAfter(startDate, "day")
-                                        );
-                                    }}
-                                    /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-                                        refs:
-                                            *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-                                            *	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-                                        there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-                                        the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-                                        or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-                                    renderInput={(props) => {
-                                        return <input {...props} value={field.value ? props.value : ''} />
-                                    }}
-                                />
-                            )}
-                        />
-                        <ErrorMessage source={errors.endDate} />
-                    </Col>
                     <Col sm lg="3" className="align-self-end text-center mt-3">
                         <Button className="w-100" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
                             { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
@@ -294,11 +244,11 @@ const SalesReport = () => {
                     <Table id="myTable" className="rounded-2" striped hover responsive>
                         <thead>
                             <tr className="shadow-sm">
-                                <th className='text-danger'>Item Name</th>
+                                <th className='text-danger'>Description</th>
                                 <th className='text-danger'>Store Qty</th>
                                 <th className='text-danger'>Sales Qty</th>
                                 <th className='text-danger'>Total Qty</th>
-                                <th className='text-danger'>Sold Qty</th>
+                                <th className='text-danger'>Amount</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -319,4 +269,4 @@ const SalesReport = () => {
     )
 }
 
-export default SalesReport;
+export default StockSummary;
