@@ -18,8 +18,8 @@ import Cookies from "js-cookie";
     axios.post(url, data, config)
 */
 
-// axios.defaults.baseURL = "http://localhost:8082";
-axios.defaults.baseURL = "http://192.168.0.163:8082";
+axios.defaults.baseURL = "http://localhost:8082";
+// axios.defaults.baseURL = "http://192.168.0.110:8082";
 // axios.defaults.baseURL = "http://192.168.88.59:8082";
 
 // ref: https://stackoverflow.com/questions/43002444/make-axios-send-cookies-in-its-requests-automatically
@@ -52,7 +52,7 @@ axios.interceptors.request.use((config) => {
 /*  configure axios with different baseUrl.
     ref:    https://stackoverflow.com/questions/47477594/how-to-use-2-instances-of-axios-with-different-baseurl-in-the-same-app-vue-js*/
 const printerAxios = axios.create({
-    baseURL: 'http://localhost:8084'
+    baseURL: 'http://192.168.0.112:8084'
 });
 
 

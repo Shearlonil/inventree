@@ -7,10 +7,11 @@ import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
-import { autoTable } from 'jspdf-autotable'
+import { autoTable, applyPlugin } from 'jspdf-autotable'
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -22,8 +23,10 @@ import inventoryController from '../../Controllers/inventory-controller';
 
 const StockSummary = () => {
     const navigate = useNavigate();
+    applyPlugin(jsPDF);
         
-    const { handleRefresh, logout } = useAuth();
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
 
     const schema = object().shape({
         startDate: date(),
@@ -51,10 +54,18 @@ const StockSummary = () => {
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
             case 'xlsExport':
-                exportToCSV();
+                if(user.hasAuth('PROFIT_VIEW')){
+                    exportStoreWorthToCSV();
+                }else {
+                    exportToCSV();
+                }
                 break;
             case 'pdfExport':
-                exportPDF();
+                if(user.hasAuth('PROFIT_VIEW')){
+                    generateStoreWorthPDF();
+                }else {
+                    generatePDF();
+                }
                 break;
         }
 	}
@@ -65,25 +76,27 @@ const StockSummary = () => {
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
 
-        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", soldOutQty: "Amount" } ];
+        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty" } ];
 
         const temp = [...data];
-        temp.forEach(t => delete t.id);
+        temp.forEach(t => {
+            delete t.itemId;
+            delete t.qtyMgrId;
+        });
         const wscols = [
             { wch: Math.max(...data.map(datum => datum.itemName.length)) },
-            { wch: 15 },
             { wch: 15 },
             { wch: 15 },
             { wch: 15 }
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty"],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty"],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -93,7 +106,48 @@ const StockSummary = () => {
         FileSaver.saveAs(finalData, `${filename}` + fileExtension);
     };
 
-    const exportPDF = () => {
+    const exportStoreWorthToCSV = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+
+        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", stockPrice: "Stock Price" } ];
+
+        let grossWorth = numeral(0);
+
+        const temp = [...data];
+        temp.forEach(t => {
+            delete t.itemId;
+            delete t.qtyMgrId;
+            grossWorth = numeral(grossWorth).add(t.stockPrice);
+        });
+
+        const wscols = [
+            { wch: Math.max(...data.map(datum => datum.itemName.length)) },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 }
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "stockPrice"],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "stockPrice"],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${filename}` + fileExtension);
+    };
+
+    const generatePDF = () => {
         /*  ref:
             *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
             *   https://www.npmjs.com/package/jspdf-autotable
@@ -108,7 +162,7 @@ const StockSummary = () => {
 
         doc.setFontSize(15);
 
-        const title = "Sales Summary";
+        const title = "Stock Summary";
 
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -121,9 +175,50 @@ const StockSummary = () => {
                 { header: 'Store Qty', dataKey: 'storeQty' },
                 { header: 'Sales Qty', dataKey: 'salesQty' },
                 { header: 'Total Qty', dataKey: 'totalQty' },
-                { header: 'Qty Sold', dataKey: 'soldOutQty' },
             ],
         });
+        
+        doc.save(`${filename}` + fileExtension);
+    }
+
+    const generateStoreWorthPDF = () => {
+        let netWorth = numeral(0);
+
+        data.forEach(t => {
+            netWorth = numeral(netWorth).add(t.stockPrice);
+        });
+
+        /*  ref:
+            *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
+            *   https://www.npmjs.com/package/jspdf-autotable
+            *   https://www.npmjs.com/package/jspdf */
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(15);
+
+        const title = "Stock Summary";
+
+        doc.text(title, marginLeft, 40);
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 50 },
+            // head: [['Name', 'Email']],
+            body: data,
+            columns: [
+                { header: 'Item Name', dataKey: 'itemName' },
+                { header: 'Store Qty', dataKey: 'storeQty' },
+                { header: 'Sales Qty', dataKey: 'salesQty' },
+                { header: 'Total Qty', dataKey: 'totalQty' },
+                { header: 'Stock Price', dataKey: 'stockPrice' },
+            ],
+        });
+        doc.text(`Total Net: ${numeral(netWorth).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 40);
         
         doc.save(`${filename}` + fileExtension);
     }
@@ -138,23 +233,11 @@ const StockSummary = () => {
 				data.startDate.setMinutes(59);
 				data.startDate.setSeconds(59);
 
-                setFilename(`sales_summary_${data.startDate}`);
+                setFilename(`stock_summary_${data.startDate}`);
 
 				const response = await inventoryController.stockSummary(data.startDate.toISOString());
 				if(response && response.data){
-                    //  filter out items with sales qty and sort by name
-                    const sold = response.data
-                        .filter(item => item.soldOutQty > 0)
-                        .sort(
-                            (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
-                        );
-                    //  filter out unsold items
-                    const unsold = response.data
-                        .filter(item => item.soldOutQty === 0)
-                        .sort(
-                            (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
-                        );
-					setData([...sold, ...unsold]);
+					setData(response.data);
 				}
 				setNetworkRequest(false);
 			}
@@ -248,7 +331,7 @@ const StockSummary = () => {
                                 <th className='text-danger'>Store Qty</th>
                                 <th className='text-danger'>Sales Qty</th>
                                 <th className='text-danger'>Total Qty</th>
-                                <th className='text-danger'>Amount</th>
+                                {/* <th className='text-danger'>Amount</th> */}
                             </tr>
                         </thead>
                         <tbody>
@@ -258,7 +341,7 @@ const StockSummary = () => {
                                     <td>{_datum.storeQty}</td>
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
-                                    <td>{_datum.soldOutQty}</td>
+                                    {/* <td>{_datum.soldOutQty}</td> */}
                                 </tr>
                             ))}
                         </tbody>

@@ -69,7 +69,7 @@ const SalesReport = () => {
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
 
-        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty" } ];
+        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty" } ];
 
         const temp = [...data];
         temp.forEach(t => delete t.id);
@@ -123,7 +123,7 @@ const SalesReport = () => {
             columns: [
                 { header: 'Item Name', dataKey: 'itemName' },
                 { header: 'Store Qty', dataKey: 'storeQty' },
-                { header: 'Sales Qty', dataKey: 'salesQty' },
+                { header: 'Shelf Qty', dataKey: 'salesQty' },
                 { header: 'Total Qty', dataKey: 'totalQty' },
                 { header: 'Qty Sold', dataKey: 'soldOutQty' },
             ],
@@ -296,7 +296,7 @@ const SalesReport = () => {
                             <tr className="shadow-sm">
                                 <th className='text-danger'>Item Name</th>
                                 <th className='text-danger'>Store Qty</th>
-                                <th className='text-danger'>Sales Qty</th>
+                                <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
                                 <th className='text-danger'>Sold Qty</th>
                             </tr>

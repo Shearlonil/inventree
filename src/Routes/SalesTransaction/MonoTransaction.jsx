@@ -316,8 +316,8 @@ const MonoTransaction = () => {
 			// dtoReceipt.transactionDate =  startDate.toISOString();
 			// dtoReceipt.customerName = 'Customer';
 
-			await printerController.print(response.data);
 			resetPage();
+			await printerController.print(response.data);
 			setNetworkRequest(false);
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh

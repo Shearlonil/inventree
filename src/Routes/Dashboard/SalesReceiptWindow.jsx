@@ -499,8 +499,8 @@ const SalesReceiptWindow = () => {
                 ],
             });
         });
-        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).value()} | Total Net Amount: ${numeral(totalNetAmount).value()}`, marginLeft, doc.lastAutoTable.finalY + 40);
-        doc.text(`Total Net Profit: ${numeral(totalNetProfit).value()}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).format('₦0,0.00')} | Total Net Amount: ${numeral(totalNetAmount).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
             
         doc.save(`${filename}` + fileExtension);
     }
@@ -561,7 +561,7 @@ const SalesReceiptWindow = () => {
                 ],
             });
         });
-        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).value()} | Total Net Amount: ${numeral(totalNetAmount).value()}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).format('₦0,0.00')} | Total Net Amount: ${numeral(totalNetAmount).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
             
         doc.save(`${filename}` + fileExtension);
     }
