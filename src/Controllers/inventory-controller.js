@@ -127,8 +127,8 @@ const deleteDispensary = async (dispensaryId) => {
 }
 
 //  PURCHASES
-const findItemPurchases = async (item_id) => {
-    return await httpService.get(`/api/inventory/purchases/item/${item_id}`);
+const findItemPurchases = async (item_id, startDate, endDate) => {
+    return await httpService.post(`/api/inventory/purchases/item/${item_id}`, { startDate, endDate });
 }
 
 const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {

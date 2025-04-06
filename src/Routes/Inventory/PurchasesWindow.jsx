@@ -22,9 +22,10 @@ import { Vendor } from "../../Entities/Vendor";
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
-import vendorController from "../../Controllers/vendor-controller";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
 import PurchasesUpdateForm from "../../Components/StoreComp/PurchasesUpdateForm";
+import genericController from "../../Controllers/generic-controller";
+import DateDialog from '../../Components/DialogBoxes/DateDialog';
 
 const PurchasesWindow = () => {
 	const navigate = useNavigate();
@@ -51,7 +52,7 @@ const PurchasesWindow = () => {
 	const startDate = watch("startDate");
   
 	const [networkRequest, setNetworkRequest] = useState(false);
-	const [entityToEdit, setEntityToEdit] = useState(null);
+	const [entity, setEntity] = useState(null);
 	//	indicate where id search or date search, 0 => date search	|	1 => id search
 	const [searchMode, setSearchMode] = useState(null);
 	//	incase of id search, store in this state
@@ -64,12 +65,13 @@ const PurchasesWindow = () => {
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 	const [showFormModal, setShowFormModal] = useState(false);
+	//	for date dialog
+	const [showDateModal, setShowDateModal] = useState(false);
 	//	for input dialog
 	const [showInputModal, setShowInputModal] = useState(false);
 	//	for vendor drop down dialog
 	const [dropDownMsg, setDropDownMsg] = useState("");
 	const [showDropDownModal, setShowDropDownModal] = useState(false);
-	const [vendor, setVendor] = useState({});
 	
 	//	for pagination
 	const [pageSize] = useState(10);
@@ -78,6 +80,7 @@ const PurchasesWindow = () => {
 	  
 	//  data returned from DataPagination
 	const [pagedData, setPagedData] = useState([]);
+	const [itemOptions, setItemOptions] = useState([]);
 	const [vendorOptions, setVendorOptions] = useState([]);
 	const [dropDownOptions, setDropDownOptions] = useState([]);
 
@@ -90,8 +93,9 @@ const PurchasesWindow = () => {
 
 	const purchasesOffCanvasMenu = [
 		{ label: "Search By Purchase No.", onClickParams: {evtName: 'searchByNo'} },
-		// { label: "Delete", onClickParams: {evtName: 'delete'} },
+		{ label: "Search By Item", onClickParams: {evtName: 'searchByItem'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+		{ label: "Export to Excel", onClickParams: {evtName: 'xlsxExport'} },
 	];
 		
 	useEffect( () => {
@@ -105,9 +109,18 @@ const PurchasesWindow = () => {
 
 	const initialize = async () => {
 		try {
-			const response = await vendorController.fetchAllActive();
-			if(response && response.data){
-				setVendorOptions(response.data.map( vendor => ({label: vendor.name, value: vendor})));
+			//  find active vendors and items
+			const urls = [ '/api/items/transactions/mono', '/api/vendors/active' ];
+			const response = await genericController.performGetRequests(urls);
+			const { 0: itemsRequest, 1: vendorsRequest } = response;
+
+            //	check if the request to fetch items doesn't fail before setting values to display
+            if(itemsRequest){
+				setItemOptions(itemsRequest.data.map(item => ({label: item.itemName, value: item})));
+            }
+
+			if(vendorsRequest){
+				setVendorOptions(vendorsRequest.map( vendor => ({label: vendor.name, value: vendor})));
 			}
 
 		} catch (error) {
@@ -131,106 +144,17 @@ const PurchasesWindow = () => {
 	};
 
     const setPageChanged = async (pageNumber) => {
-		if(currentPage === pageNumber){
-			return;
-		}
 		setCurrentPage(pageNumber);
-		switch (searchMode) {
-			case 0:
-				// 0 date search
-				paginateDateSearch(pageNumber);
-				break;
-			case 1:
-				// id search
-				paginateIdSearch(pageNumber);
-				break;
-		}
+    	const startIndex = (pageNumber - 1) * pageSize;
+      	setPagedData(items.slice(startIndex, startIndex + pageSize));
     };
-
-	const paginateIdSearch = async (pageNumber) => {
-		try {
-			setNetworkRequest(true);
-			setPagedData([]);
-			const offset = pageNumber - 1;	//	offset always one less current page
-	
-			const response = await inventoryController.paginatePurchasesIdSearch(
-				searchedId,
-				offset,
-				pageSize,
-			);
-	
-			//  check if the request to fetch indstries doesn't fail before setting values to display
-			if (response && response.data) {
-				setPagedData(buildTableData(response.data.content));
-			}
-			setNetworkRequest(false);
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return paginateIdSearch(pageNumber);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-			setNetworkRequest(false);
-		}
-	};
-  
-	const paginateDateSearch = async (pageNumber) => {
-		try {
-			setNetworkRequest(true);
-			setPagedData([]);
-			const offset = pageNumber - 1;	//	offset always one less current page
-			
-			const response = await inventoryController.paginatePurchasesDateSearch(
-				searchedDate.startDate.toISOString(), 
-				searchedDate.endDate.toISOString(),
-				offset,
-				pageSize,
-			);
-	
-			//  check if the request to fetch indstries doesn't fail before setting values to display
-			if (response && response.data) {
-				setPagedData(buildTableData(response.data.content));
-			}
-			setNetworkRequest(false);
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return paginateDateSearch(pageNumber);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-			setNetworkRequest(false);
-		}
-	};
 
 	const handleCloseModal = () => {
 		setShowConfirmModal(false);
 		setShowInputModal(false);
 		setShowFormModal(false);
-		setEntityToEdit(null);
+		setShowDateModal(false);
+		setEntity(null);
 	};
 	
 	const handleDropDownCloseModal = () => {
@@ -246,16 +170,18 @@ const PurchasesWindow = () => {
         switch (onclickParams.evtName) {
             case 'deleteItem':
 				//	ask if sure to delete
-				setEntityToEdit(entity);
+				setEntity(entity);
 				setDisplayMsg(`Delete item ${entity.itemName}?`);
 				setShowConfirmModal(true);
                 break;
             case 'updateVendor':
+				setConfirmDialogEvtName('updateVendor');
+				setDropDownOptions(vendorOptions)
 				setDropDownMsg("Please select Vendor")
 				setShowDropDownModal(true);
                 break;
             case 'edit':
-				setEntityToEdit(entity);
+				setEntity(entity);
 				setShowFormModal(true);
                 break;
         }
@@ -269,17 +195,32 @@ const PurchasesWindow = () => {
                 break;
             case 'exportToPDF':
                 break;
-            case 'search':
+            case 'xlsxExport':
+                break;
+            case 'searchByItem':
+				setConfirmDialogEvtName('searchByItem');
+				setDropDownOptions(itemOptions)
+				setDropDownMsg("Please select Item")
+				setShowDropDownModal(true);
                 break;
         }
 	}
 
-	const updateVendor = async (vendor) => {
-		setVendor(vendor);
-		//	ask to update vendor
-		setDisplayMsg(`Update vendor to ${vendor.name}?`);
-		setConfirmDialogEvtName('updateVendor');
-		setShowConfirmModal(true);
+	const dropDownItemSelected = async (dropDownItem) => {
+		switch (confirmDialogEvtName) {
+            case 'searchByItem':
+				setEntity(dropDownItem);
+				setShowDateModal(true);
+                break;
+            case 'updateVendor':
+				//	TODO: Update vendor
+				setEntity(dropDownItem);
+				//	ask to update vendor
+				setDisplayMsg(`Update vendor to ${dropDownItem.name}?`);
+				console.log('editing vendor.....');
+				setShowConfirmModal(true);
+                break;
+        }
 	};
 	
 	const handleConfirmOK = async () => {
@@ -308,6 +249,7 @@ const PurchasesWindow = () => {
 			}
 			setNetworkRequest(true);
 			setPagedData([]);
+			setItems([]);
 			setCurrentPage(1);
 			setTotalItemsCount(0);
 			setSearchMode(1);
@@ -317,11 +259,7 @@ const PurchasesWindow = () => {
 			setValue('startDate', null);
 			setValue('endDate', null);
 	
-			const response = await inventoryController.paginatePurchasesIdSearch(
-				id,
-				0,
-				pageSize,
-			);
+			const response = await inventoryController.paginatePurchasesIdSearch(id);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data) {
@@ -358,6 +296,8 @@ const PurchasesWindow = () => {
 				setCurrentPage(1);
 				setSearchMode(0);
 				setTotalItemsCount(0);
+				setItems([]);
+				setPagedData([]);
 				data.startDate.setHours(0);
 				data.startDate.setMinutes(0);
 				data.startDate.setSeconds(0);
@@ -369,9 +309,9 @@ const PurchasesWindow = () => {
 				setSearchedId(0);
 				setSearchedDate(data);
 	
-				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString(), 0, pageSize);
+				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString());
 				if(response && response.data){
-					setPagedData(buildTableData(response.data.content));
+					setItems(buildTableData(response.data.content));
 					setTotalItemsCount(response.data.page.totalElements);
 				}
 				setNetworkRequest(false);
@@ -383,6 +323,42 @@ const PurchasesWindow = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return onsubmit(data);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const itemDateSearch = async (date) => {
+        try {
+			if (date.startDate && date.endDate) {
+				setNetworkRequest(true);
+				setItems([]);
+				setPagedData([]);
+				setCurrentPage(1);
+				setTotalItemsCount(0);
+				const response = await inventoryController.findItemPurchases(entity.id, date.startDate.toISOString(), date.endDate.toISOString());
+				if(response && response.data && response.data.length > 0){
+					setItems(buildTableData(response.data));
+					setTotalItemsCount(response.data.length);
+				}
+				setNetworkRequest(false);
+			}
+		} catch (error) {
+			setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return itemDateSearch(date);
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -607,12 +583,20 @@ const PurchasesWindow = () => {
 				handleConfirm={idSearch}
 				message={displayMsg}
 			/>
+            <DateDialog
+                showRadio={false}
+                show={showDateModal}
+                handleClose={handleCloseModal}
+                handleConfirm={itemDateSearch}
+                message={"Select date range"}
+            />
 			<DropDownDialog
 				show={showDropDownModal}
 				handleClose={handleDropDownCloseModal}
-				handleConfirm={updateVendor}
+				handleConfirm={dropDownItemSelected}
 				message={dropDownMsg}
-				options={vendorOptions}
+				optionsLoading={networkRequest}
+				options={dropDownOptions}
 			/>
 
 			<Modal show={showFormModal} onHide={handleCloseModal}>
@@ -620,7 +604,7 @@ const PurchasesWindow = () => {
 					<Modal.Title>Edit Item</Modal.Title>
 				</Modal.Header>
 				<Modal.Body>
-					<PurchasesUpdateForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} />
+					<PurchasesUpdateForm fnSave={fnSave} data={entity} networkRequest={networkRequest} />
 				</Modal.Body>
 				<Modal.Footer></Modal.Footer>
 			</Modal>
