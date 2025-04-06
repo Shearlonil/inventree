@@ -26,6 +26,7 @@ const ItemUpdateForm = (props) => {
 			restock_level: 0,
 			unit_sales: 0,
 			pkg_sales_price: 0,
+			barcode: "",
 		},
 	});
 
@@ -34,7 +35,8 @@ const ItemUpdateForm = (props) => {
             setValue("item_name", data.itemName);
             setValue("unit_sales", numeral(data.unitSalesPrice).value());
             setValue("pkg_sales_price", numeral(data.pkgSalesPrice).value());
-            setValue("restock_level",numeral( data.restockLevel).value());
+            setValue("restock_level", numeral( data.restockLevel).value());
+            setValue("barcode", data.barcode);
         }
     }, []);
 
@@ -43,6 +45,7 @@ const ItemUpdateForm = (props) => {
 		props.data.restockLevel = formData.restock_level;
 		props.data.unitSalesPrice = formData.unit_sales;
 		props.data.pkgSalesPrice = formData.pkg_sales_price;
+		props.data.barcode = formData.barcode;
 		await fnSave(props.data);
 	};
 
@@ -117,6 +120,22 @@ const ItemUpdateForm = (props) => {
 								{...register("pkg_sales_price")}
 							/>
 							<ErrorMessage source={errors.pkg_sales_price} />
+						</Col>
+					</Row>
+				</Form.Group>
+
+				<Form.Group className="mb-3" controlId="barcode">
+					<Row>
+						<Col sm={"12"} md="4">
+							<Form.Label>Barcode</Form.Label>
+						</Col>
+						<Col sm={"12"} md="8">
+							<Form.Control
+								type="text"
+								placeholder="Scan Code"
+								{...register("barcode")}
+							/>
+							<ErrorMessage source={errors.barcode} />
 						</Col>
 					</Row>
 				</Form.Group>

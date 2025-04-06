@@ -143,18 +143,7 @@ const SalesWindow = () => {
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
                 response.data.forEach( i => {
-                    const item = new Item();
-                    item.id = i.id;
-                    item.itemName = i.itemName;
-                    item.restockLevel = i.restockLevel;
-                    item.creationDate = i.creationDate;
-                    item.qtyPerPkg = i.qtyPerPkg;
-                    item.qty = i.qty;
-                    item.pkgName = i.pkgName;
-                    item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitPrice;
-                    item.pkgSalesPrice = i.pkgPrice;
-                    arr.push(item);
+                    arr.push(createItem(i));
                 } );
 				setItems(arr);
                 setFilteredItems(arr);
@@ -191,18 +180,7 @@ const SalesWindow = () => {
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
                 response.data.forEach( i => {
-                    const item = new Item();
-                    item.id = i.id;
-                    item.itemName = i.itemName;
-                    item.restockLevel = i.restockLevel;
-                    item.creationDate = i.creationDate;
-                    item.qtyPerPkg = i.qtyPerPkg;
-                    item.qty = i.qty;
-                    item.pkgName = i.pkgName;
-                    item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitPrice;
-                    item.pkgSalesPrice = i.pkgPrice;
-                    arr.push(item);
+                    arr.push(createItem(i));
                 } );
 				setItems(arr);
                 setFilteredItems(arr);
@@ -241,18 +219,7 @@ const SalesWindow = () => {
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
                 response.data.forEach( i => {
-                    const item = new Item();
-                    item.id = i.id;
-                    item.itemName = i.itemName;
-                    item.restockLevel = i.restockLevel;
-                    item.creationDate = i.creationDate;
-                    item.qtyPerPkg = i.qtyPerPkg;
-                    item.qty = i.qty;
-                    item.pkgName = i.pkgName;
-                    item.tractName = i.tractName;
-                    item.unitSalesPrice = i.unitPrice;
-                    item.pkgSalesPrice = i.pkgPrice;
-                    arr.push(item);
+                    arr.push(createItem(i));
                 } );
 				setItems(arr);
                 setFilteredItems(arr);
@@ -619,6 +586,22 @@ const SalesWindow = () => {
 			}
 		}
 	}
+
+    const createItem = (i) => {
+        const item = new Item();
+        item.id = i.id;
+        item.itemName = i.itemName;
+        item.barcode = i.barcode;
+        item.restockLevel = i.restockLevel;
+        item.creationDate = i.creationDate;
+        item.qtyPerPkg = i.qtyPerPkg;
+        item.qty = i.qty;
+        item.pkgName = i.pkgName;
+        item.tractName = i.tractName;
+        item.unitSalesPrice = i.unitPrice;
+        item.pkgSalesPrice = i.pkgPrice;
+        return item;
+    }
     
     const tableProps = {
         //	table header

@@ -22,9 +22,60 @@ import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import transactionsController from "../../Controllers/transactions-controller";
 import printerController from "../../Controllers/printer-controller";
+import { useNumericCodeScanner } from "../../Utils/useNumericCodeScanner";
 
 const MonoTransaction = () => {
+	const onCodeScan = (code) => {
+		//	detect if item already exists in the list
+		const found = itemOptions.find(i => i.value.code === code);
+		if(found){
+			//	is list item > 0 ?. if yes check if item exists in the list to update qty
+			if(transactionItems.length > 0){
+				const listItem = transactionItems.find(i => i.id == found.value.id);
+				if(listItem){
+					increment(listItem, 1);
+					return;
+				}else {
+					createItemFromBarcodeScan(found);
+				}
+			}else {
+				//	not in the list, create new item
+				if(found){
+					createItemFromBarcodeScan(found);
+					return;
+				}else {
+					toast.error(`No item found with code ${code}`);
+				}
+			}
+		}else {
+			toast.error(`No item found with code ${code}`);
+		}
+		
+	}
+
+	const createItemFromBarcodeScan = (found) => {
+		const item = new TransactionItem();
+		item.id = found.value.id;
+		item.name = found.value.itemName;
+		item.unitSalesPrice = found.value.salesPrice.unitSalesPrice;
+		item.pkgSalesPrice = found.value.salesPrice.packSalesPrice;
+		item.qtyType = 'Unit';
+		item.qty = 1;
+		item.discount = 0;
+		//	soldOutPrice is original item price (pack or unit) less discount
+		item.itemSoldOutPrice = found.value.salesPrice.unitSalesPrice;
+		transactionItems.push(item);
+		setTransactionItems(transactionItems);
+		updateTransactionAmount();
+		
+		//	reset fields for next input
+		productSelectionReset();
+		setUnitPrice(0);
+		setPkgPrice(0);
+	}
+
 	const navigate = useNavigate();
+	useNumericCodeScanner(onCodeScan);
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
@@ -75,6 +126,7 @@ const MonoTransaction = () => {
 			cash: 0,
 			transfer: 0,
 			atm: 0,
+			print_receipt: true,
 		},
 	});
 	
@@ -317,7 +369,9 @@ const MonoTransaction = () => {
 			// dtoReceipt.customerName = 'Customer';
 
 			resetPage();
-			await printerController.print(response.data);
+			if(dtoReceipt.printReceipt){
+				await printerController.print(response.data);
+			}
 			setNetworkRequest(false);
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -402,6 +456,7 @@ const MonoTransaction = () => {
 			ledgerDiscount: customerPaymentInfo.customer.value.ledger.discount,
 			dtoInvoice,
 			paymentModes,
+			printReceipt: customerPaymentInfo.print_receipt,
 		}
 	}
 
@@ -774,10 +829,11 @@ const MonoTransaction = () => {
 							<label className="d-flex gap-2" htmlFor="print_receipt">
 								<Form.Check
 									type="checkbox"
-									value="yes"
+									value="print"
 									className="shadow-sm p-0 m-0"
 									id="print_receipt"
 									name="print_receipt"
+									{...customerSelectionRegister("print_receipt")}
 								/>
 								Print Receipt
 							</label>

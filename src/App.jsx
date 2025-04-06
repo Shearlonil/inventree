@@ -45,6 +45,7 @@ import LedgersView from "./Routes/Finance/Legers/LedgersView";
 import TrashedLedgers from "./Routes/Finance/Legers/TrashedLedgers";
 import SalesReport from "./Routes/Dashboard/SalesReport";
 import StockSummary from "./Routes/Inventory/StockSummary";
+import Settings from "./Routes/Settings";
 
 function App() {
 	return (
@@ -52,6 +53,7 @@ function App() {
 			<Routes>
 				<Route index path={"/"} element={<Home />} />
 				<Route index path={"/login"} element={<Login />} />
+				<Route index path={"/settings"} element={<Settings />} />
 				<Route path="/transaction" element={<ProtectedRoute />}>
 					<Route path="cashier" element={<CashierWindow />} />
 					<Route path="section" element={<SectionTransaction />} />

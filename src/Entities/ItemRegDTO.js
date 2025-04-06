@@ -23,6 +23,9 @@ export class ItemRegDTO {
     get itemName() { return _itemProps.get(this).itemName }
     set itemName(name) { _itemProps.get(this).itemName = name }
     
+    get barcode() { return _itemProps.get(this).barcode }
+    set barcode(code) { _itemProps.get(this).barcode = code }
+    
     get qty() { return _itemProps.get(this).qty }
     set qty(qty) { _itemProps.get(this).qty = qty }
     
@@ -115,6 +118,7 @@ export class ItemRegDTO {
             id: this.id,
             itemDetailId: this.itemDetailId,
             itemName: this.itemName,
+            barcode: this.barcode,
             qty: this.qty,
             qtyType: this.qtyType,
             qtyPerPkg: this.qtyPerPkg,

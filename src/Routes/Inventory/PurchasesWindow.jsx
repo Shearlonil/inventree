@@ -79,6 +79,7 @@ const PurchasesWindow = () => {
 	//  data returned from DataPagination
 	const [pagedData, setPagedData] = useState([]);
 	const [vendorOptions, setVendorOptions] = useState([]);
+	const [dropDownOptions, setDropDownOptions] = useState([]);
 
     //	menus for the react-menu in table
     const menuItems = [

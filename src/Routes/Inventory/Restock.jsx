@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
 import { MdAddBusiness } from "react-icons/md";
+import { Modal } from 'react-bootstrap';
 
 import inventoryController from '../../Controllers/inventory-controller';
 import genericController from '../../Controllers/generic-controller';
@@ -15,7 +16,6 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import ReactMenu from '../../Components/ReactMenu';
 import { useAuth } from '../../app-context/auth-user-context';
-import { Modal } from 'react-bootstrap';
 import { ItemRegDTO } from '../../Entities/ItemRegDTO';
 import { Packaging } from '../../Entities/Packaging';
 import { Vendor } from '../../Entities/Vendor';

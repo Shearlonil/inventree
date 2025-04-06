@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import Datetime from "react-datetime";
-import "react-datetime/css/react-datetime.css";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
@@ -48,7 +47,6 @@ const StoreItemRegForm = (props) => {
 	const [unitStockPrice, setUnitStockPrice] = useState(0);
 	const [markup, setMarkup] = useState(0);
 
-
 	const {
 		register,
 		handleSubmit,
@@ -60,6 +58,7 @@ const StoreItemRegForm = (props) => {
 		resolver: yupResolver(storeItemRegSchema),
 		defaultValues: {
 			item_name: null,
+			barcode: null,
 			total_qty: 0,
 			qty_per_pkg: 0,
 			unit_stock: 0,
@@ -106,6 +105,7 @@ const StoreItemRegForm = (props) => {
 			if(data){
 				const pkgType = {value: data.pkg.id, label: data.pkg.name};
 				setValue("item_name", data.itemName);
+				setValue("barcode", data.barcode);
 				setValue("total_qty", data.qty);
 				setValue("qty_per_pkg", data.qtyPerPkg);
 				setValue("unit_stock", numeral(data.unitStockPrice).value());
@@ -161,6 +161,7 @@ const StoreItemRegForm = (props) => {
 
 	const setItem = (item, formData) => {
 		item.itemName = formData.item_name;
+		item.barcode = formData.barcode;
 		item.qty = formData.total_qty;
 		item.expDate = formData.expDate ? format(formData.expDate, "yyyy-MM-dd") : null;
 		item.qtyPerPkg = formData.qty_per_pkg;
@@ -319,6 +320,7 @@ const StoreItemRegForm = (props) => {
 	const reset = () => {
 		resetField('section');
 		resetField('item_name');
+		resetField('barcode');
 		resetField('total_qty');
 		resetField('qty_per_pkg');
 		resetField('unit_stock');
@@ -370,6 +372,24 @@ const StoreItemRegForm = (props) => {
 						</Col>
 					</Row>
 				</Form.Group>
+
+
+				<Form.Group className="mb-3" controlId="barcode">
+					<Row>
+						<Col sm={"12"} md="4">
+							<Form.Label>Barcode</Form.Label>
+						</Col>
+						<Col sm={"12"} md="8">
+							<Form.Control
+								type="text"
+								placeholder="Scan Code"
+								{...register("barcode")}
+							/>
+							<ErrorMessage source={errors.barcode} />
+						</Col>
+					</Row>
+				</Form.Group>
+
 				<Form.Group className="mb-3" controlId="total_qty">
 					<Row>
 						<Col sm={"12"} md="4">
@@ -522,6 +542,7 @@ const StoreItemRegForm = (props) => {
 						<Col sm={"12"} md="8">
 							<Form.Control
 								type="number"
+								disabled
 								placeholder="0"
 								{...register("pkg_stock_price")}
 							/>

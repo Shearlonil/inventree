@@ -3,6 +3,7 @@ import * as yup from "yup";
 const storeItemRegSchema = yup.object().shape({
 	section: yup.object().required("Select a section"),
 	item_name: yup.string().required("Item name required!"),
+	barcode: yup.string(),
 	total_qty: yup
 		.number()
 		.positive("Quantity must be positive")
@@ -79,6 +80,7 @@ const restockSchema = yup.object().shape({
 
 const itemUpdateSchema = yup.object().shape({
 	item_name: yup.string().required("Item name required!"),
+	barcode: yup.string(),
 	restock_level: yup
 		.number()
 		.positive("Restock Level must be positive")

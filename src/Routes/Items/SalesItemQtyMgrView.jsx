@@ -54,6 +54,16 @@ const SalesItemQtyMgrView = () => {
                 if(rowData.outpostName && index === 2){
                     return <EditableCell dataKey={objProps[index]} dataType="number" onChange={handleChange} onEdit={handleEdit} rowData={rowData} {...rest} />
                 }
+                if(!rowData.outpostName && index === 2){
+                    return <EditableCell 
+                                dataKey={objProps[index]} 
+                                dataType="number" 
+                                onChange={handleChange} 
+                                onEdit={handleEdit} 
+                                rowData={rowData} 
+                                {...rest}
+                                style={{ backgroundColor: rowData.faultFlag ? "red" : 'transparent', color: rowData.faultFlag ? 'white' : 'black' }} />
+                }
                 if(!rowData.outpostName && index === 4){
                     return (
                         <EditableCell 

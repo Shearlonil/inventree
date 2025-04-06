@@ -7,6 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
 import numeral from "numeral";
+import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 
 import { restockSchema } from "../../Utils/yup-schema-validator/store-form-schema";
@@ -15,7 +16,6 @@ import { useAuth } from "../../app-context/auth-user-context";
 import genericController from "../../Controllers/generic-controller";
 import handleErrMsg from '../../Utils/error-handler';
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
-import { format } from "date-fns";
 import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
@@ -494,6 +494,7 @@ const RestockForm = (props) => {
 						<Col sm={"12"} md="8">
 							<Form.Control
 								type="number"
+								disabled
 								placeholder="0"
 								{...register("pkg_stock_price")}
 							/>

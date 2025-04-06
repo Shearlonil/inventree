@@ -39,6 +39,7 @@ const CashierWindow = () => {
 			cash: 0,
 			transfer: 0,
 			atm: 0,
+			print_receipt: true,
 		},
 	});
 
@@ -224,8 +225,11 @@ const CashierWindow = () => {
     const commitTransaction = async (dtoReceipt) => {
 		try {
 			setNetworkRequest(true);
-			const receipt = await transactionsController.generateReceipt(dtoReceipt);
+			const response = await transactionsController.generateReceipt(dtoReceipt);
 			resetPage();
+			if(dtoReceipt.printReceipt){
+				await printerController.print(response.data);
+			}
 			setNetworkRequest(false);
 		} catch (error) {
 			//	Incase of 500 (Invalid Token received!), perform refresh
@@ -304,6 +308,7 @@ const CashierWindow = () => {
 			ledgerDiscount: customerPaymentInfo.customer.value.ledger.discount,
 			dtoInvoice,
 			paymentModes,
+			printReceipt: customerPaymentInfo.print_receipt,
 		}
 	}
 
@@ -497,6 +502,7 @@ const CashierWindow = () => {
 									className="shadow-sm p-0 m-0"
 									id="print_receipt"
 									name="print_receipt"
+									{...customerSelectionRegister("print_receipt")}
 								/>
 								Print Receipt
 							</label>

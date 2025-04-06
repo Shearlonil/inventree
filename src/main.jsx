@@ -7,6 +7,7 @@ import 'rsuite/dist/rsuite.min.css';
 import "bootstrap/dist/css/bootstrap.min.css";
 import "react-toastify/dist/ReactToastify.css";
 import "react-loading-skeleton/dist/skeleton.css";
+import "react-datetime/css/react-datetime.css";
 
 import "bootstrap/dist/js/bootstrap.bundle.js";
 import App from "./App.jsx";

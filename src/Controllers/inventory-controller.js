@@ -127,6 +127,10 @@ const deleteDispensary = async (dispensaryId) => {
 }
 
 //  PURCHASES
+const findItemPurchases = async (item_id) => {
+    return await httpService.get(`/api/inventory/purchases/item/${item_id}`);
+}
+
 const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize) => {
     return await httpService.post(`/api/inventory/purchases`, { startDate, endDate }, {
         params: {
@@ -164,6 +168,7 @@ export default {
     deleteDispensedItemDetail,
     deleteDispensary,
     pdfExport,
+    findItemPurchases,
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
     updatePurchasedItem,

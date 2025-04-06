@@ -170,6 +170,7 @@ const StoreItemReg = () => {
 			dtoItem.id = item.id;
 			dtoItem.itemDetailId = item.itemDetailId;
 			dtoItem.itemName = item.itemName;
+			dtoItem.barcode = item.barcode;
 			dtoItem.qty = item.qty;
 			dtoItem.expDate = item.expDate;
 			dtoItem.qtyPerPkg = item.qtyPerPkg;
@@ -403,10 +404,10 @@ const StoreItemReg = () => {
 
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pkg Stock', 'Pkg Sales', 'Dept.', "Total", 
+        headers: ['Item Name', 'Barcode', 'Total Qty', 'Type', 'Qty/Pkg', 'Exp. Date', 'Unit Stock', 'Unit Sales', 'Pkg Stock', 'Pkg Sales', 'Dept.', "Total", 
 			"Vendor", "Cash", "Credit", 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['itemName', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', 
+        objectProps: ['itemName', 'barcode', 'qty', 'qtyType', 'qtyPerPkg', 'expDate', 'unitStockPrice', 'unitSalesPrice', 'pkgStockPrice', 'pkgSalesPrice', 'tractName', 
 			"purchaseAmount", "vendorName", "cashPurchaseAmount", "creditPurchaseAmount"],
 		//	React Menu
 		menus: {
@@ -424,7 +425,7 @@ const StoreItemReg = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Store Item Registration</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Item Registration</span>
 						<FaStoreAlt className="text-white" size={"30px"} />
 					</h2>
 				</div>

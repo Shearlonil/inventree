@@ -59,6 +59,7 @@ const customer_selection_schema = yup.object().shape({
 		.nullable()
 		.min(0, 'POS/ATM amount cannot be less than 0')
 		.required("POS/ATM amount must be at least 0"),
+	print_receipt: yup.boolean(),
 });
 
 export { cashier_invoice_search_schema, product_selection_schema, customer_selection_schema, invoice_disc_schema };

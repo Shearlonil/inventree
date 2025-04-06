@@ -10,6 +10,7 @@ export class Item {
             _itemProps.set(this, {
                 id: jsonObject.id,
                 itemName: jsonObject.itemName,
+                barcode: jsonObject.barcode,
                 qty: jsonObject.qty,
                 qtyType: jsonObject.qtyType, // for table display in store related activities
                 restockLevel: jsonObject.restockLevel, //   setting low qty for either unit sales or store
@@ -34,6 +35,9 @@ export class Item {
     
     get itemName() { return _itemProps.get(this).itemName }
     set itemName(name) { _itemProps.get(this).itemName = name }
+    
+    get barcode() { return _itemProps.get(this).barcode }
+    set barcode(code) { _itemProps.get(this).barcode = code }
     
     get qty() { return _itemProps.get(this).qty }
     set qty(qty) { _itemProps.get(this).qty = qty }
@@ -84,6 +88,7 @@ export class Item {
         return {
             id: this.id,
             itemName: this.itemName,
+            barcode: this.barcode,
             qty: this.qty,
             qtyType: this.qtyType,
             restockLevel: this.restockLevel,

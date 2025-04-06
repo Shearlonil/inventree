@@ -19,7 +19,7 @@ import Cookies from "js-cookie";
 */
 
 axios.defaults.baseURL = "http://localhost:8082";
-// axios.defaults.baseURL = "http://192.168.0.110:8082";
+// axios.defaults.baseURL = "http://192.168.0.101:8082";
 // axios.defaults.baseURL = "http://192.168.88.59:8082";
 
 // ref: https://stackoverflow.com/questions/43002444/make-axios-send-cookies-in-its-requests-automatically
@@ -45,14 +45,15 @@ axios.interceptors.request.use((config) => {
     //  const token = Cookies.get("authorization");
     const token = localStorage.getItem("authorization");
     config.headers.authorization = token ? `Bearer ${token}` : "";
-    config.headers['X-TENANT-ID'] = 'hv';
+    config.headers['X-TENANT-ID'] = 'inventree';
     return config;
 });
 
 /*  configure axios with different baseUrl.
     ref:    https://stackoverflow.com/questions/47477594/how-to-use-2-instances-of-axios-with-different-baseurl-in-the-same-app-vue-js*/
 const printerAxios = axios.create({
-    baseURL: 'http://192.168.0.112:8084'
+    baseURL: 'http://localhost:8084'
+    // baseURL: 'http://192.168.0.102:8084'
 });
 
 
