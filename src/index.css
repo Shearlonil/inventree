@@ -4,6 +4,7 @@
   margin: 0;
   padding: 0;
 }
+
 p{
   margin: 0 !important;
 }
@@ -22,7 +23,7 @@ h6 {
 
 }
 
-p,button{
+p,button, td, label{
   font-family: "Work Sans", sans-serif !important;
   /* font-optical-sizing: auto; */
   /* font-weight: <weight>; */
@@ -76,10 +77,13 @@ span{
   font-style: normal;
 }
 
-
 .rubik-doodle-shadow-regular {
   font-family: "Rubik Doodle Shadow", system-ui !important;
   font-weight: 400;
   font-style: normal;
 }
 
+.disabledDiv {
+  pointer-events: none;
+  opacity: 0.4;
+}

@@ -1,42 +1,44 @@
 import React from "react";
-import SVG from "../Assets/Svg";
+import SVG from "../assets/Svg";
 import { HomeWrapper } from "../Components/Styles/HomeStyles";
 
 import { IoIosRefresh } from "react-icons/io";
-import { LuUserSquare } from "react-icons/lu";
 import { TbUsersGroup } from "react-icons/tb";
-import { AiFillCustomerService, AiFillProduct } from "react-icons/ai";
+import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
-import { TiVendorAndroid } from "react-icons/ti";
 import { MdSell } from "react-icons/md";
+import Sliced from "../Components/SlicedEffect/Sliced";
 
 const Home = () => {
-	const { svg_1, svg_2, svg_3_red, svg_3_yellow, svg_4 } = SVG;
+	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
 
 	return (
 		<HomeWrapper>
-			<div className="container-md my-4 p-4 bg-secondary-subtle rounded">
-				<h2 className="space-mono-regular mb-2 px-1 bg-info d-inline-block rounded">
-					Inventree
-				</h2>
-				<div className="row">
-					<div className="col-12 col-md-6 my-auto">
-						<h1
-							className="space-mono-bold fw-bold display-5 mb-3"
-							style={{ textTransform: "capitalize" }}
-						>
-							Simple Smart Store App + Accounting Software for small businesses
-						</h1>
-						<div>
-							<button className="btn btn-lg btn-warning">Get Started</button>
+			<div className="container-fluid bg-secondary-subtle">
+				<div className="container-md mb-4 p-4 rounded">
+					<h2 className="space-mono-regular mb-2 px-1 d-inline-block rounded display-4">
+						<Sliced>Inventree</Sliced>
+					</h2>
+					<div className="row">
+						<div className="col-12 col-md-6 my-auto">
+							<h1
+								className="space-mono-bold fw-bold display-6 mb-3"
+								style={{ textTransform: "capitalize" }}
+							>
+								Simple Smart Store App + Accounting Software for small
+								businesses
+							</h1>
+							<div>
+								<button className="btn btn-lg btn-warning">Get Started</button>
+							</div>
 						</div>
-					</div>
-					<div className="col-12 col-md-6 text-center">
-						<img
-							src={svg_1}
-							style={{ width: "80vh", maxWidth: "100%", minHeight: "400px" }}
-							alt=""
-						/>
+						<div className="col-12 col-md-6 text-center">
+							<img
+								src={svg_1}
+								style={{ width: "80vh", maxWidth: "100%", minHeight: "400px" }}
+								alt=""
+							/>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -69,7 +71,7 @@ const Home = () => {
 								</div>
 							</div>
 							<a className="text-decoration-none" href="">
-								<p>Invoices with receipts</p>
+								<p>Invoices without receipts</p>
 							</a>
 						</div>
 					</div>

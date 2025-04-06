@@ -1,0 +1,33 @@
+.table-container {
+  margin-bottom: 2rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.table-container table {
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.detached-section {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detached-section h3 {
+  margin-bottom: 1.5rem;
+}
+
+.detached-section .shadow-sm {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-mode-cards .col-6 {
+  margin-bottom: 1rem;
+}
