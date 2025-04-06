@@ -342,7 +342,8 @@ const Restock = () => {
 					navigate("/inventory/item/reg/0");
 					break;
 				case "exportToPDF":
-					await inventoryController.exportToPDF(stockRecId);
+					//	TODO
+					//	await inventoryController.exportToPDF(stockRecId);
 					break;
 			}
 			setNetworkRequest(false);

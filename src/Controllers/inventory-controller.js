@@ -69,14 +69,6 @@ const deleteStockRecItem = async (itemDetailId) => {
     });
 }
 
-const pdfExport = async (stockRecId) => {
-    return await httpService.get(`/api/inventory/stock-record/pdf`, {
-        params: {
-            stockRecId,
-        }
-    });
-}
-
 //  DISPENSARY
 const findUnverifiedDispensaryById = async (dispensaryId) => {
     return await httpService.get(`/api/inventory/id/dispensary`, {
@@ -126,7 +118,14 @@ const deleteDispensary = async (dispensaryId) => {
     });
 }
 
-//  PURCHASES
+//  PURCHASES 
+const changePurchasesVendor = async (dtoItem) => {
+    return await httpService.post(`/api/inventory/purchases/vendor/update`, dtoItem);
+}
+const deletePurchasedItem = async (dtoItem) => {
+    return await httpService.post(`/api/inventory/purchases/item/delete`, dtoItem);
+}
+
 const findItemPurchases = async (item_id, startDate, endDate) => {
     return await httpService.post(`/api/inventory/purchases/item/${item_id}`, { startDate, endDate });
 }
@@ -167,7 +166,8 @@ export default {
     updateDispensedItem,
     deleteDispensedItemDetail,
     deleteDispensary,
-    pdfExport,
+    changePurchasesVendor,
+    deletePurchasedItem,
     findItemPurchases,
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,

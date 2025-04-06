@@ -1,33 +1,11 @@
 const clientDetails = { 
-	storeName: "Mr. Farouk", 
+	storeName: "P&P Mini Mart", 
 	address: "Mr. Farouk",
 	phone: "",
 	invoiceWarning: 'GOODS SOLD IN GOOD CONDITION ARE NOT RETURNABLE',
 	poweredBy: 'Genius Computer Technologies',
 	gctContact: '08034262759'
 }
-
-const selectOption = [
-	{ value: "Mr. Farouk", label: "Mr. Farouk" },
-	{ value: "mrs", label: "Mrs" },
-	{ value: "miss", label: "Miss" },
-	{ value: "ms", label: "Ms" },
-	{ value: "others", label: "Others" },
-];
-
-const customerName = [
-	{ value: "olumide", label: "Olumide" },
-	{ value: "olumide", label: "Olumide" },
-	{ value: "olumide", label: "Olumide" },
-	{ value: "olumide", label: "Olumide" },
-	{ value: "olumide", label: "Olumide" },
-];
-
-const sectionOption = [
-	{ value: "pharmarcy", label: "Pharmarcy" },
-	{ value: "hotel", label: "Hotel" },
-	{ value: "superMarket", label: "SuperMarket" },
-];
 
 //	menus for the ellipse menu-button
 const reactMenuItems = [
@@ -68,8 +46,4 @@ const tableData = [
 
 export {
 	clientDetails,
-	selectOption,
-	customerName,
-	sectionOption,
-	reactMenuItems,
 };

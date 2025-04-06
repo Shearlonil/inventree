@@ -8,6 +8,7 @@ import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdSell } from "react-icons/md";
 import Sliced from "../Components/SlicedEffect/Sliced";
+import { clientDetails } from "../../data";
 
 const Home = () => {
 	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
@@ -47,15 +48,15 @@ const Home = () => {
 				<div className="row">
 					<div className="col-12 col-md-8 p-2" id="child-1">
 						<div className="p-3 h-100 py-auto bg-primary rounded d-flex flex-column justify-content-around">
-							<h3 className="fw-bold">Client Store Name</h3>
-							<p>
+							<button className="btn btn-outline-light fw-bold">
+								<h1 className="fw-bold"> {clientDetails.storeName} </h1>
+							</button>
+							<p className="text-white">
 								<span className="fw-bold">App Mode:</span> Single/Multi Tier
 							</p>
-							<div>
-								<button className="btn btn-outline-light fw-bold">
-									Get Started
-								</button>
-							</div>
+							<p className="text-white">
+								<span className="fw-bold">Address:</span> {clientDetails.address}
+							</p>
 						</div>
 					</div>
 

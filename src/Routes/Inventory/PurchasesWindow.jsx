@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import "react-datetime/css/react-datetime.css";
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { Controller, useForm } from "react-hook-form";
 import Datetime from 'react-datetime';
 import { toast } from "react-toastify";
+import { format } from 'date-fns';
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import ReactMenu from "../../Components/ReactMenu";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
@@ -53,12 +57,7 @@ const PurchasesWindow = () => {
   
 	const [networkRequest, setNetworkRequest] = useState(false);
 	const [entity, setEntity] = useState(null);
-	//	indicate where id search or date search, 0 => date search	|	1 => id search
-	const [searchMode, setSearchMode] = useState(null);
-	//	incase of id search, store in this state
-	const [searchedId, setSearchedId] = useState(0);
-	//	incase of date search, store in this state
-	const [searchedDate, setSearchedDate] = useState(null);
+	const [selectedDropDownEntity, setSelectedDropDownEntity] = useState(null);
 	const [items, setItems] = useState([]);
 	//	for confirmation dialog
 	const [displayMsg, setDisplayMsg] = useState("");
@@ -72,6 +71,9 @@ const PurchasesWindow = () => {
 	//	for vendor drop down dialog
 	const [dropDownMsg, setDropDownMsg] = useState("");
 	const [showDropDownModal, setShowDropDownModal] = useState(false);
+
+	const [reportTitle, setReportTitle] = useState("Purchases");
+	const [filename, setFilename] = useState("");
 	
 	//	for pagination
 	const [pageSize] = useState(10);
@@ -80,6 +82,7 @@ const PurchasesWindow = () => {
 	  
 	//  data returned from DataPagination
 	const [pagedData, setPagedData] = useState([]);
+
 	const [itemOptions, setItemOptions] = useState([]);
 	const [vendorOptions, setVendorOptions] = useState([]);
 	const [dropDownOptions, setDropDownOptions] = useState([]);
@@ -120,7 +123,7 @@ const PurchasesWindow = () => {
             }
 
 			if(vendorsRequest){
-				setVendorOptions(vendorsRequest.map( vendor => ({label: vendor.name, value: vendor})));
+				setVendorOptions(vendorsRequest.data.map( vendor => ({label: vendor.name, value: vendor})));
 			}
 
 		} catch (error) {
@@ -175,6 +178,7 @@ const PurchasesWindow = () => {
 				setShowConfirmModal(true);
                 break;
             case 'updateVendor':
+				setEntity(entity);
 				setConfirmDialogEvtName('updateVendor');
 				setDropDownOptions(vendorOptions)
 				setDropDownMsg("Please select Vendor")
@@ -194,8 +198,14 @@ const PurchasesWindow = () => {
 				setShowInputModal(true);
                 break;
             case 'exportToPDF':
+				if(items.length > 0){
+					pdfExport();
+				}
                 break;
             case 'xlsxExport':
+				if(items.length > 0){
+					xlsxExport();
+				}
                 break;
             case 'searchByItem':
 				setConfirmDialogEvtName('searchByItem');
@@ -209,15 +219,13 @@ const PurchasesWindow = () => {
 	const dropDownItemSelected = async (dropDownItem) => {
 		switch (confirmDialogEvtName) {
             case 'searchByItem':
-				setEntity(dropDownItem);
+				setSelectedDropDownEntity(dropDownItem);
 				setShowDateModal(true);
                 break;
             case 'updateVendor':
-				//	TODO: Update vendor
-				setEntity(dropDownItem);
+				setSelectedDropDownEntity(dropDownItem);
 				//	ask to update vendor
-				setDisplayMsg(`Update vendor to ${dropDownItem.name}?`);
-				console.log('editing vendor.....');
+				setDisplayMsg(`Update ${entity.itemName}, change vendor to ${dropDownItem.name}?`);
 				setShowConfirmModal(true);
                 break;
         }
@@ -227,12 +235,10 @@ const PurchasesWindow = () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'deleteItem':
-				//	TODO: delte item
-				console.log('deleting.....');
+				deletePurchasedItem();
                 break;
             case 'updateVendor':
-				//	TODO: Update vendor
-				console.log('editing vendor.....');
+				changePurchasesVendor();
                 break;
         }
 	}
@@ -252,10 +258,10 @@ const PurchasesWindow = () => {
 			setItems([]);
 			setCurrentPage(1);
 			setTotalItemsCount(0);
-			setSearchMode(1);
 
-			setSearchedId(id);
-			setSearchedDate(null);
+			setReportTitle(`Purchases Report with ID: ${id}`);
+			setFilename(`Purchases Report with ID: ${id}`);
+
 			setValue('startDate', null);
 			setValue('endDate', null);
 	
@@ -294,7 +300,6 @@ const PurchasesWindow = () => {
 			if (data.startDate && data.endDate) {
 				setNetworkRequest(true);
 				setCurrentPage(1);
-				setSearchMode(0);
 				setTotalItemsCount(0);
 				setItems([]);
 				setPagedData([]);
@@ -306,9 +311,9 @@ const PurchasesWindow = () => {
 				data.endDate.setMinutes(59);
 				data.endDate.setSeconds(59);
 
-				setSearchedId(0);
-				setSearchedDate(data);
-	
+				setReportTitle(`Purchases Report from ${format(data.startDate, "dd/MM/yyyy")} to ${format(data.endDate, "dd/MM/yyyy")}`);
+				setFilename(`Purchases Report from ${format(data.startDate, "dd/MM/yyyy")} to ${format(data.endDate, "dd/MM/yyyy")}`);
+
 				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString());
 				if(response && response.data){
 					setItems(buildTableData(response.data.content));
@@ -345,7 +350,11 @@ const PurchasesWindow = () => {
 				setPagedData([]);
 				setCurrentPage(1);
 				setTotalItemsCount(0);
-				const response = await inventoryController.findItemPurchases(entity.id, date.startDate.toISOString(), date.endDate.toISOString());
+
+				setReportTitle(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
+				setFilename(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
+
+				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, date.startDate.toISOString(), date.endDate.toISOString());
 				if(response && response.data && response.data.length > 0){
 					setItems(buildTableData(response.data));
 					setTotalItemsCount(response.data.length);
@@ -407,6 +416,188 @@ const PurchasesWindow = () => {
 			}
 		}
 	}
+	
+	const changePurchasesVendor = async () => {
+		try {
+			setNetworkRequest(true);
+			const vendor = new Vendor();
+			vendor.id = selectedDropDownEntity.id;
+			vendor.name = selectedDropDownEntity.name;
+
+			const temp = {...entity};
+			temp.vendor = vendor;
+
+			await inventoryController.changePurchasesVendor(entity);
+			entity.vendor = vendor;
+			//	find index position of edited item in items arr
+			const indexPos = pagedData.findIndex(i => i.id === temp.id);
+			if(indexPos > -1){
+				//	replace old item found at index position in items array with edited one
+				pagedData.splice(indexPos, 1, temp);
+				setPagedData([...pagedData]);
+				toast.success('Update successful');
+			}
+
+			setSelectedDropDownEntity(null);
+			setEntity(null);
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return changePurchasesVendor();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const deletePurchasedItem = async () => {
+		try {
+			setNetworkRequest(true);
+			await inventoryController.deletePurchasedItem(entity);
+			//	find index position of edited item in items arr
+			const indexPos = pagedData.findIndex(i => i.id === entity.id);
+			if(indexPos > -1){
+				//	cut out deleted item found at index position
+				items.splice(indexPos, 1);
+				setItems([...items]);
+				/*  MAINTAIN CURRENT PAGE.	*/
+				setCurrentPage(Math.ceil((totalItemsCount - 1) / pageSize));
+				setTotalItemsCount(totalItemsCount - 1);
+				toast.success('Delete successful');
+			}
+
+			setSelectedDropDownEntity(null);
+			setEntity(null);
+			setNetworkRequest(false);
+		} catch (error) {
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return deletePurchasedItem();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+				setNetworkRequest(false);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const pdfExport = () => {
+		const unit = "pt";
+		const size = "A4"; // Use A1, A2, A3 or A4
+		const orientation = "landscape"; // portrait or landscape
+		const fileExtension = ".pdf";
+
+		const marginLeft = 40;
+		const doc = new jsPDF(orientation, unit, size);
+
+		doc.setFontSize(20);
+
+		const title = reportTitle;
+
+		doc.text(title, marginLeft, 40);
+
+		doc.autoTable({
+			styles: { theme: 'striped' },
+			margin: { top: 60 },
+			body: items,
+			columns: [
+				// { header: 'Receipt No.', dataKey: 'receipt_id' },
+				{ header: 'Description', dataKey: 'itemName' },
+				{ header: 'Qty', dataKey: 'qty' },
+				{ header: 'Type', dataKey: 'qtyType' },
+				{ header: 'Qty/Pkg', dataKey: 'qtyPerPkg' },
+				{ header: 'Unit Stock', dataKey: 'unitStockPrice' },
+				{ header: 'Pkg Stock', dataKey: 'pkgStockPrice' },
+				{ header: 'Date', dataKey: 'creationDate' },
+				{ header: 'Amount', dataKey: 'purchaseAmount' },
+				{ header: 'Dept.', dataKey: 'tractName' },
+				{ header: 'Vendor', dataKey: 'vendorName' },
+				{ header: 'Cash', dataKey: 'cashPurchaseAmount' },
+				{ header: 'Credit', dataKey: 'creditPurchaseAmount' },
+				{ header: 'Purchase No.', dataKey: 'id' },
+			],
+		});
+		doc.save(`${filename}` + fileExtension);
+	}
+	
+	const xlsxExport = () => {
+		//  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+		const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+		const fileExtension = ".xlsx";
+
+		const Heading = [ {itemName: "Description", qty: "Total Qty", qtyType: "Type", qtyPerPkg: "Qty/Pkg", unitStockPrice: "Unit Stock", pkgStockPrice: "Pkg Stock", 
+			creationDate: "Date", purchaseAmount: "Amount", tractName: "Dept.", vendorName: "Vendor", cashPurchaseAmount: "Cash", creditPurchaseAmount: "Credit", id: "Purchase No." } ];
+		
+		const temp = [];
+		items.forEach(t => {
+			const a = {...t.toJSON()};
+			delete a.itemDetailId;
+			delete a.barcode;
+			delete a.pkgId;
+            delete a.vendorId;
+            delete a.tractId;
+			delete a.status;
+			delete a.expDate;
+			delete a.pkgSalesPrice;
+			delete a.unitSalesPrice;
+			temp.push(a);
+		});
+		console.log(temp, 'temp');
+		const wscols = [
+			{ wch: Math.max(...items.map(datum => datum.itemName.length)) },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+			{ wch: 15 },
+		];
+		const ws = XLSX.utils.json_to_sheet(Heading, {
+			header: ["itemName", "qty", "qtyType", "qtyPerPkg", "unitStockPrice", "pkgStockPrice", "creationDate", "purchaseAmount", "tractName", "vendorName", 
+				"cashPurchaseAmount", "creditPurchaseAmount", "id"],
+			skipHeader: true,
+			origin: 0 //ok
+		});
+		ws["!cols"] = wscols;
+		XLSX.utils.sheet_add_json(ws, temp, {
+			header: ["itemName", "qty", "qtyType", "qtyPerPkg", "unitStockPrice", "pkgStockPrice", "creationDate", "purchaseAmount", "tractName", "vendorName", 
+				"cashPurchaseAmount", "creditPurchaseAmount", "id"],
+			skipHeader: true,
+			origin: -1 //ok
+		});
+		const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+		const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+		const finalData = new Blob([excelBuffer], { type: fileType });
+		FileSaver.saveAs(finalData, `${filename}` + fileExtension);
+	};
 		
 	//	setup table data from fetched stock record
 	const buildTableData = (arr = []) => {
@@ -555,7 +746,7 @@ const PurchasesWindow = () => {
 						</Col>
 					</Row>
 				</div>
-				<div className="row mt-2">
+				<div className={`row mt-2 ${networkRequest ? 'disabledDiv' : ''}`}>
 					{/* Main Content */}
 					<TableMain tableProps={tableProps} tableData={pagedData} />
 					{/* PaginationLite is engulfed in a span tag because of the padding applied to the span tags to keep the PaginationLite component farther
