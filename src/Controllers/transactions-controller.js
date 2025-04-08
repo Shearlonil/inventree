@@ -71,6 +71,22 @@ const findInvoiceForReceipt = async (invoiceId) => {
     });
 };
 
+const itemSalesReceiptsByDate = async (startDate, endDate, item_id) => {
+    return await httpService.post(`/api/transactions/receipts/item/get-within`, { startDate, endDate }, {
+        params: {
+            item_id
+        }
+    });
+};
+
+const customerSalesReceiptsByDate = async (startDate, endDate, item_id) => {
+    return await httpService.post(`/api/transactions/receipts/customer/get-within`, { startDate, endDate }, {
+        params: {
+            item_id
+        }
+    });
+};
+
 const searchPurchaseReceiptsByDate = async (startDate, endDate, reversalStatus) => {
     return await httpService.post(`/api/transactions/receipts/get-within`, { startDate, endDate }, {
         params: {
@@ -131,6 +147,8 @@ export default {
     fetchTractItems,
     findInvoiceForReceipt,
     searchPurchaseReceiptsByDate,
+    itemSalesReceiptsByDate,
+    customerSalesReceiptsByDate,
     pdfPurchaseReceiptsByDateForExport,
     pdfPurchaseReceiptsByNoForExport,
     findPurchaseReceiptByNo,

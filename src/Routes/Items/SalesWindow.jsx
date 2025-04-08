@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Modal } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
@@ -20,6 +24,7 @@ import genericController from '../../Controllers/generic-controller';
 import ItemUpdateForm from '../../Components/Item/ItemUpdateForm';
 
 const SalesWindow = () => {
+    applyPlugin(jsPDF);
     const navigate = useNavigate();
     const { salesMode } = useParams();
             
@@ -64,6 +69,9 @@ const SalesWindow = () => {
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
     const [filteredItems, setFilteredItems] = useState([]);
+        
+    const [reportTitle, setReportTitle] = useState("Store Items");
+    const [filename, setFilename] = useState("");
 
     const itemsOffCanvasMenu = [
         { label: "Available Stock", onClickParams: {evtName: 'availableStock'} },
@@ -72,8 +80,9 @@ const SalesWindow = () => {
         { label: "Filter By Section", onClickParams: {evtName: 'filterBySection'} },
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
-        // { label: "Sales Price Markup", onClickParams: {evtName: 'salesPriceMarkup'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
+        { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
+        { label: "Export to Excel", onClickParams: {evtName: 'xlsxExport'} },
     ];
             
     useEffect( () => {
@@ -140,6 +149,9 @@ const SalesWindow = () => {
             const response = await itemController.fetchInStockSalesItems();
             setMode('Available Stock');
 
+			setReportTitle(`Available Stock (Sales)`);
+			setFilename(`sales_available_stock`);
+
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
                 response.data.forEach( i => {
@@ -176,6 +188,9 @@ const SalesWindow = () => {
             setNetworkRequest(true);
             const response = await itemController.fetchLowStockSalesItems();
             setMode('Low Stock');
+
+			setReportTitle(`Low Stock (Sales)`);
+			setFilename(`sales_low_stock`);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -215,6 +230,9 @@ const SalesWindow = () => {
             setNetworkRequest(true);
             const response = await itemController.fetchOutOfStockSalesItems();
             setMode('Out Of Stock');
+
+			setReportTitle(`Out Of Stock (Sales)`);
+			setFilename(`sales_out_of_stock`);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -358,9 +376,11 @@ const SalesWindow = () => {
                 setDropDownMsg("Select Section");
                 setShowDropDownModal(true);
                 break;
-            case 'salesPriceMarkup':
+            case 'pdfExport':
+                pdfExport();
                 break;
-            case 'trash':
+            case 'xlsxExport':
+                xlsxExport();
                 break;
         }
 	};
@@ -586,6 +606,93 @@ const SalesWindow = () => {
 			}
 		}
 	}
+            
+    const pdfExport = () => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "landscape"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(20);
+
+        const title = reportTitle;
+
+        doc.text(title, marginLeft, 40);
+
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 60 },
+            body: filteredItems,
+            columns: [
+                // { header: 'Receipt No.', dataKey: 'receipt_id' },
+                { header: 'Description', dataKey: 'itemName' },
+                { header: 'Restock Level', dataKey: 'restockLevel' },
+                { header: 'Date', dataKey: 'creationDate' },
+                { header: 'Qty/Pkg', dataKey: 'qtyPerPkg' },
+                { header: 'Qty', dataKey: 'qty' },
+                { header: 'Pkg Qty', dataKey: 'pkgQty' },
+                { header: 'Packaging', dataKey: 'pkgName' },
+                { header: 'Section.', dataKey: 'tractName' },
+                { header: 'Unit Sales', dataKey: 'unitSalesPrice' },
+                { header: 'Pkg Sales', dataKey: 'pkgSalesPrice' },
+            ],
+        });
+        doc.save(`${filename}` + fileExtension);
+    }
+    
+    const xlsxExport = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+
+        const Heading = [ {itemName: "Description", restockLevel: "Restock Level", creationDate: "Reg. Date", qtyPerPkg: "Qty/Pkg", qty: "Unit Qty", pkgQty: "Pkg Qty", 
+            pkgName: "Packaging", tractName: "Section", unitSalesPrice: 'Unit Sales', pkgSalesPrice: 'Pkg Sales' } ];
+        
+        const temp = [];
+        filteredItems.forEach(t => {
+            const a = {...t.toJSON()};
+            delete a.id;
+            delete a.barcode;
+            delete a.qtyType;
+            delete a.storeQty;
+            delete a.pkgStockPrice;
+            delete a.unitStockPrice;
+            delete a.status;
+            delete a.expDate;
+            temp.push(a);
+        });
+        console.log('temp data', temp);
+        const wscols = [
+            { wch: Math.max(...temp.map(datum => datum.itemName.length)) },
+            { wch: 15 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'pkgSalesPrice'],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ['itemName', 'restockLevel', 'creationDate', 'qtyPerPkg', 'qty', 'pkgQty', 'pkgName', 'tractName', 'unitSalesPrice', 'pkgSalesPrice'],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${filename}` + fileExtension);
+    };
 
     const createItem = (i) => {
         const item = new Item();

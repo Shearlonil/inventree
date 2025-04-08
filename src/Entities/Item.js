@@ -101,6 +101,10 @@ export class Item {
             unitSalesPrice: this.unitSalesPrice,
             pkgStockPrice: this.pkgStockPrice,
             unitStockPrice: this.unitStockPrice,
+            //  adding these because of document (pdf and xlsx) export
+            tractName: this.tractName,
+            pkgName: this.pkgName,
+            pkgQty: this.pkgQty,
         }
     }
 }

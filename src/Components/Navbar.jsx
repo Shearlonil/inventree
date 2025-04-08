@@ -126,6 +126,18 @@ function NavBar() {
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
+											navigate("/items/sales-record");
+										}}
+										className={`nav-item ${
+											location.pathname.startsWith("/items/sales-record") &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										Sales Record
+									</NavDropdown.Item>
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
 											navigate("/items/trash");
 										}}
 										className={`nav-item ${

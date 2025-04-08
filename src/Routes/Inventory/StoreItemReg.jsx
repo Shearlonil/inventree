@@ -65,7 +65,7 @@ const StoreItemReg = () => {
 		{ label: "Save To Store", onClickParams: {evtName: 'saveRecToStore'} },
 		{ label: "Delete Record", onClickParams: {evtName: 'deleteStockRec'} },
 		// { label: "Search", onClickParams: {evtName: 'search'} },
-		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+		// { label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
 	
 	useEffect( () => {

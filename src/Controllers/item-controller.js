@@ -9,6 +9,10 @@ const findById = async (id) => {
     });
 }
 
+const findItemsForMonoTransaction = async (id) => {
+    return await httpService.get(`/api/items/transactions/mono`);
+}
+
 //  fetch in stock items for sales/shelf view
 const fetchInStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales`);
@@ -100,6 +104,7 @@ const changePkg = async (id, pkgId) => {
 
 export default {
     findById,
+    findItemsForMonoTransaction,
     fetchInStockSalesItems,
     fetchInStockStoreItems,
     fetchInStockGrossItems,

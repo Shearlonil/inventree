@@ -46,6 +46,7 @@ import TrashedLedgers from "./Routes/Finance/Legers/TrashedLedgers";
 import SalesReport from "./Routes/Dashboard/SalesReport";
 import StockSummary from "./Routes/Inventory/StockSummary";
 import Settings from "./Routes/Settings";
+import ItemSalesReceiptWindow from "./Routes/Items/ItemSalesReceiptWindow";
 
 function App() {
 	return (
@@ -103,6 +104,7 @@ function App() {
 						<Route path={""} element={<GrossWindow />} />
 					</Route>
 					<Route path={"trash"} element={<Trash />} />
+					<Route path={"sales-record"} element={<ItemSalesReceiptWindow />} />
 				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>
 					<Route path={"trash"} element={<OutpostTrash />} />

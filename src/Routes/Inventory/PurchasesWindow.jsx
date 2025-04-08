@@ -32,6 +32,7 @@ import genericController from "../../Controllers/generic-controller";
 import DateDialog from '../../Components/DialogBoxes/DateDialog';
 
 const PurchasesWindow = () => {
+	applyPlugin(jsPDF);
 	const navigate = useNavigate();
 		
 	const { handleRefresh, logout, authUser } = useAuth();
@@ -564,7 +565,6 @@ const PurchasesWindow = () => {
 			delete a.unitSalesPrice;
 			temp.push(a);
 		});
-		console.log(temp, 'temp');
 		const wscols = [
 			{ wch: Math.max(...items.map(datum => datum.itemName.length)) },
 			{ wch: 15 },
