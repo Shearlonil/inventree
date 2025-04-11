@@ -93,7 +93,7 @@ function NavBar() {
 											navigate("/items/store");
 										}}
 										className={`nav-item ${
-											location.pathname.startsWith("/items/store") &&
+											location.pathname === ("/items/store") &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
@@ -105,7 +105,7 @@ function NavBar() {
 											navigate("/items/sales");
 										}}
 										className={`nav-item ${
-											location.pathname.startsWith("/items/sales") &&
+											location.pathname === ("/items/sales") &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
@@ -117,7 +117,7 @@ function NavBar() {
 											navigate("/items/gross");
 										}}
 										className={`nav-item ${
-											location.pathname.startsWith("/items/gross") &&
+											location.pathname === ("/items/gross") &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
@@ -129,7 +129,7 @@ function NavBar() {
 											navigate("/items/sales-record");
 										}}
 										className={`nav-item ${
-											location.pathname.startsWith("/items/sales-record") &&
+											location.pathname === ("/items/sales-record") &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
@@ -141,7 +141,7 @@ function NavBar() {
 											navigate("/items/trash");
 										}}
 										className={`nav-item ${
-											location.pathname.startsWith("/items/trash") &&
+											location.pathname === ("/items/trash") &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
