@@ -161,7 +161,7 @@ const CustomersWindow = () => {
 				setShowFormModal(true);
                 break;
             case 'ledger':
-                window.open('/contacts/customer/ledger', '_blank')?.focus();
+                window.open(`/finance/ledgers/${entity.ledger.id}/view`, '_blank')?.focus();
                 break;
         }
     };

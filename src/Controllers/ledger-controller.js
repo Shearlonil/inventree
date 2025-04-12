@@ -58,6 +58,15 @@ const setDiscount = async (id, val) => {
     });
 };
 
+const setAllowCreditSales = async (id, val) => {
+    return await httpService.put(`/api/ledgers/allow-credit-sales`, null, {
+        params: {
+            val,
+            id
+        }
+    });
+};
+
 const findAll = async () => {
     return await httpService.get(`/api/ledgers/all`);
 };
@@ -80,5 +89,6 @@ export default {
     restoreLedger,
     rename,
     setDiscount,
+    setAllowCreditSales,
     ledgerTransactions,
 }

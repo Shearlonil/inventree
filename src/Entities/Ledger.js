@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import numeral from "numeral";
 
 const _ledgerProps = new WeakMap();
 
@@ -23,8 +24,8 @@ export class Ledger {
     get creator() { return _ledgerProps.get(this).creator; }
     set creator(creator) { _ledgerProps.get(this).creator = creator }
 
-    get ledgerBalance() { return _ledgerProps.get(this).ledgerBalance }
-    set ledgerBalance(name) { _ledgerProps.get(this).ledgerBalance = name }
+    get ledgerBalance() { return numeral(_ledgerProps.get(this).ledgerBalance).format('₦0,0.00') }
+    set ledgerBalance(balance) { _ledgerProps.get(this).ledgerBalance = balance }
 
     get discount() { return _ledgerProps.get(this).discount ? _ledgerProps.get(this).discount : 0; }
     set discount(discount) { _ledgerProps.get(this).discount = discount }

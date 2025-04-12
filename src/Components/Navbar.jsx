@@ -332,7 +332,7 @@ function NavBar() {
 								</NavDropdown.Item>
 								<NavDropdown.Divider />
 
-								<NavDropdown title="Accounting Vouchers" className="ms-2" drop="end">
+								<NavDropdown title="Account Vouchers" className="ms-2" drop="end">
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
@@ -359,32 +359,18 @@ function NavBar() {
 									</NavDropdown.Item>
 								</NavDropdown>
 
-								<NavDropdown title="Accounting Groups" className="ms-2" drop="end">
-									<NavDropdown.Item 
-										onClick={() => {
-											handleNavSelect();
-											navigate("/finance/groups/create");
-										}}
-										className={`nav-item ${
-											location.pathname === "/finance/groups/create" &&
-											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-										}`}
-									>
-										Create
-									</NavDropdown.Item>
-									<NavDropdown.Item 
-										onClick={() => {
-											handleNavSelect();
-											navigate("/finance/groups/view");
-										}}
-										className={`nav-item ${
-											location.pathname === "/finance/groups/view" &&
-											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-										}`}
-									>
-										View
-									</NavDropdown.Item>
-								</NavDropdown>
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/finance/groups");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/groups" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Account Groups
+								</NavDropdown.Item>
 
 								<NavDropdown.Item 
 									onClick={() => {
@@ -396,7 +382,7 @@ function NavBar() {
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
-									Ledgers
+									Account Ledgers
 								</NavDropdown.Item>
 							</NavDropdown>}
 

@@ -157,8 +157,7 @@ const VendorsWindow = () => {
 				setShowFormModal(true);
                 break;
             case 'ledger':
-                console.log(entity);
-                window.open('/contacts/vendor/ledger', '_blank')?.focus();
+                window.open(`/finance/ledgers/${entity.ledger.id}/view`, '_blank')?.focus();
                 break;
         }
     };

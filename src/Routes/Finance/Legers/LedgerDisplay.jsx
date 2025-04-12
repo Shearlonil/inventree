@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -25,6 +25,7 @@ import { Ledger } from '../../../Entities/Ledger';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
+import ToggleSwitch from '../../../Components/ToggleSwitch';
 
 const LedgerDisplay = () => {
     const navigate = useNavigate();
@@ -70,6 +71,7 @@ const LedgerDisplay = () => {
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     
     const [ledger, setLedger] = useState({});
+    const [ledgerParent, setLedgerParent] = useState({});
     const [transactions, setTransactions] = useState([]);
 
     //  for ledgers
@@ -90,12 +92,12 @@ const LedgerDisplay = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const urls = [ `/api/ledgers/find/${id}`, '/api/ledgers/active' ];
+            const urls = [ `/api/ledgers/find/${id}`, `/api/ledgers/find/${id}/parent`, '/api/ledgers/active' ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: ledgerRequest, 1: ledgersRequest } = response;
+            const { 0: ledgerRequest, 1: ledgerParentRequest, 2: activeLedgersRequest } = response;
 
-            if (ledgersRequest && ledgersRequest.data && ledgersRequest.data.length > 0) {
-				setLedgerOptions(ledgersRequest.data.map(ledger => ({label: ledger.name, value: ledger})));
+            if (activeLedgersRequest && activeLedgersRequest.data && activeLedgersRequest.data.length > 0) {
+				setLedgerOptions(activeLedgersRequest.data.map(ledger => ({label: ledger.name, value: ledger})));
                 setLedgersLoading(false);
             }
 
@@ -103,6 +105,10 @@ const LedgerDisplay = () => {
                 const l = new Ledger(ledgerRequest.data);
                 l.creator = ledgerRequest.data.creator.username;
                 setLedger(l);
+            }
+
+            if (ledgerParentRequest && ledgerParentRequest.data) {
+                setLedgerParent(ledgerParentRequest.data);
             }
             const startDate = new Date();
             startDate.setHours(0, 0, 0);
@@ -405,6 +411,35 @@ const LedgerDisplay = () => {
             }
         }
     }
+    
+        const toggle = async (checked, ledger) => {
+            try {
+                if(user.hasAuth('EDIT_lEDGER_CREDIT_SALES')){
+                    await ledgerController.setAllowCreditSales(id, checked);
+                }else {
+                    toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
+                    throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
+                }
+            } catch (error) {
+                //	Incase of 500 (Invalid Token received!), perform refresh
+                try {
+                    if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                        await handleRefresh();
+                        return toggle(checked, auth);
+                    }
+                    // Incase of 401 Unauthorized, navigate to 404
+                    if(error.response?.status === 401){
+                        navigate('/404');
+                    }
+                    // display error message
+                    toast.error(handleErrMsg(error).msg);
+                } catch (error) {
+                    // if error while refreshing, logout and delete all cookies
+                    logout();
+                }
+                throw error;
+            }
+        };
 
     return (
         <div className='container my-4'>
@@ -415,7 +450,7 @@ const LedgerDisplay = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Ledger</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Account Ledger</span>
 						<img src={SVG.ledger} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
@@ -451,6 +486,29 @@ const LedgerDisplay = () => {
                             <span className="fw-bold text-md-end h5 me-2">Discount:</span>
                             <span className='pe-2 text-primary fw-bold'>
                                 {ledger?.discount} %
+                            </span>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Parent:</span>
+                            <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>
+                                <Link>
+                                    {ledgerParent?.name}
+                                </Link>
+                            </span>
+                        </div>
+                    </div>
+                    <div className="col-12 col-md-6">
+                        <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
+                            <span className="fw-bold text-md-end h5 me-2">Credit Sales:</span>
+                            <span className='pe-2 text-primary fw-bold'>
+                                <ToggleSwitch
+                                    data={ledger}
+                                    checkedTxt="Granted" 
+                                    unCheckedTxt="Revoked" 
+                                    ticked={ledger.allowCreditSales ? true : false} 
+                                    onChangeFn={toggle} />
                             </span>
                         </div>
                     </div>
