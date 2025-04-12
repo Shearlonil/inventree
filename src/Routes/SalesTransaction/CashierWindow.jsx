@@ -31,6 +31,7 @@ const CashierWindow = () => {
 		handleSubmit: handleCompleteTransactionSubmit,
 		control: customerSelectionControl,
 		reset: customerSelectionReset,
+		setValue,
 		formState: { errors: customerSelectionErrors },
 	} = useForm({
 		resolver: yupResolver(customer_selection_schema),
@@ -153,7 +154,9 @@ const CashierWindow = () => {
 					return item;
 				});
 				const itemAmount = arr.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0);
-				setTotalTransactionAmount(numeral(itemAmount).subtract(invoiceProps.invoiceDisc).value());
+				const tempTotalTransactionAmount = numeral(itemAmount).subtract(invoiceProps.invoiceDisc).value();
+				setTotalTransactionAmount(tempTotalTransactionAmount);
+				setValue('cash', tempTotalTransactionAmount);
 				setTransactionItems(arr);
 			}
 			setNetworkRequest(false);

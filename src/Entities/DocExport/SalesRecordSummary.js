@@ -9,10 +9,11 @@ export class SalesRecordSummary {
             _summaryProps.set(this, {
                 id: jsonObject.item_id,
                 packStock: jsonObject.pack_stock,
-                unitStock: jsonObject.unit_stock,
+                stockPrice: jsonObject.unit_stock,
                 price: jsonObject.price,
                 qty: jsonObject.qty,
                 qtyType: jsonObject.qty_type,
+                qtyPerPkg: jsonObject.qty_per_package,
                 itemName: jsonObject.item_name,
                 itemDiscount: jsonObject.item_discount ? jsonObject.item_discount : 0,
             });
@@ -22,37 +23,62 @@ export class SalesRecordSummary {
     }
 
     get id() { return _summaryProps.get(this).id; }
-    set id(id) { _summaryProps.get(this).id = id }
+    set id(id) { _summaryProps.get(this).id = id; }
     
-    get itemName() { return _summaryProps.get(this).itemName }
-    set itemName(name) { _summaryProps.get(this).itemName = name }
+    get itemName() { return _summaryProps.get(this).itemName; }
+    set itemName(name) { _summaryProps.get(this).itemName = name; }
     
-    get qty() { return _summaryProps.get(this).qty }
-    set qty(qty) { _summaryProps.get(this).qty = qty }
+    get qty() { return _summaryProps.get(this).qty; }
+    set qty(qty) { _summaryProps.get(this).qty = qty; }
 
-    get qtyType() { return _summaryProps.get(this).qtyType }
-    set qtyType(qtyType) { _summaryProps.get(this).qtyType = qtyType }
+    get qtyType() { return _summaryProps.get(this).qtyType; }
+    set qtyType(qtyType) { _summaryProps.get(this).qtyType = qtyType; }
 
-    get price() { return _summaryProps.get(this).price }
-    set price(price) { _summaryProps.get(this).price = price }
+    get qtyPerPkg() { return _summaryProps.get(this).qtyPerPkg; }
+    set qtyPerPkg(qtyPerPkg) { _summaryProps.get(this).qtyPerPkg = qtyPerPkg; }
+
+    /*  holds either unit sales price or pack sales price. Depends on the qtyType.  */
+    get price() { return _summaryProps.get(this).price; }
+    set price(price) { _summaryProps.get(this).price = price; }
     
-    get unitStockPrice() { return _summaryProps.get(this).unitStock }
-    set unitStockPrice(unitStockPrice) { _summaryProps.get(this).unitStock = unitStockPrice }
-    
-    get pkgStockPrice() { return _summaryProps.get(this).packStock }
-    set pkgStockPrice(pkgStockPrice) { _summaryProps.get(this).packStock = pkgStockPrice }
+    /*  this holds either unit stock price or pack stock price. Depends on the qtyType. The pkgStockPrice is dummy, i believe   */
+    get stockPrice() { return _summaryProps.get(this).stockPrice }
+    set stockPrice(stockPrice) { _summaryProps.get(this).stockPrice = stockPrice }
 
     get itemDiscount() { return _summaryProps.get(this).itemDiscount; }
-    set itemDiscount(itemDiscount) { _summaryProps.get(this).itemDiscount = itemDiscount }
+    set itemDiscount(itemDiscount) { _summaryProps.get(this).itemDiscount = itemDiscount; }
+    
+    /*  unitQty represents the quantity in units only. While qty above could be unit or pkg */
+    get unitQty() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).qty : 
+            numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).qtyPerPkg);
+    }
+    
+    get unitStockPrice() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).stockPrice : 
+           numeral(_summaryProps.get(this).stockPrice).divide(_summaryProps.get(this).qtyPerPkg).value();
+    }
+    
+    get unitSalesPrice() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).price : 
+           numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
+    }
     
     get totalAmount() {
-        const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
-        const tempDisc = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).itemDiscount).value();
-        return numeral(tempAmount).subtract(tempDisc).value();
+        return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
+        /*
+            NOTE:   price (itemSoldOutPrice) is already less item discount
+            const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
+            const tempDisc = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).itemDiscount).value();
+            return numeral(tempAmount).subtract(tempDisc).value();
+        */
     }
     
     get profit() {
-        const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).unitStock).value();
+        const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value();
         return numeral(this.totalAmount).subtract(tempAmount).value();
     }
 
@@ -64,8 +90,9 @@ export class SalesRecordSummary {
             qtyType: this.qtyType,
             itemDiscount: this.itemDiscount,
             price: this.price,
-            pkgStockPrice: this.pkgStockPrice,
             unitStockPrice: this.unitStockPrice,
+            stockPrice: this.stockPrice,
+            unitQty: this.unitQty,
         }
     }
 }

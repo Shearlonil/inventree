@@ -169,8 +169,10 @@ const Home = () => {
 							<h4 className="fw-normal text-center mb-3">Vendor Management</h4>
 							<div className="d-flex flex-column gap-2 list-group">
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
-									You can keep track of transactions with your Vendors without
-									hassle
+									Create, manage & track Vendors.
+								</p>
+								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
+									Keep track of transactions with your Vendors without hassle
 								</p>
 							</div>
 						</div>

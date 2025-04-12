@@ -79,10 +79,10 @@ const itemSalesReceiptsByDate = async (startDate, endDate, item_id) => {
     });
 };
 
-const customerSalesReceiptsByDate = async (startDate, endDate, item_id) => {
+const customerSalesReceiptsByDate = async (startDate, endDate, customer_id) => {
     return await httpService.post(`/api/transactions/receipts/customer/get-within`, { startDate, endDate }, {
         params: {
-            item_id
+            customer_id
         }
     });
 };

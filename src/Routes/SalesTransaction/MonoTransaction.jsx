@@ -248,7 +248,7 @@ const MonoTransaction = () => {
 		if(data.item_disc > 0){
 			if(user.hasAuth('ITEM_DISCOUNT')){
 				item.discount = data.item_disc_type === "perc" 
-				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'Pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
+				? numeral(data.item_disc).divide(100).multiply(data.qty_type.toLowerCase() === "unit" ? item.unitSalesPrice : item.pkgSalesPrice).value() 
 				: data.item_disc;
 			}else {
 				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
@@ -256,9 +256,9 @@ const MonoTransaction = () => {
 			}
 		}
 		//	soldOutPrice is original item price (pack or unit) less discount
-		item.itemSoldOutPrice = data.qty_type === "Pkg" 
-			? numeral(item.pkgSalesPrice).subtract(item.discount).value() 
-			: numeral(item.unitSalesPrice).subtract(item.discount).value();
+		item.itemSoldOutPrice = data.qty_type.toLowerCase() === "unit" 
+			? numeral(item.unitSalesPrice).subtract(item.discount).value()
+			: numeral(item.pkgSalesPrice).subtract(item.discount).value();
 		transactionItems.push(item);
 		setTransactionItems(transactionItems);
 		updateTransactionAmount();

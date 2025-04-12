@@ -231,7 +231,7 @@ const SectionTransaction = () => {
 		if(data.item_disc > 0){
 			if(user.hasAuth('ITEM_DISCOUNT')){
 				item.discount = data.item_disc_type === "perc" 
-				? numeral(data.item_disc).divide(100).multiply(data.qtyType === 'Pkg' ? item.pkgSalesPrice : item.unitSalesPrice).value() 
+				? numeral(data.item_disc).divide(100).multiply(data.qty_type.toLowerCase() === "unit" ? item.unitSalesPrice : item.pkgSalesPrice).value() 
 				: data.item_disc;
 			}else {
 				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
@@ -239,9 +239,9 @@ const SectionTransaction = () => {
 			}
 		}
 		//	soldOutPrice is original item price (pack or unit) less discount
-		item.itemSoldOutPrice = data.qty_type === "Pkg" 
-			? numeral(item.pkgSalesPrice).subtract(item.discount).value() 
-			: numeral(item.unitSalesPrice).subtract(item.discount).value();
+		item.itemSoldOutPrice = data.qty_type.toLowerCase() === "unit" 
+			? numeral(item.unitSalesPrice).subtract(item.discount).value()
+			: numeral(item.pkgSalesPrice).subtract(item.discount).value();
 		transactionItems.push(item);
 		setTransactionItems(transactionItems);
 		updateTransactionAmount();
@@ -338,7 +338,7 @@ const SectionTransaction = () => {
 					item.itemSoldOutPrice = salesRec.price;
 					item.id = salesRec.item_id;
 					item.qtyType = salesRec.qty_type;
-					item.discount = numeral(salesRec.qty_type === 'Pkg' ? salesRec.pack_sales : salesRec.unit_sales).subtract(salesRec.price).value();
+					item.discount = salesRec.item_discount ? salesRec.item_discount : 0;
 					item.unitSalesPrice = salesRec.unit_sales;
 					item.pkgSalesPrice = salesRec.pack_sales;
 					/*	temporarily pushing to transactionItems to cause an immediate reset of transactionAmount as react state update is unpredictable	*/

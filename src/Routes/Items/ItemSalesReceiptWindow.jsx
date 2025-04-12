@@ -127,8 +127,8 @@ const ItemSalesReceiptWindow = () => {
         data.forEach(t => {
 			const a = {...t.toJSON()};
             a.totalAmount = t.totalAmount;
-			delete a.pkgStockPrice;
-			delete a.unitStockPrice;
+			//  delete a.pkgStockPrice;
+			delete a.stockPrice;
 			temp.push(a);
 		});
         const wscols = [
@@ -163,7 +163,7 @@ const ItemSalesReceiptWindow = () => {
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
         
-        const Heading = [ {id: "Receipt No.", itemName: "Description", qty: "Qty", qtyType: "Qty Type", unitStockPrice: 'Stock Price (x1)', price: "Sales Price (x1)", 
+        const Heading = [ {id: "Receipt No.", itemName: "Description", qty: "Qty", qtyType: "Qty Type", stockPrice: 'Stock Price (x1)', price: "Sales Price (x1)", 
             itemDiscount: "Discount (x1)", totalAmount: 'Amount', profit: 'Profit Margin' } ];
 
         const temp = [];
@@ -171,7 +171,7 @@ const ItemSalesReceiptWindow = () => {
 			const a = {...t.toJSON()};
             a.totalAmount = t.totalAmount;
 			a.profit = t.profit;
-            delete a.pkgStockPrice;
+            //  delete a.pkgStockPrice;
 			temp.push(a);
 		});
         const wscols = [
@@ -186,13 +186,13 @@ const ItemSalesReceiptWindow = () => {
             { wch: 15 }
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ['id', "itemName", "qty", "qtyType", 'unitStockPrice', "price", "itemDiscount", 'totalAmount', 'profit'],
+            header: ['id', "itemName", "qty", "qtyType", 'stockPrice', "price", "itemDiscount", 'totalAmount', 'profit'],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ['id', "itemName", "qty", "qtyType", 'unitStockPrice', "price", "itemDiscount", 'totalAmount', 'profit'],
+            header: ['id', "itemName", "qty", "qtyType", 'stockPrice', "price", "itemDiscount", 'totalAmount', 'profit'],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -275,7 +275,7 @@ const ItemSalesReceiptWindow = () => {
                 { header: 'Description', dataKey: 'itemName' },
                 { header: 'Qty', dataKey: 'qty' },
                 { header: 'Qty Type', dataKey: 'qtyType' },
-                { header: 'Stock Price (x1)', dataKey: 'unitStockPrice' },
+                { header: 'Stock Price (x1)', dataKey: 'stockPrice' },
                 { header: 'Sales Price', dataKey: 'price' },
                 { header: 'Discount (x1)', dataKey: 'itemDiscount' },
                 { header: 'Amount', dataKey: 'totalAmount' },
@@ -314,8 +314,8 @@ const ItemSalesReceiptWindow = () => {
                             salesRecord.qtyType = item.qty_type;
                             salesRecord.itemDiscount = item.item_discount ? item.item_discount : 0;
                             salesRecord.itemName = item.item_name;
-                            salesRecord.pkgStockPrice = item.pack_stock;
-                            salesRecord.unitStockPrice = item.unit_stock;
+                            //  salesRecord.pkgStockPrice = item.pack_stock;
+                            salesRecord.stockPrice = item.unit_stock;
                             salesRecord.price = item.price;
                             arr.push(salesRecord);
                         });

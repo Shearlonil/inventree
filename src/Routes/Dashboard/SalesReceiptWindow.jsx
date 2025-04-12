@@ -25,6 +25,7 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
+import { SalesRecordSummary } from '../../Entities/DocExport/SalesRecordSummary';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -383,7 +384,7 @@ const SalesReceiptWindow = () => {
                     searchedDate.reversal_status);
                 if(response && response.data){
                     if(user.hasAuth('PROFIT_VIEW')){
-                        generateProfitPDF(response.data);
+                        dayBookProfitPDF(response.data);
                     }else {
                         generatePDF(response.data);
                     }
@@ -392,7 +393,7 @@ const SalesReceiptWindow = () => {
                 response = await transactionsController.pdfPurchaseReceiptsByNoForExport(searchedId);
                 if(response && response.data){
                     if(user.hasAuth('PROFIT_VIEW')){
-                        generateProfitPDF(response.data);
+                        dayBookProfitPDF(response.data);
                     }else {
                         generatePDF(response.data);
                     }
@@ -439,7 +440,103 @@ const SalesReceiptWindow = () => {
         return tableArr;
     };
 
-    const generateProfitPDF = (receiptData) => {
+    const summarizeProfitPDF = (receiptData) => {
+        const itemMap = new Map();
+
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "landscape"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(20);
+
+        const title = "Receipts Summary";
+
+        doc.text(title, marginLeft, 40);
+        const receipts = [];
+        for (const key in receiptData) {
+            const receipt = new ReceiptSummary(receiptData[key]);
+            receipt.items.forEach(item => {
+                const current = itemMap.get(item.id);
+                if(current){
+                    current.qty += item.unitQty;
+                    const stockPrice = numeral(current.stockPrice).add(item.unitStockPrice);
+                    const price = numeral(current.price).add(item.unitSalesPrice);
+                    const itemDiscount = numeral(current.itemDiscount).add(item.itemDiscount);
+                    current.stockPrice = numeral(stockPrice).divide(2).value();
+                    current.price = numeral(price).divide(2).value();
+                    current.itemDiscount = numeral(itemDiscount).divide(2).value();
+                    current.totalAmount += item.totalAmount;
+                    current.profit += item.profit;
+                }else {
+                    const salesRecordSummary = new SalesRecordSummary();
+                    salesRecordSummary.id = item.id;
+                    salesRecordSummary.qtyType = 'unit';
+                    salesRecordSummary.itemDiscount = item.itemDiscount;
+                    salesRecordSummary.itemName = item.itemName;
+                    salesRecordSummary.price = item.unitSalesPrice;
+                    salesRecordSummary.qtyPerPkg = item.qtyPerPkg;
+                    salesRecordSummary.qty = item.unitQty;
+                    salesRecordSummary.stockPrice = item.unitStockPrice;
+                    salesRecordSummary.totalAmount = item.totalAmount;
+                    salesRecordSummary.profit = item.profit;
+                    itemMap.set(item.id, salesRecordSummary);
+                }
+            });
+            receipts.push(receipt);
+        }
+        let totalGrossAmount = numeral(0);
+        let totalNetAmount = numeral(0);
+        let totalNetProfit = numeral(0);
+        receipts.forEach(receipt => {
+            totalGrossAmount = numeral(totalGrossAmount).add(receipt.grossAmount);
+            totalNetAmount = numeral(totalNetAmount).add(receipt.netAmount);
+            totalNetProfit = numeral(totalNetProfit).add(receipt.netProfit);
+            doc.autoTable({
+                styles: { theme: 'striped' },
+                margin: { top: 60 },
+                showHead: 'firstPage',
+                footStyles: {textColor: 'black', fillColor: 'white',},
+                foot: [
+                    [
+                        {
+                            content: `Receipt No. ${receipt.id} | Date: ${receipt.transactionDate} | Payment Mode: ${receipt.toStringPaymentModes}`,
+                            colSpan: 8,
+                        }
+                    ],
+                    [
+                        {
+                            content: "Gross Amount " + `${numeral(receipt.grossAmount).format('₦0,0.00')} | Invoice Discount: ` + 
+                                `${numeral(receipt.invoiceDiscount).format('₦0,0.00')} | Net Amount: ${numeral(receipt.netAmount).format('₦0,0.00')} | ` + 
+                                `Net Profit: ${numeral(receipt.netProfit).format('₦0,0.00')}`,
+                            colSpan: 8,
+                        }
+                    ],
+                ],
+                body: receipt.items,
+                columns: [
+                    // { header: 'Receipt No.', dataKey: 'receipt_id' },
+                    { header: 'Description', dataKey: 'itemName' },
+                    { header: 'Qty', dataKey: 'qty' },
+                    { header: 'Type', dataKey: 'qtyType' },
+                    { header: 'Stock Price (x1)', dataKey: 'stockPrice' },
+                    { header: 'Sales Price (x1)', dataKey: 'price' },
+                    { header: 'Discount x1', dataKey: 'itemDiscount' },
+                    { header: 'Amount', dataKey: 'totalAmount' },
+                    { header: 'Profit Margin', dataKey: 'profit' },
+                ],
+            });
+        });
+        doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).format('₦0,0.00')} | Total Net Amount: ${numeral(totalNetAmount).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+            
+        doc.save(`${filename}` + fileExtension);
+    }
+
+    const dayBookProfitPDF = (receiptData) => {
         const unit = "pt";
         const size = "A4"; // Use A1, A2, A3 or A4
         const orientation = "landscape"; // portrait or landscape
@@ -491,7 +588,7 @@ const SalesReceiptWindow = () => {
                     { header: 'Description', dataKey: 'itemName' },
                     { header: 'Qty', dataKey: 'qty' },
                     { header: 'Type', dataKey: 'qtyType' },
-                    { header: 'Stock Price (x1)', dataKey: 'unitStockPrice' },
+                    { header: 'Stock Price (x1)', dataKey: 'stockPrice' },
                     { header: 'Sales Price (x1)', dataKey: 'price' },
                     { header: 'Discount x1', dataKey: 'itemDiscount' },
                     { header: 'Amount', dataKey: 'totalAmount' },
