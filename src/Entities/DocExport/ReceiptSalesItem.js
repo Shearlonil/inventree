@@ -3,7 +3,7 @@ import numeral from "numeral";
 
 const _summaryProps = new WeakMap();
 
-export class SalesRecordSummary {
+export class ReceiptSalesItem {
     constructor(jsonObject) {
         if (jsonObject) {
             _summaryProps.set(this, {
@@ -41,31 +41,12 @@ export class SalesRecordSummary {
     get price() { return _summaryProps.get(this).price; }
     set price(price) { _summaryProps.get(this).price = price; }
     
-    /*  this holds either unit stock price or pack stock price. Depends on the qtyType. The pkgStockPrice is dummy, i believe   */
+    /*  this holds either unit stock price or pack stock price. Depends on the qtyType. */
     get stockPrice() { return _summaryProps.get(this).stockPrice }
     set stockPrice(stockPrice) { _summaryProps.get(this).stockPrice = stockPrice }
 
     get itemDiscount() { return _summaryProps.get(this).itemDiscount; }
     set itemDiscount(itemDiscount) { _summaryProps.get(this).itemDiscount = itemDiscount; }
-    
-    /*  unitQty represents the quantity in units only. While qty above could be unit or pkg */
-    get unitQty() { 
-        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
-            _summaryProps.get(this).qty : 
-            numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).qtyPerPkg);
-    }
-    
-    get unitStockPrice() { 
-        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
-            _summaryProps.get(this).stockPrice : 
-           numeral(_summaryProps.get(this).stockPrice).divide(_summaryProps.get(this).qtyPerPkg).value();
-    }
-    
-    get unitSalesPrice() { 
-        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
-            _summaryProps.get(this).price : 
-           numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
-    }
     
     get totalAmount() {
         return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
@@ -95,4 +76,24 @@ export class SalesRecordSummary {
             unitQty: this.unitQty,
         }
     }
+    
+    /*  unitQty represents the quantity in units only. While qty above could be unit or pkg
+    get unitQty() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).qty : 
+            numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).qtyPerPkg);
+    }
+    
+    get unitStockPrice() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).stockPrice : 
+           numeral(_summaryProps.get(this).stockPrice).divide(_summaryProps.get(this).qtyPerPkg).value();
+    }
+    
+    get unitSalesPrice() { 
+        return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
+            _summaryProps.get(this).price : 
+           numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
+    }
+    */
 }

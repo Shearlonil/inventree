@@ -25,7 +25,7 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
-import { SalesRecordSummary } from '../../Entities/DocExport/SalesRecordSummary';
+import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -472,18 +472,18 @@ const SalesReceiptWindow = () => {
                     current.totalAmount += item.totalAmount;
                     current.profit += item.profit;
                 }else {
-                    const salesRecordSummary = new SalesRecordSummary();
-                    salesRecordSummary.id = item.id;
-                    salesRecordSummary.qtyType = 'unit';
-                    salesRecordSummary.itemDiscount = item.itemDiscount;
-                    salesRecordSummary.itemName = item.itemName;
-                    salesRecordSummary.price = item.unitSalesPrice;
-                    salesRecordSummary.qtyPerPkg = item.qtyPerPkg;
-                    salesRecordSummary.qty = item.unitQty;
-                    salesRecordSummary.stockPrice = item.unitStockPrice;
-                    salesRecordSummary.totalAmount = item.totalAmount;
-                    salesRecordSummary.profit = item.profit;
-                    itemMap.set(item.id, salesRecordSummary);
+                    const receiptSalesItem = new ReceiptSalesItem();
+                    receiptSalesItem.id = item.id;
+                    receiptSalesItem.qtyType = 'unit';
+                    receiptSalesItem.itemDiscount = item.itemDiscount;
+                    receiptSalesItem.itemName = item.itemName;
+                    receiptSalesItem.price = item.unitSalesPrice;
+                    receiptSalesItem.qtyPerPkg = item.qtyPerPkg;
+                    receiptSalesItem.qty = item.unitQty;
+                    receiptSalesItem.stockPrice = item.unitStockPrice;
+                    receiptSalesItem.totalAmount = item.totalAmount;
+                    receiptSalesItem.profit = item.profit;
+                    itemMap.set(item.id, receiptSalesItem);
                 }
             });
             receipts.push(receipt);

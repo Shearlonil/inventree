@@ -299,6 +299,10 @@ const SalesReport = () => {
                                 <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
                                 <th className='text-danger'>Sold Qty</th>
+                                <th className='text-danger'>Stock Price (AVG)</th>
+                                <th className='text-danger'>Sales Price (AVG)</th>
+                                <th className='text-danger'>Profit (x1)</th>
+                                <th className='text-danger'>Gross Profit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -309,6 +313,8 @@ const SalesReport = () => {
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
                                     <td>{_datum.soldOutQty}</td>
+                                    <td>{_datum.avgStockPrice}</td>
+                                    <td>{_datum.avgSalesPrice}</td>
                                 </tr>
                             ))}
                         </tbody>

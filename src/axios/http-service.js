@@ -45,7 +45,7 @@ axios.interceptors.request.use((config) => {
     //  const token = Cookies.get("authorization");
     const token = localStorage.getItem("authorization");
     config.headers.authorization = token ? `Bearer ${token}` : "";
-    config.headers['X-TENANT-ID'] = 'pp';
+    config.headers['X-TENANT-ID'] = 'inventree';
     return config;
 });
 

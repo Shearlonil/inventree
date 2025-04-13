@@ -21,7 +21,7 @@ import transactionsController from '../../Controllers/transactions-controller';
 import itemController from '../../Controllers/item-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
-import { SalesRecordSummary } from '../../Entities/DocExport/SalesRecordSummary';
+import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 
 const ItemSalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -308,7 +308,7 @@ const ItemSalesReceiptWindow = () => {
                     for (const key in response.data) {
                         response.data[key].forEach(item => {
                             //  temporarily use id to hold receipt id
-                            const salesRecord = new SalesRecordSummary();
+                            const salesRecord = new ReceiptSalesItem();
                             salesRecord.id = item.receipt_id;
                             salesRecord.qty = item.qty;
                             salesRecord.qtyType = item.qty_type;

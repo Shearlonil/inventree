@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import numeral from "numeral";
-import { SalesRecordSummary } from "./SalesRecordSummary";
+import { ReceiptSalesItem } from "./ReceiptSalesItem";
 
 const _summaryProps = new WeakMap();
 
@@ -9,7 +9,7 @@ export class ReceiptSummary {
         if (arr) {
             const array = [];
             arr.forEach(i => {
-                const salesSummary = new SalesRecordSummary(i);
+                const salesSummary = new ReceiptSalesItem(i);
                 array.push(salesSummary);
             });
             _summaryProps.set(this, {
