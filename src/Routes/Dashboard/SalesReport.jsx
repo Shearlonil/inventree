@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
-import "react-datetime/css/react-datetime.css";
+import numeral from 'numeral';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import FileSaver from 'file-saver';
@@ -19,11 +19,13 @@ import handleErrMsg from '../../Utils/error-handler';
 import transactionsController from '../../Controllers/transactions-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
+import { SalesSummary } from '../../Entities/SalesSummary';
 
 const SalesReport = () => {
     const navigate = useNavigate();
         
-    const { handleRefresh, logout } = useAuth();
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
 
     const schema = object().shape({
         startDate: date(),
@@ -55,39 +57,51 @@ const SalesReport = () => {
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
             case 'xlsExport':
-                exportToCSV();
+                profitXlsxExport();
                 break;
             case 'pdfExport':
-                exportPDF();
+                pdfExport();
                 break;
         }
 	}
 
-    const exportToCSV = () => {
+    const profitXlsxExport = () => {
         //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
 
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
 
-        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty" } ];
+        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty", 
+            avgUnitStockPrice: "Unit Stock Price (AVG)", totalStockPrice: "Total Stock Price", avgUnitSalesPrice: "Unit Sales Price (AVG)", 
+            totalSalesPrice: "Total Sales Price", grossProfit: "Gross Profit" } ];
 
-        const temp = [...data];
-        temp.forEach(t => delete t.id);
+        const temp = [];
+        data.forEach(datum => {
+            const d = {...datum.toJSON()};
+            delete d.id;
+            delete d.unitProfit;
+            temp.push(d);
+        });
         const wscols = [
             { wch: Math.max(...data.map(datum => datum.itemName.length)) },
             { wch: 15 },
             { wch: 15 },
             { wch: 15 },
+            { wch: 15 },
+            { wch: 20 },
+            { wch: 15 },
+            { wch: 20 },
+            { wch: 15 },
             { wch: 15 }
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", "totalSalesPrice", "grossProfit"],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", "totalSalesPrice", "grossProfit"],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -97,14 +111,14 @@ const SalesReport = () => {
         FileSaver.saveAs(finalData, `${filename}` + fileExtension);
     };
 
-    const exportPDF = () => {
+    const pdfExport = () => {
         /*  ref:
             *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
             *   https://www.npmjs.com/package/jspdf-autotable
             *   https://www.npmjs.com/package/jspdf */
         const unit = "pt";
         const size = "A4"; // Use A1, A2, A3 or A4
-        const orientation = "portrait"; // portrait or landscape
+        const orientation = "landscape"; // portrait or landscape
         const fileExtension = ".pdf";
 
         const marginLeft = 40;
@@ -114,6 +128,15 @@ const SalesReport = () => {
 
         const title = "Sales Summary";
 
+        let totalStockPrice = numeral(0);
+        let totalSalesPrice = numeral(0);
+        let totalGrossProfit = numeral(0);
+        data.forEach(datum => {
+            totalStockPrice = numeral(totalStockPrice).add(datum.totalStockPrice);
+            totalSalesPrice = numeral(totalSalesPrice).add(datum.totalSalesPrice);
+            totalGrossProfit = numeral(totalGrossProfit).add(datum.grossProfit);
+        });
+        
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
             styles: { theme: 'striped' },
@@ -126,9 +149,16 @@ const SalesReport = () => {
                 { header: 'Shelf Qty', dataKey: 'salesQty' },
                 { header: 'Total Qty', dataKey: 'totalQty' },
                 { header: 'Qty Sold', dataKey: 'soldOutQty' },
+                { header: 'Unit Stock Price (AVG)', dataKey: 'avgUnitStockPrice' },
+                { header: 'Total Stock Price', dataKey: 'totalStockPrice' },
+                { header: 'Unit Sales Price (AVG)', dataKey: 'avgUnitSalesPrice' },
+                { header: 'Total Sales Price', dataKey: 'totalSalesPrice' },
+                { header: 'Gross Profit', dataKey: 'grossProfit' },
             ],
         });
-        
+        doc.text(`Total Stock Price: ${numeral(totalStockPrice).format('₦0,0.00')} | Total Sales Price: ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Gross Profit: ${numeral(totalGrossProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+
         doc.save(`${filename}` + fileExtension);
     }
 
@@ -149,19 +179,30 @@ const SalesReport = () => {
 
 				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
 				if(response && response.data){
+                    const arr = [];
+                    response.data.forEach(datum => {
+                        arr.push(new SalesSummary(datum));
+                    });
+                    arr.sort(
+                        (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
+                    )
+                    /*
+                    IN PREVIOUS VERSION, displaying both items with sales records within the selected range and items without sales record.
                     //  filter out items with sales qty and sort by name
                     const sold = response.data
                         .filter(item => item.soldOutQty > 0)
                         .sort(
                             (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
                         );
+                    
                     //  filter out unsold items
                     const unsold = response.data
                         .filter(item => item.soldOutQty === 0)
                         .sort(
                             (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
                         );
-					setData([...sold, ...unsold]);
+                    */
+					setData(arr);
 				}
 				setNetworkRequest(false);
 			}
@@ -299,10 +340,11 @@ const SalesReport = () => {
                                 <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
                                 <th className='text-danger'>Sold Qty</th>
-                                <th className='text-danger'>Stock Price (AVG)</th>
-                                <th className='text-danger'>Sales Price (AVG)</th>
-                                <th className='text-danger'>Profit (x1)</th>
-                                <th className='text-danger'>Gross Profit</th>
+                                {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Unit Stock Price (AVG)</th>}
+                                {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Total Stock Price</th>}
+                                <th className='text-danger'>Unit Sales Price (AVG)</th>
+                                <th className='text-danger'>Total Sales Price</th>
+                                {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Gross Profit</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -313,8 +355,11 @@ const SalesReport = () => {
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
                                     <td>{_datum.soldOutQty}</td>
-                                    <td>{_datum.avgStockPrice}</td>
-                                    <td>{_datum.avgSalesPrice}</td>
+                                    {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.avgUnitStockPrice).format('₦0,0.00')}</td>}
+                                    {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>}
+                                    <td>{numeral(_datum.avgUnitSalesPrice).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.totalSalesPrice).format('₦0,0.00')}</td>
+                                    {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.grossProfit).format('₦0,0.00')}</td>}
                                 </tr>
                             ))}
                         </tbody>

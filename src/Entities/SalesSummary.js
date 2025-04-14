@@ -13,8 +13,8 @@ export class SalesSummary {
                 storeQty: jsonObject.storeQty,
                 salesQty: jsonObject.salesQty,
                 soldOutQty: jsonObject.soldOutQty,
-                avgSalesPrice: jsonObject.avgSalesPrice,
-                avgStockPrice: jsonObject.avgStockPrice,
+                avgUnitSalesPrice: jsonObject.avgSalesPrice,
+                avgUnitStockPrice: jsonObject.avgStockPrice,
             });
         }else {
             _salesSummaryProps.set(this, {});
@@ -40,20 +40,20 @@ export class SalesSummary {
     get soldOutQty() { return _salesSummaryProps.get(this).soldOutQty; }
     set soldOutQty(soldOutQty) { _salesSummaryProps.get(this).soldOutQty = soldOutQty }
     
-    get avgSalesPrice() { return _salesSummaryProps.get(this).avgSalesPrice; }
-    set avgSalesPrice(avgSalesPrice) { _salesSummaryProps.get(this).avgSalesPrice = avgSalesPrice }
+    get avgUnitSalesPrice() { return _salesSummaryProps.get(this).avgUnitSalesPrice; }
+    set avgUnitSalesPrice(avgUnitSalesPrice) { _salesSummaryProps.get(this).avgUnitSalesPrice = avgUnitSalesPrice }
     
-    get avgStockPrice() { return _salesSummaryProps.get(this).avgStockPrice }
-    set avgStockPrice(avgStockPrice) { _salesSummaryProps.get(this).avgStockPrice = avgStockPrice }
+    get avgUnitStockPrice() { return _salesSummaryProps.get(this).avgUnitStockPrice }
+    set avgUnitStockPrice(avgUnitStockPrice) { _salesSummaryProps.get(this).avgUnitStockPrice = avgUnitStockPrice }
     
-    get unitSalesPrice() { return _salesSummaryProps.get(this).unitSalesPrice; }
-    set unitSalesPrice(unitSalesPrice) { _salesSummaryProps.get(this).unitSalesPrice = unitSalesPrice }
+    get totalStockPrice() { return numeral(_salesSummaryProps.get(this).avgUnitStockPrice).multiply(_salesSummaryProps.get(this).soldOutQty).value(); }
     
-    get unitStockPrice() { return _salesSummaryProps.get(this).unitStockPrice }
-    set unitStockPrice(unitStockPrice) { _salesSummaryProps.get(this).unitStockPrice = unitStockPrice }
+    get totalSalesPrice() { return numeral(_salesSummaryProps.get(this).avgUnitSalesPrice).multiply(_salesSummaryProps.get(this).soldOutQty).value(); }
     
-    get pkgQty() { return numeral(_salesSummaryProps.get(this).qty).divide(_salesSummaryProps.get(this).soldOutQty).format('0,0.00'); }
-
+    get unitProfit() { return numeral(_salesSummaryProps.get(this).avgUnitSalesPrice).subtract(_salesSummaryProps.get(this).avgUnitStockPrice).value(); }
+    
+    get grossProfit() { return numeral(this.unitProfit).multiply(_salesSummaryProps.get(this).soldOutQty).value(); }
+    
     toJSON(){
         return {
             id: this.id,
@@ -62,10 +62,12 @@ export class SalesSummary {
             salesQty: this.salesQty,
             storeQty: this.storeQty,
             soldOutQty: this.soldOutQty,
-            avgSalesPrice: this.avgSalesPrice,
-            avgStockPrice: this.avgStockPrice,
-            unitSalesPrice: this.unitSalesPrice,
-            unitStockPrice: this.unitStockPrice,
+            avgUnitSalesPrice: this.avgUnitSalesPrice,
+            avgUnitStockPrice: this.avgUnitStockPrice,
+            totalStockPrice: this.totalStockPrice,
+            totalSalesPrice: this.totalSalesPrice,
+            unitProfit: this.unitProfit,
+            grossProfit: this.grossProfit,
         }
     }
 }

@@ -501,9 +501,9 @@ const ItemSalesReceiptWindow = () => {
                                     <td>{_datum.itemName}</td>
                                     <td>{_datum.qty}</td>
                                     <td>{_datum.qtyType}</td>
-                                    <td>{_datum.price}</td>
-                                    <td>{_datum.itemDiscount}</td>
-                                    <td>{_datum.totalAmount}</td>
+                                    <td>{numeral(_datum.price).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.itemDiscount).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.totalAmount).format('₦0,0.00')}</td>
                                 </tr>
                             ))}
                         </tbody>
