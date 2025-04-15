@@ -57,13 +57,66 @@ const SalesReport = () => {
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
             case 'xlsExport':
-                profitXlsxExport();
+                if (user.hasAuth('PROFIT_VIEW')) {
+                    profitXlsxExport();
+                }else {
+                    xlsxExport();
+                }
                 break;
             case 'pdfExport':
-                pdfExport();
+                if (user.hasAuth('PROFIT_VIEW')) {
+                    profitPdfExport();
+                }else {
+                    pdfExport();
+                }
                 break;
         }
 	}
+
+    const xlsxExport = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+
+        const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty", 
+            avgUnitSalesPrice: "Unit Sales Price (AVG)", totalSalesPrice: "Total Sales Price" } ];
+
+        const temp = [];
+        data.forEach(datum => {
+            const d = {...datum.toJSON()};
+            delete d.id;
+            delete d.unitProfit;
+            delete d.avgUnitStockPrice;
+            delete d.totalStockPrice;
+            delete d.grossProfit;
+            temp.push(d);
+        });
+        const wscols = [
+            { wch: Math.max(...data.map(datum => datum.itemName.length)) },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 15 },
+            { wch: 20 },
+            { wch: 15 },
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice"],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice"],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${filename}` + fileExtension);
+    };
 
     const profitXlsxExport = () => {
         //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
@@ -112,6 +165,53 @@ const SalesReport = () => {
     };
 
     const pdfExport = () => {
+        /*  ref:
+            *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
+            *   https://www.npmjs.com/package/jspdf-autotable
+            *   https://www.npmjs.com/package/jspdf */
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(15);
+
+        const title = "Sales Summary";
+
+        let totalStockPrice = numeral(0);
+        let totalSalesPrice = numeral(0);
+        let totalGrossProfit = numeral(0);
+        data.forEach(datum => {
+            totalStockPrice = numeral(totalStockPrice).add(datum.totalStockPrice);
+            totalSalesPrice = numeral(totalSalesPrice).add(datum.totalSalesPrice);
+            totalGrossProfit = numeral(totalGrossProfit).add(datum.grossProfit);
+        });
+        
+        doc.text(title, marginLeft, 40);
+        autoTable(doc, {
+            styles: { theme: 'striped' },
+            margin: { top: 50 },
+            // head: [['Name', 'Email']],
+            body: data,
+            columns: [
+                { header: 'Item Name', dataKey: 'itemName' },
+                { header: 'Store Qty', dataKey: 'storeQty' },
+                { header: 'Shelf Qty', dataKey: 'salesQty' },
+                { header: 'Total Qty', dataKey: 'totalQty' },
+                { header: 'Qty Sold', dataKey: 'soldOutQty' },
+                { header: 'Unit Sales Price (AVG)', dataKey: 'avgUnitSalesPrice' },
+                { header: 'Total Sales Price', dataKey: 'totalSalesPrice' },
+            ],
+        });
+        doc.text(`Total Sales Price: ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+
+        doc.save(`${filename}` + fileExtension);
+    }
+
+    const profitPdfExport = () => {
         /*  ref:
             *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
             *   https://www.npmjs.com/package/jspdf-autotable
