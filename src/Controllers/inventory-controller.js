@@ -138,8 +138,8 @@ const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize)
     });
 }
 
-const paginatePurchasesIdSearch = async (dtoItem) => {
-    return await httpService.post(`/api/inventory/purchases/${id}`, dtoItem);
+const paginatePurchasesIdSearch = async (id) => {
+    return await httpService.post(`/api/inventory/purchases/${id}`);
 }
 
 const updatePurchasedItem = async (item) => {

@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import Datetime from 'react-datetime';
 import { toast } from "react-toastify";
 import { format } from 'date-fns';
+import numeral from "numeral";
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -270,7 +271,8 @@ const PurchasesWindow = () => {
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data) {
-				setPagedData(buildTableData(response.data.content));
+				setItems(buildTableData(response.data.content));
+				//	setPagedData(buildTableData(response.data.content));
 				setTotalItemsCount(response.data.page.totalElements);
 			}
 			setNetworkRequest(false);
@@ -548,7 +550,7 @@ const PurchasesWindow = () => {
 		const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
 		const fileExtension = ".xlsx";
 
-		const Heading = [ {itemName: "Description", qty: "Total Qty", qtyType: "Type", qtyPerPkg: "Qty/Pkg", unitStockPrice: "Unit Stock", pkgStockPrice: "Pkg Stock", 
+		const Heading = [ {itemName: "Description", qty: "Total Qty", qtyType: "Type", qtyPerPkg: "Qty/Pkg", unitStockPrice: "Unit Stock Price", pkgStockPrice: "Pkg Stock Price", 
 			creationDate: "Date", purchaseAmount: "Amount", tractName: "Dept.", vendorName: "Vendor", cashPurchaseAmount: "Cash", creditPurchaseAmount: "Credit", id: "Purchase No." } ];
 		
 		const temp = [];
@@ -612,7 +614,7 @@ const PurchasesWindow = () => {
 			dtoItem.creationDate = item.creationDate;
 			dtoItem.qtyPerPkg = item.qtyPerPkg;
 			dtoItem.unitStockPrice = item.unitStockPrice;
-			dtoItem.pkgStockPrice = item.pkgStockPrice;
+			dtoItem.pkgStockPrice = numeral(item.unitStockPrice).multiply(item.qtyPerPkg).value();
 			dtoItem.tractName = item.tractName;
 			dtoItem.cashPurchaseAmount = item.cashPurchaseAmount;
 	

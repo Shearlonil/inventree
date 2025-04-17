@@ -50,7 +50,7 @@ const LedgerDisplay = () => {
 	});
 	const startDate = watch("startDate");
 
-	const dispensaryOffCanvasMenu = [
+	const ledgerOffCanvasMenu = [
 		// { label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
 		{ label: "Rename Ledger", onClickParams: {evtName: 'renameLedger'} },
 		{ label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
@@ -443,10 +443,9 @@ const LedgerDisplay = () => {
 
     return (
         <div className='container my-4'>
-            {/* <h3 className="mb-4"><span>Ledger Summary</span></h3> */}
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 text-white align-items-center" >
 				<div>
-					<OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
+					<OffcanvasMenu menuItems={ledgerOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
@@ -493,7 +492,7 @@ const LedgerDisplay = () => {
                         <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
                             <span className="fw-bold text-md-end h5 me-2">Parent:</span>
                             <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>
-                                <Link>
+                                <Link to={`/finance/groups/${ledgerParent.id}/view`}>
                                     {ledgerParent?.name}
                                 </Link>
                             </span>

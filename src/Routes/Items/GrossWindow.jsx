@@ -611,7 +611,7 @@ const GrossWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Item Name', 'Restock Level', 'Sales Qty (Unit)', 'Store Qty (Unit)', 'Packaging', 'Section', 'Options'],
+        headers: ['Item Name', 'Restock Level', 'Shelf Qty (Unit)', 'Store Qty (Unit)', 'Packaging', 'Section', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
         objectProps: ['itemName', 'restockLevel', 'qty', 'storeQty', 'pkgName', 'tractName'],
         //	React Menu

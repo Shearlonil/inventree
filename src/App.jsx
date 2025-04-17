@@ -47,6 +47,7 @@ import StockSummary from "./Routes/Inventory/StockSummary";
 import Settings from "./Routes/Settings";
 import ItemSalesReceiptWindow from "./Routes/Items/ItemSalesReceiptWindow";
 import AccountGroupsView from "./Routes/Finance/AccountGroupsView";
+import GroupDisplay from "./Routes/Finance/GroupDisplay";
 
 function App() {
 	return (
@@ -112,8 +113,9 @@ function App() {
 				<Route path={"/finance"} element={<ProtectedRoute />}>
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
 					<Route path={"ledgers/:id/view"} element={<LedgerDisplay />} />
-					<Route path={"ledgers"} element={<LedgersView />} />
 					<Route path={"ledgers/trash"} element={<TrashedLedgers />} />
+					<Route path={"ledgers"} element={<LedgersView />} />
+					<Route path={"groups/:id/view"} element={<GroupDisplay />} />
 					<Route path={"groups"} element={<AccountGroupsView />} />
 					<Route path="" element={<PageNotFound />} />
 				</Route>

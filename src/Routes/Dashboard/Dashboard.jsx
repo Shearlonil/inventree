@@ -61,7 +61,7 @@ const Dashboard = () => {
                             </div>
                         </div>}
 
-                        <div className="col-md-4 col-sm-12">
+                        {user.hasAuth('SALES_RECORD') && <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('sales/report')} style={{minHeight: '110px'}}>
                                 <div className="d-flex align-items-center gap-3">
                                     <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
@@ -77,7 +77,7 @@ const Dashboard = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div>}
 
                         <div className="col-md-4 col-sm-12">
                             <div className="btn p-3 border w-100" onClick={() => navigate('/dashboard/users/password/change')} style={{minHeight: '110px'}}>

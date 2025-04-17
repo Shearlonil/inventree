@@ -1,22 +1,38 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useForm } from 'react-hook-form';
+import Select from "react-select";
+import { format } from 'date-fns';
+import { Button, Col, Form, Row, Table } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
+import { Controller, useForm } from 'react-hook-form';
 
-import { schema } from '../../Utils/yup-schema-validator/contact-schema';
-import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import PaginationLite from '../../Components/PaginationLite';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
-import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import { Button, Col, Form, Row } from 'react-bootstrap';
 import ErrorMessage from '../../Components/ErrorMessage';
+import { useAuth } from '../../app-context/auth-user-context';
+import handleErrMsg from '../../Utils/error-handler';
+import genericController from '../../Controllers/generic-controller';
+import financeController from '../../Controllers/finance-controller';
 
 const AccountGroupsView = () => {
+        
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
+
+    const schema = yup.object().shape({
+        name: yup.string().required("Name is required"),
+        group: yup.object().nullable(),
+        chart: yup.object().nullable(),
+    });
 
     const {
         register,
         handleSubmit,
+        control,
         setValue,
         reset,
         formState: { errors },
@@ -25,81 +41,167 @@ const AccountGroupsView = () => {
         defaultValues: {
             //  Set default selection
             name: "",
-            address: "",
-            email: "",
-            phone_no: "", 
+            group: null,
+            chart: null,
         },
     });
     
     const [networkRequest, setNetworkRequest] = useState(false);
 
     //	for input dialog
-    const [showInputModal, setShowInputModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-    const [entityToEdit, setEntityToEdit] = useState(null);
     //	for confirmation dialog
     const [displayMsg, setDisplayMsg] = useState("");
+
+    const [groupOptions, setGroupOptions] = useState([]);
+    const [groupsLoading, setGroupsLoading] = useState(true);
+
+    const [chartOptions, setChartOptions] = useState([]);
+    const [chartsLoading, setChartsLoading] = useState(true);
+
+    const [groups, setGroups] = useState([]);
+    const [newGroup, setNewGroup] = useState(null);
         
     //	for pagination
     const [pageSize] = useState(20);
     const [totalItemsCount, setTotalItemsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
+    //  data returned from DataPagination
+    const [pagedData, setPagedData] = useState([]);
+    
+    useEffect( () => {
+        initialize();
+    }, []);
 
-    const ledgersOffCanvasMenu = [
-        { label: "Create", onClickParams: {evtName: 'create'} },
-        { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
-        { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
-        { label: "Show All", onClickParams: {evtName: 'showAll'} },
-        { label: "Trash", onClickParams: {evtName: 'trash'} },
-    ];
+	const initialize = async () => {
+		try {
+            setNetworkRequest(true);
+            //  find active groups and charts
+            const urls = [ '/api/finance/groups', '/api/finance/charts' ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: groupsRequest, 1: chartsRequest } = response;
 
-    const handleOffCanvasMenuItemClick = async (onclickParams, e) => {}
+            //	check if the request to fetch groups doesn't fail before setting values to display
+            if(groupsRequest){
+				setGroupOptions(groupsRequest.data.map(group => ({label: group.name, value: group})));
+                groupsRequest.data.sort(
+                    (a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : ((b.name.toLowerCase() > a.name.toLowerCase()) ? -1 : 0)
+                )
+                setGroups(groupsRequest.data);
+                setGroupsLoading(false);
+                setTotalItemsCount(groupsRequest.data.length);
+            }
+
+            //	check if the request to fetch charts doesn't fail before setting values to display
+            if(chartsRequest){
+				setChartOptions(chartsRequest.data.map( chart => ({label: chart.name, value: chart})));
+				setChartsLoading(false);
+            }
+            setNetworkRequest(false);
+		} catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	};
 
     const setPageChanged = async (pageNumber) => {
         setCurrentPage(pageNumber);
         const startIndex = (pageNumber - 1) * pageSize;
-        // setPagedData(filteredLedgers.slice(startIndex, startIndex + pageSize));
+        setPagedData(groups.slice(startIndex, startIndex + pageSize));
     };
 
     const handleCloseModal = () => {
         setDisplayMsg("");
         setShowConfirmModal(false);
-        setShowInputModal(false);
     };
-    
-    const handleInputOK = async (str) => {
-        let arr = [];
-        switch (confirmDialogEvtName) {
-            case 'searchByName':
-                break;
-            case 'create':
-                break;
-            case 'rename':
-                break;
-        }
-    }
     
     const handleConfirmOK = async () => {
         setShowConfirmModal(false);
         switch (confirmDialogEvtName) {
-            case 'delete':
+            case 'create':
+                await createGroup();
                 break;
         }
     }
 
-    const onSubmit = async (data) => {}
+    //  Handle item selection change
+    const handleChartChange = (chart) => {
+        setValue('group', null);
+    };
+
+    //  Handle item selection change
+    const handleGroupChange = (group) => {
+        setValue('chart', null);
+    };
+
+    const onSubmit = async (data) => {
+        setConfirmDialogEvtName('create');
+        const dtoAccGroup = {
+            name: data.name,
+            parentChartId: data.chart?.value.id,
+            parentGroupId: data.group?.value.id
+        };
+        setDisplayMsg(`Create new account group with name ${dtoAccGroup.name} ?`)
+        setNewGroup(dtoAccGroup);
+        setShowConfirmModal(true);
+    }
+
+    const createGroup = async () => {
+        try {
+            setNetworkRequest(true);
+            
+            const response = await financeController.createGroup(newGroup);
+            const arr = [...groups, response.data];
+            arr.sort(
+                (a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : ((b.name.toLowerCase() > a.name.toLowerCase()) ? -1 : 0)
+            )
+            setGroups(arr);
+            setNetworkRequest(false);
+            toast.info("Group created");
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return createGroup();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    }
 
     return (
         <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                <div>
-                    <OffcanvasMenu menuItems={ledgersOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
-                </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Account Groups</span>
-                        <img src={SVG.ledger} style={{ width: "50px", height: "50px" }} />
+                        <img src={SVG.group} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
@@ -107,105 +209,72 @@ const AccountGroupsView = () => {
                 </span>
             </div>
             
-            <div className="container row mx-auto my-3 rounded bg-light shadow border py-4 px-2 bg-white-subtle" style={{ boxShadow: "black 3px 2px 5px" }} >
+            <div className="container row mx-auto my-3 p-4 rounded bg-light shadow">
                 <h4 className="mb-4 text-primary">Create Group:-</h4>
-                <Row className="align-items-center">
-                    <Col sm lg="3" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">Start Date</Form.Label>
-                        <input
-                            type="text"
-                            className="form-control mb-2 shadow-sm"
-                            placeholder="Customer Name"
-                            {...register("name")}
-                        />
-                        <ErrorMessage source={errors.startDate} />
-                    </Col>
-                    <Col sm lg="3" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">End Date</Form.Label>
-                        <input
-                            type="text"
-                            className="form-control mb-2 shadow-sm"
-                            placeholder="Customer Name"
-                            {...register("name")}
-                        />
-                        <ErrorMessage source={errors.endDate} />
-                    </Col>
-                    <Col sm lg="3" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">End Date</Form.Label>
-                        <input
-                            type="text"
-                            className="form-control mb-2 shadow-sm"
-                            placeholder="Customer Name"
-                            {...register("name")}
-                        />
-                        <ErrorMessage source={errors.endDate} />
-                    </Col>
-                    <Col sm lg="3" className="align-self-center text-center mt-4">
-                        <Button className="w-100" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
-                            { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
-                            { (!networkRequest) && `Search` }
-                        </Button>
-                    </Col>
-                </Row>
-            </div>
-
-            <div className="container row mx-auto my-3 p-3 rounded bg-light shadow border">
-                <h4 className="mb-4 text-primary">Create Group:-</h4>
-
                 <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Group Name:</p>
+                    <p className="h5 mb-2">Group Name</p>
                     <input
                         type="text"
                         className="form-control mb-2 shadow-sm"
-                        placeholder="Customer Name"
+                        placeholder="Group Name"
                         {...register("name")}
                     />
-                    <small className="text-danger">{errors.name?.message}</small>
+                    <ErrorMessage source={errors.name} />
                 </div>
-
                 <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Parent Group:</p>
-                    <input
-                        type="tel"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="Phone Number"
-                        {...register("phone_no")}
+                    <p className="h5 mb-2">Parent Group</p>
+                    <Controller
+                        name="group"
+                        control={control}
+                        render={({ field: { onChange, value } }) => (
+                            <Select
+                                required
+                                name="group"
+                                placeholder="Select Parent Group..."
+                                className="text-dark"
+                                isLoading={groupsLoading}
+                                options={groupOptions}
+                                value={value}
+                                onChange={(val) => {
+                                    onChange(val);
+                                    handleGroupChange(val);
+                                }}
+                            />
+                        )}
                     />
-                    <small className="text-danger">{errors.phone_no?.message}</small>
+                    <ErrorMessage source={errors.group} />
                 </div>
+                {/*  */}
 
                 <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Parent Chart:</p>
-                    <input
-                        type="text"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder="Address here"
-                        {...register("address")}
+                    <p className="h5 mb-2">Parent Chart</p>
+                    <Controller
+                        name="chart"
+                        control={control}
+                        render={({ field: { onChange, value } }) => (
+                            <Select
+                                required
+                                name="chart"
+                                placeholder="Select Parent Chart..."
+                                className="text-dark"
+                                isLoading={chartsLoading}
+                                options={chartOptions}
+                                value={value}
+                                onChange={(val) => {
+                                    onChange(val);
+                                    handleChartChange(val);
+                                }}
+                            />
+                        )}
                     />
-                    <small className="text-danger">{errors.address?.message}</small>
+                    <ErrorMessage source={errors.chart} />
                 </div>
 
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">{' '}</p>
-                    <button type="reset" className="btn btn-outline-danger ms-auto" onClick={() => resetForm()}>
-                        <span className="d-flex gap-2 align-items-center px-4">
-                            <span className="fs-5">Reset</span>
-                        </span>
-                    </button>
-                </div>
-
-                <div className="d-flex gap-3">
-                    <button type="reset" className="btn btn-outline-danger ms-auto" onClick={() => resetForm()}>
-                        <span className="d-flex gap-2 align-items-center px-4">
-                            <span className="fs-5">Reset</span>
-                        </span>
-                    </button>
-
-                    <button className="btn btn-outline-success" onClick={handleSubmit(onSubmit)}>
-                        <span className="d-flex gap-2 align-items-center px-4">
-                            <span className="fs-5">Save</span>
-                        </span>
-                    </button>
+                <div className="col-md-3 col-12 mt-4">
+                    <Button className="w-100 mt-2" onClick={handleSubmit(onSubmit)} disabled={networkRequest}>
+                        { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+                        { (!networkRequest) && `Create` }
+                    </Button>
                 </div>
             </div>
 
@@ -215,7 +284,28 @@ const AccountGroupsView = () => {
 
             <div className={`container mt-4 p-3 shadow-sm border border-2 rounded-1 ${networkRequest ? 'disabledDiv' : ''}`}>
                 <div className="border bg-light my-3">
-                    {/* <TableM tableProps={tableProps} tableData={pagedData} /> */}
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Name</th>
+                                <th className='text-danger'>Date</th>
+                                <th className='text-danger'>Creator</th>
+                                <th className='text-danger'>Option</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pagedData.map((group, index) => (
+                                <tr className='' key={index}>
+                                    <td>{group.name}</td>
+                                    <td>{format(group.creationDate, "dd/MM/yyyy")}</td>
+                                    <td>{group.creatorName}</td>
+                                    <td>
+                                        <Link to={`${group.id}/view`}>View</Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
                 <div className="mt-3">
                     <PaginationLite
@@ -230,12 +320,6 @@ const AccountGroupsView = () => {
                 show={showConfirmModal}
                 handleClose={handleCloseModal}
                 handleConfirm={handleConfirmOK}
-                message={displayMsg}
-            />
-            <InputDialog
-                show={showInputModal}
-                handleClose={handleCloseModal}
-                handleConfirm={handleInputOK}
                 message={displayMsg}
             />
         </div>
