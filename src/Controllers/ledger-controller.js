@@ -16,10 +16,11 @@ const findById = async (id) => {
     });
 };
 
-const create = async (name) => {
+const create = async (name, groupId) => {
     return await httpService.post(`/api/ledgers/create`, null, {
         params: {
             name,
+            groupId
         }
     });
 };

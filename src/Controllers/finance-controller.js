@@ -11,12 +11,32 @@ const createGroup = async (dtoAccGroup) => {
     return await httpService.post(`/api/finance/groups/create`, dtoAccGroup);
 }
 
+const renameGroup = async (dtoAccGroup) => {
+    return await httpService.post(`/api/finance/groups/rename`, dtoAccGroup);
+}
+
+const moveAccGroupToGroup = async (dtoAccGroup) => {
+    return await httpService.post(`/api/finance/groups/move-to-group`, dtoAccGroup);
+}
+
+const moveAccGroupToChart = async (dtoAccGroup) => {
+    return await httpService.post(`/api/finance/groups/move-to-chart`, dtoAccGroup);
+}
+
 const findAccGroupById = async (id) => {
     return await httpService.get(`/api/finance/groups/${id}`);
+}
+
+const findAccChartById = async (id) => {
+    return await httpService.get(`/api/finance/charts/${id}`);
 }
 
 export default {
     backup,
     createGroup,
+    renameGroup,
+    moveAccGroupToGroup,
+    moveAccGroupToChart,
     findAccGroupById,
+    findAccChartById,
 }

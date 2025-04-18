@@ -48,6 +48,7 @@ import Settings from "./Routes/Settings";
 import ItemSalesReceiptWindow from "./Routes/Items/ItemSalesReceiptWindow";
 import AccountGroupsView from "./Routes/Finance/AccountGroupsView";
 import GroupDisplay from "./Routes/Finance/GroupDisplay";
+import AccChartDisplay from "./Routes/Finance/AccChartDisplay";
 
 function App() {
 	return (
@@ -115,6 +116,7 @@ function App() {
 					<Route path={"ledgers/:id/view"} element={<LedgerDisplay />} />
 					<Route path={"ledgers/trash"} element={<TrashedLedgers />} />
 					<Route path={"ledgers"} element={<LedgersView />} />
+					<Route path={"charts/:id/view"} element={<AccChartDisplay />} />
 					<Route path={"groups/:id/view"} element={<GroupDisplay />} />
 					<Route path={"groups"} element={<AccountGroupsView />} />
 					<Route path="" element={<PageNotFound />} />

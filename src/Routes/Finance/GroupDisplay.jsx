@@ -40,7 +40,7 @@ const GroupDisplay = () => {
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
     //  for holding input string, parent group or chart
-    const [content, setContent] = useState({});
+    const [content, setContent] = useState(null);
     
     const [group, setGroup] = useState(null);
     const [children, setChildren] = useState([]);
@@ -152,10 +152,12 @@ const GroupDisplay = () => {
         switch (confirmDialogEvtName) {
             case 'moveToChart':
                 setDisplayMsg(`move group from ${group.parentName} to parent chart ${parent.name}?`);
+                setContent(parent);
                 setShowConfirmModal(true);
                 break;
             case 'moveToGroup':
                 setDisplayMsg(`move group from ${group.parentName} to parent group ${parent.name}?`);
+                setContent(parent);
                 setShowConfirmModal(true);
                 break;
         }
@@ -166,6 +168,7 @@ const GroupDisplay = () => {
             case 'renameGroup':
                 setInputStr(str);
                 setDisplayMsg(`set new group name from ${group.name} to ${str}?`);
+                setContent(str);
                 setShowConfirmModal(true);
                 break;
         }
@@ -201,10 +204,9 @@ const GroupDisplay = () => {
     const renameGroup = async () => {
         try {
             setNetworkRequest(true);
-            // await groupController.rename(group.id, inputStr);
-            const temp = new group(group);
-            temp.name = inputStr;
-            temp.creator = group.creator;
+            const temp = {...group};
+            temp.name = content;
+            await financeController.renameGroup(temp);
             setGroup(temp);
             setNetworkRequest(false);
         } catch (error) {
@@ -214,6 +216,70 @@ const GroupDisplay = () => {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
                     return renameGroup();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
+
+    const moveToGroup = async () => {
+        try {
+            setNetworkRequest(true);
+            const temp = {...group};
+            temp.parentName = content.name;
+            temp.parentGroupId = content.id;
+            temp.parentChartId = null;
+            console.log(content);
+            await financeController.moveAccGroupToGroup(temp);
+            setGroup(temp);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return moveToGroup();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
+
+    const moveToChart = async () => {
+        try {
+            setNetworkRequest(true);
+            const temp = {...group};
+            temp.parentName = content.name;
+            temp.parentChartId = content.id;
+            temp.parentGroupId = null;
+            console.log(content);
+            await financeController.moveAccGroupToChart(temp);
+            setGroup(temp);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return moveToChart();
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -271,7 +337,7 @@ const GroupDisplay = () => {
                         <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
                             <span className="fw-bold text-md-end h5 me-2">Parent:</span>
                             <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>
-                                <Link to={`${group?.parentChartId ? `/finance/chart/${group?.parentChartId}/view` : `/finance/groups/${group?.parentGroupId}/view`}`}>
+                                <Link to={`${group?.parentChartId ? `/finance/charts/${group?.parentChartId}/view` : `/finance/groups/${group?.parentGroupId}/view`}`}>
                                     {group?.parentName}
                                 </Link>
                             </span>

@@ -1,26 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Button } from 'react-bootstrap';
+import { Controller, useForm } from 'react-hook-form';
+import * as yup from "yup";
+import { yupResolver } from '@hookform/resolvers/yup';
+import Select from "react-select";
 
 import { useAuth } from '../../../app-context/auth-user-context';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import SVG from '../../../assets/Svg';
 import handleErrMsg from '../../../Utils/error-handler';
 import ledgerController from '../../../Controllers/ledger-controller';
+import genericController from '../../../Controllers/generic-controller';
 import TableMain from '../../../Components/TableView/TableMain';
 import PaginationLite from '../../../Components/PaginationLite';
 import ReactMenu from '../../../Components/ReactMenu';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
-import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
+import { OribitalLoading, ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
 import { Ledger } from '../../../Entities/Ledger';
+import ErrorMessage from '../../../Components/ErrorMessage';
 
 const LedgersView = () => {
     const navigate = useNavigate();
             
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
+    
+    const schema = yup.object().shape({
+        name: yup.string().required("Name is required"),
+        group: yup.object().required("Account Group is required"),
+    });
 
     //	menus for the react-menu in table
     const menuItems = [
@@ -28,6 +40,22 @@ const LedgersView = () => {
         // { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'View', onClickParams: {evtName: 'view'} },
     ];
+    
+    const {
+        register,
+        handleSubmit,
+        control,
+        setValue,
+        reset,
+        formState: { errors },
+    } = useForm({
+        resolver: yupResolver(schema),
+        defaultValues: {
+            //  Set default selection
+            name: "",
+            group: null,
+        },
+    });
     
     const [networkRequest, setNetworkRequest] = useState(false);
 
@@ -45,13 +73,15 @@ const LedgersView = () => {
     const [currentPage, setCurrentPage] = useState(1);
     
     const [ledgers, setLedgers] = useState([]);
+    const [newLedger, setNewLedger] = useState(null);
+    
+    const [groupOptions, setGroupOptions] = useState([]);
         
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
     const [filteredLedgers, setFilteredLedgers] = useState([]);
 
     const ledgersOffCanvasMenu = [
-        { label: "Create", onClickParams: {evtName: 'create'} },
         { label: "Search By Name", onClickParams: {evtName: 'searchByName'} },
         { label: "Sort By Name", onClickParams: {evtName: 'sortByName'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
@@ -65,15 +95,26 @@ const LedgersView = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await ledgerController.findAllActive();
+            const urls = [ '/api/finance/groups', `/api/ledgers/active` ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: groupsRequest, 1: ledgersRequest } = response;
 
-            if (response && response.data && response.data.length > 0) {
+            if (ledgersRequest && ledgersRequest.data && ledgersRequest.data.length > 0) {
                 const arr = [];
-                response.data.forEach( ledger => arr.push(new Ledger(ledger)) );
+                ledgersRequest.data.forEach( ledger => arr.push(new Ledger(ledger)) );
                 setLedgers(arr);
                 setFilteredLedgers(arr);
-                setTotalItemsCount(response.data.length);
+                setTotalItemsCount(ledgersRequest.data.length);
             }
+
+            //	check if the request to fetch groups doesn't fail before setting values to display
+            if(groupsRequest && groupsRequest.data){
+				setGroupOptions(groupsRequest.data.map(group => ({label: group.name, value: group})));
+                groupsRequest.data.sort(
+                    (a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : ((b.name.toLowerCase() > a.name.toLowerCase()) ? -1 : 0)
+                )
+            }
+
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
@@ -106,6 +147,8 @@ const LedgersView = () => {
         setEntityToEdit(null);
         setConfirmDialogEvtName(null);
         handleCloseModal();
+        setNewLedger(null);
+        reset();
     };
 
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
@@ -173,16 +216,6 @@ const LedgersView = () => {
                 }
                 setCurrentPage(1);
                 break;
-            case 'create':
-                if(user.hasAuth('FINANCE')){
-                    setConfirmDialogEvtName(onclickParams.evtName);
-                    setDisplayMsg(`Enter Unique ledger name`);
-                    setShowInputModal(true);
-                }else {
-                    toast.error("Account doesn't support this operation. Please contact your supervisor");
-                    return;
-                }
-                break;
         }
     }
 
@@ -201,9 +234,6 @@ const LedgersView = () => {
                 setTotalItemsCount(arr.length);
                 setCurrentPage(1);
                 break;
-            case 'create':
-                createLedger(str);
-                break;
             case 'rename':
                 renameLedger(str);
                 break;
@@ -216,14 +246,35 @@ const LedgersView = () => {
             case 'delete':
                 deleteLedger();
                 break;
+            case 'create':
+                if(user.hasAuth('FINANCE')){
+                    await createLedger();
+                }else {
+                    toast.error("Account doesn't support this operation. Please contact your supervisor");
+                    return;
+                }
+                break;
         }
     }
+
+    const onSubmit = async (data) => {
+        setConfirmDialogEvtName('create');
+        console.log(data);
+        const ledger = {
+            name: data.name,
+            groupId: data.group?.value.id
+        };
+        setDisplayMsg(`Create new account ledger with name ${data.name} ?`)
+        setConfirmDialogEvtName('create');
+        setNewLedger(ledger);
+        setShowConfirmModal(true);
+    }
     
-    const createLedger = async (name) => {
+    const createLedger = async () => {
         try {
             setNetworkRequest(true);
             //  network request to update data
-            const response = await ledgerController.create(name);
+            const response = await ledgerController.create(newLedger.name, newLedger.groupId);
             if(response && response.data){
                 const ledger = new Ledger(response.data);
                 const arr = [...filteredLedgers, ledger];
@@ -387,6 +438,48 @@ const LedgersView = () => {
                 <span className='text-center m-1'>
                     Create, View and modify accounting Legers. View ledger transactions by custom dates
                 </span>
+            </div>
+            
+            <div className="container row mx-auto my-3 p-4 rounded bg-light shadow">
+                <h4 className="mb-4 text-primary">Create Ledger:-</h4>
+                <div className="col-md-4 col-12 mb-3">
+                    <p className="h5 mb-2">Ledger Name</p>
+                    <input
+                        type="text"
+                        className="form-control mb-2 shadow-sm"
+                        placeholder="Ledger Name"
+                        {...register("name")}
+                    />
+                    <ErrorMessage source={errors.name} />
+                </div>
+                <div className="col-md-4 col-12 mb-3">
+                    <p className="h5 mb-2">Parent Group</p>
+                    <Controller
+                        name="group"
+                        control={control}
+                        render={({ field: { onChange, value } }) => (
+                            <Select
+                                required
+                                name="group"
+                                placeholder="Select Parent Group..."
+                                className="text-dark"
+                                isLoading={networkRequest}
+                                options={groupOptions}
+                                value={value}
+                                onChange={(val) => onChange(val) }
+                            />
+                        )}
+                    />
+                    <ErrorMessage source={errors.group} />
+                </div>
+                {/*  */}
+
+                <div className="col-md-3 col-12 mt-4">
+                    <Button className="w-100 mt-2" onClick={handleSubmit(onSubmit)} disabled={networkRequest}>
+                        { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+                        { (!networkRequest) && `Create` }
+                    </Button>
+                </div>
             </div>
 
             <div className="justify-content-center d-flex">
