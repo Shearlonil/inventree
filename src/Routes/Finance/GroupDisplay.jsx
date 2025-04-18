@@ -58,7 +58,7 @@ const GroupDisplay = () => {
         if(user.hasAuth('FINANCE')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
     }, [id]);

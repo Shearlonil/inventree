@@ -1,7 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import Home from "./Routes/Home";
-import AcctVoucherCreation from "./Routes/AcctVoucherCreation";
 import MonoTransaction from "./Routes/SalesTransaction/MonoTransaction";
 import StoreItemReg from "./Routes/Inventory/StoreItemReg";
 import Test from "./Routes/Test";
@@ -49,6 +48,7 @@ import ItemSalesReceiptWindow from "./Routes/Items/ItemSalesReceiptWindow";
 import AccountGroupsView from "./Routes/Finance/AccountGroupsView";
 import GroupDisplay from "./Routes/Finance/GroupDisplay";
 import AccChartDisplay from "./Routes/Finance/AccChartDisplay";
+import AcctVoucherCreation from "./Routes/Finance/AcctVoucherCreation";
 
 function App() {
 	return (

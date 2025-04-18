@@ -9,7 +9,7 @@ import inventoryController from '../../Controllers/inventory-controller';
 import genericController from '../../Controllers/generic-controller';
 import handleErrMsg from '../../Utils/error-handler';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
-import RestockForm from '../../Components/StoreComp/RestockForm';
+import RestockForm from '../../Components/InventoryComp/RestockForm';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';

@@ -30,6 +30,9 @@ export class LedgerTransaction {
     get ledgerId() { return _transactionProps.get(this).ledgerId }
     set ledgerId(ledgerId) { _transactionProps.get(this).ledgerId = ledgerId }
     
+    get ledgerName() { return _transactionProps.get(this).ledgerName }
+    set ledgerName(ledgerName) { _transactionProps.get(this).ledgerName = ledgerName }
+    
     get ledgerVchId() { return _transactionProps.get(this).ledgerVchId }
     set ledgerVchId(ledgerVchId) { _transactionProps.get(this).ledgerVchId = ledgerVchId }
 
@@ -37,10 +40,16 @@ export class LedgerTransaction {
     set balance(balance) { _transactionProps.get(this).balance = balance }
 
     get crAmount() { return _transactionProps.get(this).crAmount ? numeral(_transactionProps.get(this).crAmount).format('₦0,0.00') : numeral(0).format('₦0,0.00'); }
-    set crAmount(crAmount) { _transactionProps.get(this).crAmount = crAmount }
+    set crAmount(crAmount) {
+        _transactionProps.get(this).crAmount = crAmount;
+        _transactionProps.get(this).drAmount = 0;
+    }
 
     get drAmount() { return _transactionProps.get(this).drAmount ? numeral(_transactionProps.get(this).drAmount).format('₦0,0.00') : numeral(0).format('₦0,0.00'); }
-    set drAmount(drAmount) { _transactionProps.get(this).drAmount = drAmount }
+    set drAmount(drAmount) {
+        _transactionProps.get(this).drAmount = drAmount;
+        _transactionProps.get(this).crAmount = 0
+    }
             
     get date() { return _transactionProps.get(this).date ? format(_transactionProps.get(this).date, 'dd/MM/yyyy HH:mm:ss') : ''; }
     set date(date) { _transactionProps.get(this).date = date; }
@@ -50,10 +59,11 @@ export class LedgerTransaction {
             id: this.id,
             description: this.description,
             ledgerId: this.ledgerId,
+            ledgerName: this.ledgerName,
             ledgerVchId: this.ledgerVchId,
             balance: this.balance,
-            crAmount: this.crAmount,
-            drAmount: this.drAmount,
+            crAmount: numeral(this.crAmount).value(),
+            drAmount: numeral(this.drAmount).value(),
             date: this.date,
         }
     }

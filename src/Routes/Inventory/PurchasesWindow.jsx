@@ -28,7 +28,7 @@ import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
-import PurchasesUpdateForm from "../../Components/StoreComp/PurchasesUpdateForm";
+import PurchasesUpdateForm from "../../Components/InventoryComp/PurchasesUpdateForm";
 import genericController from "../../Controllers/generic-controller";
 import DateDialog from '../../Components/DialogBoxes/DateDialog';
 

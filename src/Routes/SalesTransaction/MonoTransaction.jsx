@@ -251,7 +251,7 @@ const MonoTransaction = () => {
 				? numeral(data.item_disc).divide(100).multiply(data.qty_type.toLowerCase() === "unit" ? item.unitSalesPrice : item.pkgSalesPrice).value() 
 				: data.item_disc;
 			}else {
-				toast.error("Account doesn't support discount feature. Please contanct your supervisor");
+				toast.error("Account doesn't support discount feature. Please contact your supervisor");
 				return;
 			}
 		}

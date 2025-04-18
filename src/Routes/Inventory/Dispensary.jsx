@@ -19,7 +19,7 @@ import { DispensaryItem } from '../../Entities/DispensaryItem';
 import PaginationLite from '../../Components/PaginationLite';
 import inventoryController from '../../Controllers/inventory-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
-import DispensaryForm from '../../Components/StoreComp/DispensaryForm';
+import DispensaryForm from '../../Components/InventoryComp/DispensaryForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 
@@ -105,7 +105,7 @@ const Dispensary = () => {
                 initialize();
             }
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
     }, [dispensary_id]);

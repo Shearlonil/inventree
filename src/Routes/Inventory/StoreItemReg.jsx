@@ -5,7 +5,7 @@ import { toast } from "react-toastify";
 import { FaStoreAlt } from "react-icons/fa";
 import { MdAddBusiness } from "react-icons/md";
 
-import StoreItemRegForm from "../../Components/StoreComp/StoreItemRegForm";
+import StoreItemRegForm from "../../Components/InventoryComp/StoreItemRegForm";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";

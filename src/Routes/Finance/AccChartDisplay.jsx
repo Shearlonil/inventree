@@ -9,7 +9,6 @@ import handleErrMsg from '../../Utils/error-handler';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import SVG from '../../assets/Svg';
 import financeController from '../../Controllers/finance-controller';
-import genericController from '../../Controllers/generic-controller';
 
 const AccChartDisplay = () => {
     const navigate = useNavigate();
@@ -27,7 +26,7 @@ const AccChartDisplay = () => {
         if(user.hasAuth('FINANCE')){
             initialize();
         }else {
-            toast.error("Account doesn't support viewing this page. Please contanct your supervisor");
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
     }, [id]);
