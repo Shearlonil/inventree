@@ -9,7 +9,7 @@ import { LedgerTransaction } from '../../Entities/LedgerTransaction';
 import numeral from 'numeral';
 
 const VchCreationForm = (props) => {
-	const { data, fnSave, ledgerOptions, networkRequest }  = props;
+	const { data, fnAdd, ledgerOptions, networkRequest }  = props;
         
     const schema = yup.object().shape({
         ledger: yup.object().required("Select a ledger"),
@@ -55,7 +55,7 @@ const VchCreationForm = (props) => {
             }else {
                 data.crAmount = formData.amount;
             }
-            fnSave(data);
+            fnAdd(data);
         }else {
             const transaction = new LedgerTransaction();
             transaction.ledgerId = formData.ledger.value.id;
@@ -66,7 +66,7 @@ const VchCreationForm = (props) => {
             }else {
                 transaction.crAmount = formData.amount;
             }
-            fnSave(transaction);
+            fnAdd(transaction);
         }
         reset();
 	};

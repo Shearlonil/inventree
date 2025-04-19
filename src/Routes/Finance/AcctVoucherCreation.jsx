@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Form, Modal, Table } from "react-bootstrap";
-import Select from "react-select";
-import * as yup from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
+import { Modal } from "react-bootstrap";
+import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
-import { Controller, useForm } from "react-hook-form";
+import numeral from "numeral";
+import { toast } from "react-toastify";
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
-import ErrorMessage from "../../Components/ErrorMessage";
 import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
 import { useAuth } from "../../app-context/auth-user-context";
@@ -15,7 +13,8 @@ import VchCreationForm from "../../Components/Finance/VchCreationForm";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
-import numeral from "numeral";
+import handleErrMsg from '../../Utils/error-handler';
+import financeController from "../../Controllers/finance-controller";
 
 const AcctVoucherCreation = () => {
 		
@@ -90,7 +89,7 @@ const AcctVoucherCreation = () => {
 		setShowConfirmModal(false);
     };
 
-	const fnSave = (data) => {
+	const fnAdd = (data) => {
 		const indexPos = ledgerTransactions.findIndex(i => i.ledgerId === data.ledgerId);
 		if(indexPos > -1){
 			//	replace old item found at index position in ledgerTransactions array with edited one
@@ -128,8 +127,65 @@ const AcctVoucherCreation = () => {
 			case 'delete':
 				break;
 			case "save":
+				saveTransactions();
+				break;
+			case "cancel":
+				setLedgerTransactions([]);
+				calcTotalAmounts([]);
 				break;
 		}
+	}
+
+    const handleCancel = () => {
+		if(ledgerTransactions.length === 0){
+			return;
+		}
+		setDisplayMsg('Cancel transaction?');
+		setConfirmDialogEvtName('cancel');
+		setShowConfirmModal(true);
+	};
+
+    const handleSave = () => {
+		if(ledgerTransactions.length === 0){
+			return;
+		}
+		if(numeral(totalDrAmount).difference(totalCrAmount)){
+			toast.error('Dr and Cr must balance');
+			return;
+		}
+		setDisplayMsg('Save transaction?');
+		setConfirmDialogEvtName('save');
+		setShowConfirmModal(true);
+	};
+
+	const saveTransactions = async () => {
+		try {
+            setNetworkRequest(true);
+            await financeController.createVoucher(ledgerTransactions);
+
+            setLedgerTransactions([]);
+			calcTotalAmounts([]);
+
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return saveTransactions();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
 	}
 		
 	//  private helper function to calculate total debit and credit
@@ -175,7 +231,7 @@ const AcctVoucherCreation = () => {
 				<div className="row p-3 rounded-2 my-3 py-4 border shadow">
 					<div className="col-12 col-md-4 my-3">
 						<aside className="p-3 d-none d-md-block bg-light shadow-lg">
-							<VchCreationForm fnSave={fnSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
+							<VchCreationForm fnAdd={fnAdd} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
 						</aside>
 					</div>
 					<div className="col-12 col-md-8 border border rounded-3 p-1 bg-light my-3 shadow">
@@ -193,16 +249,10 @@ const AcctVoucherCreation = () => {
 					</div>
 				</div>
 				<div className="d-flex flex-end justify-content-end gap-3">
-					<button
-						className="btn btn-danger rounded-3 py-1"
-						style={{ width: "7em" }}
-					>
+					<button className="btn btn-danger rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleCancel()} >
 						Cancel
 					</button>
-					<button
-						className="btn btn-success rounded-3 py-1"
-						style={{ width: "7em" }}
-					>
+					<button className="btn btn-success rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleSave()} >
 						Ok
 					</button>
 				</div>
@@ -213,13 +263,20 @@ const AcctVoucherCreation = () => {
                 handleConfirm={handleConfirmOK}
                 message={displayMsg}
             />
+			<div className="d-md-none" style={{ position: "fixed", bottom: "40px", right: "30px", cursor: "pointer", zIndex: 999}}>
+				<div variant="dark"
+					style={{ boxShadow: '4px 4px 4px #9E9E9E', maxWidth: '50px' }}
+					className="m-2 p-2 rounded bg-success text-white rounded-5 d-flex justify-content-center" onClick={handleShowFormModal}>
+					<LuTicket className="text-white" size={'25px'} />
+				</div>
+			</div>
 
             <Modal show={showFormModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Voucher Creation Form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <VchCreationForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
+                    <VchCreationForm fnAdd={fnAdd} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
                 </Modal.Body>
             </Modal>
 		</div>
