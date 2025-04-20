@@ -44,40 +44,28 @@ export class ReceiptSalesItem {
     /*  this holds either unit stock price or pack stock price. Depends on the qtyType. */
     get stockPrice() { return _summaryProps.get(this).stockPrice }
     set stockPrice(stockPrice) { _summaryProps.get(this).stockPrice = stockPrice }
+    get tempStockPrice() { return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value() }
 
     get itemDiscount() { return _summaryProps.get(this).itemDiscount; }
     set itemDiscount(itemDiscount) { _summaryProps.get(this).itemDiscount = itemDiscount; }
     
     get totalAmount() {
-        return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
         /*
             NOTE:   price (itemSoldOutPrice) is already less item discount
             const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
             const tempDisc = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).itemDiscount).value();
             return numeral(tempAmount).subtract(tempDisc).value();
         */
+        return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).price).value();
     }
     
     get profit() {
-        const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value();
+        // const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value();
+        const tempAmount = numeral(this.unitQty).multiply(this.unitStockPrice).value();
         return numeral(this.totalAmount).subtract(tempAmount).value();
     }
-
-    toJSON(){
-        return {
-            id: this.id,
-            itemName: this.itemName,
-            qty: this.qty,
-            qtyType: this.qtyType,
-            itemDiscount: this.itemDiscount,
-            price: this.price,
-            unitStockPrice: this.unitStockPrice,
-            stockPrice: this.stockPrice,
-            unitQty: this.unitQty,
-        }
-    }
     
-    /*  unitQty represents the quantity in units only. While qty above could be unit or pkg
+    /*  unitQty represents the quantity in units only. While qty above could be unit or pkg, depends on the qtyType */
     get unitQty() { 
         return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
             _summaryProps.get(this).qty : 
@@ -95,5 +83,19 @@ export class ReceiptSalesItem {
             _summaryProps.get(this).price : 
            numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
     }
-    */
+
+    toJSON(){
+        return {
+            id: this.id,
+            itemName: this.itemName,
+            qty: this.qty,
+            qtyType: this.qtyType,
+            itemDiscount: this.itemDiscount,
+            price: this.price,
+            unitStockPrice: this.unitStockPrice,
+            stockPrice: this.stockPrice,
+            unitQty: this.unitQty,
+        }
+    }
+    
 }

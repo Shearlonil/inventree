@@ -71,7 +71,12 @@ const AccountGroupsView = () => {
     const [pagedData, setPagedData] = useState([]);
     
     useEffect( () => {
-        initialize();
+        if(user.hasAuth('FINANCE')){
+            initialize();
+        }else {
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
+            navigate('/404');
+        }
     }, []);
 
 	const initialize = async () => {

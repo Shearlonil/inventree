@@ -664,7 +664,6 @@ const SalesWindow = () => {
             delete a.expDate;
             temp.push(a);
         });
-        console.log('temp data', temp);
         const wscols = [
             { wch: Math.max(...temp.map(datum => datum.itemName.length)) },
             { wch: 15 },

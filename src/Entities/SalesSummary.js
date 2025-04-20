@@ -33,7 +33,6 @@ export class SalesSummary {
     get storeQty() { return _salesSummaryProps.get(this).storeQty }
     set storeQty(storeQty) { _salesSummaryProps.get(this).storeQty = storeQty }
     
-    
     get salesQty() { return _salesSummaryProps.get(this).salesQty }
     set salesQty(salesQty) { _salesSummaryProps.get(this).salesQty = salesQty }
     

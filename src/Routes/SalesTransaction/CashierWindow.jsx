@@ -19,6 +19,7 @@ import { useAuth } from "../../app-context/auth-user-context";
 import { TransactionItem } from "../../Entities/TransactionItem";
 import transactionsController from "../../Controllers/transactions-controller";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
+import printerController from "../../Controllers/printer-controller";
 
 const CashierWindow = () => {
 	const navigate = useNavigate();

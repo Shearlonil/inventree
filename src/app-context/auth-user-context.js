@@ -7,23 +7,22 @@ import User from "../Entities/User";
 import httpService from "../axios/http-service";
 import { useCookieStorage } from "./useCookies";
 import { useLocalStorage } from "./useLocalStorage";
+import AppConstants from "../Utils/AppConstants";
 
 const AuthContext = createContext();
-const jwtStorageTitle = "authorization";
-const TOKEN_PREFIX = "Bearer ";
 
 // ref: https://blog.logrocket.com/authentication-react-router-v6/
 export const AuthProvider = ({ children }) => {
-    //  const [jwtToken, setJwtToken] = useCookieStorage(jwtStorageTitle, null);
-    const [jwtToken, setJwtToken] = useLocalStorage(jwtStorageTitle, null);
+    //  const [jwtToken, setJwtToken] = useCookieStorage(AppConstants.jwtStorageTitle, null);
+    const [jwtToken, setJwtToken] = useLocalStorage(AppConstants.jwtStorageTitle, null);
     const navigate = useNavigate();
 
     // call this function when you want to authenticate the user
     const login = async (loginDetails) => {
         const response = await httpService.post("/login", loginDetails);
         //  remove the token prefix from the token for jwtDecode to decode the token
-        // const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
-        const jwt = response.headers[jwtStorageTitle];
+        // const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
+        const jwt = response.headers[AppConstants.jwtStorageTitle];
         setJwtToken(jwt);
     };
 
@@ -31,7 +30,7 @@ export const AuthProvider = ({ children }) => {
     const handleRefresh = async () => {
         const response = await httpService.get("/refresh");
         //  remove the token prefix from the token for jwtDecode to decode the token
-        const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
+        const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
         setJwtToken(jwt);
     };
 
@@ -47,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateJWT = (response) => {
-        const jwt = response.headers[jwtStorageTitle].replace(TOKEN_PREFIX, "");
+        const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
         setJwtToken(jwt);
     };
 

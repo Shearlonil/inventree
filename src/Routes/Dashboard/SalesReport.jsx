@@ -51,8 +51,19 @@ const SalesReport = () => {
         
     const [networkRequest, setNetworkRequest] = useState(false);
     const [data, setData] = useState([]);
+
+    const [totalStockPrice, setTotalStockPrice] = useState(0);
+    const [totalSalesPrice, setTotalSalesPrice] = useState(0);
+    const [totalGrossProfit, setTotalGrossProfit] = useState(0);
     
     const [filename, setFilename] = useState("");
+    
+    useEffect( () => {
+        if(!user.hasAuth('SALES_RECORD')){
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
+            navigate('/404');
+        }
+    }, []);
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -180,15 +191,6 @@ const SalesReport = () => {
         doc.setFontSize(15);
 
         const title = "Sales Summary";
-
-        let totalStockPrice = numeral(0);
-        let totalSalesPrice = numeral(0);
-        let totalGrossProfit = numeral(0);
-        data.forEach(datum => {
-            totalStockPrice = numeral(totalStockPrice).add(datum.totalStockPrice);
-            totalSalesPrice = numeral(totalSalesPrice).add(datum.totalSalesPrice);
-            totalGrossProfit = numeral(totalGrossProfit).add(datum.grossProfit);
-        });
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -227,15 +229,6 @@ const SalesReport = () => {
         doc.setFontSize(15);
 
         const title = "Sales Summary";
-
-        let totalStockPrice = numeral(0);
-        let totalSalesPrice = numeral(0);
-        let totalGrossProfit = numeral(0);
-        data.forEach(datum => {
-            totalStockPrice = numeral(totalStockPrice).add(datum.totalStockPrice);
-            totalSalesPrice = numeral(totalSalesPrice).add(datum.totalSalesPrice);
-            totalGrossProfit = numeral(totalGrossProfit).add(datum.grossProfit);
-        });
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -267,6 +260,10 @@ const SalesReport = () => {
 			if (data.startDate && data.endDate) {
 				setNetworkRequest(true);
                 setData([]);
+                setTotalGrossProfit(0);
+                setTotalSalesPrice(0);
+                setTotalStockPrice(0);
+                
 				data.startDate.setHours(0);
 				data.startDate.setMinutes(0);
 				data.startDate.setSeconds(0);
@@ -280,8 +277,16 @@ const SalesReport = () => {
 				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
 				if(response && response.data){
                     const arr = [];
+
+                    let totalStockPrice = numeral(0);
+                    let totalSalesPrice = numeral(0);
+                    let totalGrossProfit = numeral(0);
                     response.data.forEach(datum => {
-                        arr.push(new SalesSummary(datum));
+                        const salesRecord = new SalesSummary(datum);
+                        totalStockPrice = numeral(totalStockPrice).add(salesRecord.totalStockPrice);
+                        totalSalesPrice = numeral(totalSalesPrice).add(salesRecord.totalSalesPrice);
+                        totalGrossProfit = numeral(totalGrossProfit).add(salesRecord.grossProfit);
+                        arr.push(salesRecord);
                     });
                     arr.sort(
                         (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
@@ -302,6 +307,9 @@ const SalesReport = () => {
                             (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
                         );
                     */
+                    setTotalGrossProfit(totalGrossProfit);
+                    setTotalSalesPrice(totalSalesPrice);
+                    setTotalStockPrice(totalStockPrice);
 					setData(arr);
 				}
 				setNetworkRequest(false);
@@ -465,6 +473,20 @@ const SalesReport = () => {
                         </tbody>
                     </Table>
                 </div>
+            </div>
+            <div className="row">
+                <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Sales Price</p>
+                    <h3 className='text-danger'> {numeral(totalSalesPrice).format('₦0,0.00')} </h3>
+                </div>
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Stock Price</p>
+                    <h3 className='text-danger'> {numeral(totalStockPrice).format('₦0,0.00')} </h3>
+                </div>}
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Gross Profit</p>
+                    <h3 className='text-danger'> {numeral(totalGrossProfit).format('₦0,0.00')} </h3>
+                </div>}
             </div>
         </div>
     )

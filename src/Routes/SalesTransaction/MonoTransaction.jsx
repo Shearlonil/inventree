@@ -26,7 +26,7 @@ import { useNumericCodeScanner } from "../../Utils/useNumericCodeScanner";
 
 const MonoTransaction = () => {
 	const onCodeScan = (code) => {
-		//	detect if item already exists in the list
+		//	find item from option list in drop down
 		const found = itemOptions.find(i => i.value.code === code);
 		if(found){
 			//	is list item > 0 ?. if yes check if item exists in the list to update qty

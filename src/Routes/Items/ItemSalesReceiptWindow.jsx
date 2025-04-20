@@ -60,6 +60,9 @@ const ItemSalesReceiptWindow = () => {
     const [itemsLoading, setItemsLoading] = useState(true);
     
     const [filename, setFilename] = useState("");
+    
+    const [totalAmount, setTotalAmount] = useState(0);
+    const [totalProfit, setTotalProfit] = useState(0);
         
     useEffect( () => {
         initialize();
@@ -258,13 +261,6 @@ const ItemSalesReceiptWindow = () => {
 
         doc.text(title, marginLeft, 40);
 
-        let totalAmount = numeral(0);
-        let totalProfit = numeral(0);
-        data.forEach(salesRecord => {
-            totalAmount = numeral(totalAmount).add(salesRecord.totalAmount);
-            totalProfit = numeral(totalProfit).add(salesRecord.profit);
-        });
-
         doc.autoTable({
             styles: { theme: 'striped' },
             margin: { top: 50 },
@@ -292,6 +288,9 @@ const ItemSalesReceiptWindow = () => {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
                 setData([]);
+                setTotalProfit(0);
+                setTotalAmount(0);
+
                 data.startDate.setHours(0);
                 data.startDate.setMinutes(0);
                 data.startDate.setSeconds(0);
@@ -305,6 +304,7 @@ const ItemSalesReceiptWindow = () => {
                 const response = await transactionsController.itemSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.product.value.id);
                 if(response && response.data){
                     const arr = [];
+                    
                     for (const key in response.data) {
                         response.data[key].forEach(item => {
                             //  temporarily use id to hold receipt id
@@ -317,9 +317,28 @@ const ItemSalesReceiptWindow = () => {
                             //  salesRecord.pkgStockPrice = item.pack_stock;
                             salesRecord.stockPrice = item.unit_stock;
                             salesRecord.price = item.price;
+                            
                             arr.push(salesRecord);
                         });
                     }
+                    
+                    let tempSalesPrice = numeral(0);
+                    let tempStockPrice = numeral(0);
+                    let tempQty = numeral(0);
+                    
+                    arr.forEach(item => {
+                        tempSalesPrice = numeral(tempSalesPrice).add(item.unitSalesPrice);
+                        tempStockPrice = numeral(tempStockPrice).add(item.unitStockPrice);
+                        tempQty = numeral(tempQty).add(item.unitQty);
+                    });
+
+                    const avgUnitSalesPrice = numeral(tempSalesPrice).divide(arr.length).value();
+                    const avgUnitStockPrice = numeral(tempStockPrice).divide(arr.length).value();
+                    const totalAvgStockPrice = numeral(tempQty).multiply(avgUnitStockPrice).value();
+                    const totalAvgSalesPrice =  numeral(tempQty).multiply(avgUnitSalesPrice).value();
+                    
+                    setTotalProfit(numeral(totalAvgSalesPrice).subtract(totalAvgStockPrice).value());
+                    setTotalAmount(totalAvgSalesPrice);
                     setData(arr);
                 }
                 setNetworkRequest(false);
@@ -498,6 +517,16 @@ const ItemSalesReceiptWindow = () => {
                         </tbody>
                     </Table>
                 </div>
+            </div>
+            <div className="row">
+                <div className="col-md-6 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Sales Price</p>
+                    <h3 className='text-danger'> {numeral(totalAmount).format('₦0,0.00')} </h3>
+                </div>
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-6 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Profit</p>
+                    <h3 className='text-danger'> {numeral(totalProfit).format('₦0,0.00')} </h3>
+                </div>}
             </div>
         </div>
     )

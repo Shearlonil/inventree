@@ -1,5 +1,6 @@
 import axios from "axios";
 import Cookies from "js-cookie";
+import AppConstants from "../Utils/AppConstants";
 
 /*
     const config = {
@@ -43,7 +44,7 @@ axios.interceptors.response.use(null, (error) => {
 
 axios.interceptors.request.use((config) => {
     //  const token = Cookies.get("authorization");
-    const token = localStorage.getItem("authorization");
+    const token = localStorage.getItem(AppConstants.jwtStorageTitle);
     config.headers.authorization = token ? `Bearer ${token}` : "";
     config.headers['X-TENANT-ID'] = 'inventree';
     return config;
@@ -52,7 +53,8 @@ axios.interceptors.request.use((config) => {
 /*  configure axios with different baseUrl.
     ref:    https://stackoverflow.com/questions/47477594/how-to-use-2-instances-of-axios-with-different-baseurl-in-the-same-app-vue-js*/
 const printerAxios = axios.create({
-    baseURL: 'http://localhost:8084'
+    baseURL: localStorage.getItem(AppConstants.printerURL)
+    // baseURL: 'http://localhost:8084'
     // baseURL: 'http://192.168.0.102:8084'
 });
 
