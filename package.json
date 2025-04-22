@@ -36,6 +36,7 @@
     "react-router-dom": "^6.28.0",
     "react-select": "^5.8.3",
     "react-toastify": "^11.0.3",
+    "recharts": "^2.15.3",
     "rsuite": "^5.78.0",
     "styled-components": "^6.1.13",
     "xlsx": "^0.18.5",

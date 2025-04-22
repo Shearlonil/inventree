@@ -24,7 +24,7 @@ const GroupDisplay = () => {
 
 	const offCanvasMenu = [
 		{ label: "Rename Group", onClickParams: {evtName: 'renameGroup'} },
-		{ label: "Delete Group", onClickParams: {evtName: 'deleteGroup'} },
+		// { label: "Delete Group", onClickParams: {evtName: 'deleteGroup'} },
 		{ label: "Move to Group", onClickParams: {evtName: 'moveToGroup'} },
 		{ label: "Move to Chart", onClickParams: {evtName: 'moveToChart'} },
 	];

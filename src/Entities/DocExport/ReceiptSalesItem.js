@@ -44,7 +44,6 @@ export class ReceiptSalesItem {
     /*  this holds either unit stock price or pack stock price. Depends on the qtyType. */
     get stockPrice() { return _summaryProps.get(this).stockPrice }
     set stockPrice(stockPrice) { _summaryProps.get(this).stockPrice = stockPrice }
-    get tempStockPrice() { return numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value() }
 
     get itemDiscount() { return _summaryProps.get(this).itemDiscount; }
     set itemDiscount(itemDiscount) { _summaryProps.get(this).itemDiscount = itemDiscount; }
@@ -61,7 +60,7 @@ export class ReceiptSalesItem {
     
     get profit() {
         // const tempAmount = numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).stockPrice).value();
-        const tempAmount = numeral(this.unitQty).multiply(this.unitStockPrice).value();
+        const tempAmount = numeral(this.unitQty).multiply(numeral(this.unitStockPrice).value()).value();
         return numeral(this.totalAmount).subtract(tempAmount).value();
     }
     
@@ -74,14 +73,14 @@ export class ReceiptSalesItem {
     
     get unitStockPrice() { 
         return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
-            _summaryProps.get(this).stockPrice : 
-           numeral(_summaryProps.get(this).stockPrice).divide(_summaryProps.get(this).qtyPerPkg).value();
+            numeral(_summaryProps.get(this).stockPrice).format('₦0,0.00') : 
+            numeral(_summaryProps.get(this).stockPrice).divide(_summaryProps.get(this).qtyPerPkg).format('₦0,0.00');
     }
     
     get unitSalesPrice() { 
         return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
             _summaryProps.get(this).price : 
-           numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
+            numeral(_summaryProps.get(this).price).divide(_summaryProps.get(this).qtyPerPkg).value();
     }
 
     toJSON(){

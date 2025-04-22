@@ -26,6 +26,7 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
 import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
+import printerController from '../../Controllers/printer-controller';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -40,6 +41,7 @@ const SalesReceiptWindow = () => {
 		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
 		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
 		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
+		{ label: "Reprint", onClickParams: {evtName: 'reprint'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
     
@@ -122,6 +124,15 @@ const SalesReceiptWindow = () => {
 				setDisplayMsg(`Reverse receipt with No. ${selectedReceipt.id}`);
 				setShowConfirmModal(true);
                 break;
+            case 'reprint':
+                if(!selectedReceipt){
+                    toast.error("Please select a receipt");
+                    return;
+                }
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Reprint receipt with No. ${selectedReceipt.id}`);
+				setShowConfirmModal(true);
+                break;
         }
 	}
 
@@ -151,6 +162,9 @@ const SalesReceiptWindow = () => {
                     return;
                 }
 				reverseReceipt();
+                break;
+            case 'reprint':
+				reprint();
                 break;
         }
 	}
@@ -374,6 +388,33 @@ const SalesReceiptWindow = () => {
 			}
         }
     }
+	
+	const reprint = async () => {
+        try {
+            setNetworkRequest(true);
+            
+            await printerController.print(selectedReceipt);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return activateReceipt();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
     
     const pdfExport = async () => {
         try {
@@ -501,7 +542,7 @@ const SalesReceiptWindow = () => {
             });
         });
         doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).format('₦0,0.00')} | Total Net Amount: ${numeral(totalNetAmount).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
-        doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+        // doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
             
         doc.save(`${filename}` + fileExtension);
     }

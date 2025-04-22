@@ -328,15 +328,17 @@ const ItemSalesReceiptWindow = () => {
                     
                     arr.forEach(item => {
                         tempSalesPrice = numeral(tempSalesPrice).add(item.unitSalesPrice);
-                        tempStockPrice = numeral(tempStockPrice).add(item.unitStockPrice);
+                        tempStockPrice = numeral(tempStockPrice).add(numeral(item.unitStockPrice).value());
                         tempQty = numeral(tempQty).add(item.unitQty);
                     });
 
-                    const avgUnitSalesPrice = numeral(tempSalesPrice).divide(arr.length).value();
-                    const avgUnitStockPrice = numeral(tempStockPrice).divide(arr.length).value();
-                    const totalAvgStockPrice = numeral(tempQty).multiply(avgUnitStockPrice).value();
-                    const totalAvgSalesPrice =  numeral(tempQty).multiply(avgUnitSalesPrice).value();
+                    const avgUnitSalesPrice = numeral(tempSalesPrice).divide(arr.length).format('₦0,0.00');
+                    const avgUnitStockPrice = numeral(tempStockPrice).divide(arr.length).format('₦0,0.00');
+                    const totalAvgStockPrice = numeral(tempQty).multiply(numeral(avgUnitStockPrice).value()).value();
+                    const totalAvgSalesPrice =  numeral(tempQty).multiply(numeral(avgUnitSalesPrice).value()).value();
                     
+                    console.log('total avg stock', totalAvgStockPrice, 'avg unit stock', avgUnitStockPrice, 'total qty', tempQty.value(), 'temp stock', 
+                        tempStockPrice.value(), 'length of arr', arr.length);
                     setTotalProfit(numeral(totalAvgSalesPrice).subtract(totalAvgStockPrice).value());
                     setTotalAmount(totalAvgSalesPrice);
                     setData(arr);

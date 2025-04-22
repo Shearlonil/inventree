@@ -53,7 +53,7 @@ const LedgerDisplay = () => {
 	const ledgerOffCanvasMenu = [
 		// { label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
 		{ label: "Rename Ledger", onClickParams: {evtName: 'renameLedger'} },
-		{ label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
+		// { label: "Delete Ledger", onClickParams: {evtName: 'deleteLedger'} },
 		{ label: "Remove Discount", onClickParams: {evtName: 'removeDiscount'} },
 		{ label: "Adjust Discount", onClickParams: {evtName: 'adjustDiscount'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },

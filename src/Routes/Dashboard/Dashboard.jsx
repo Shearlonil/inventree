@@ -3,12 +3,49 @@ import SVG from "../../assets/Svg";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app-context/auth-user-context";
 import { Button } from "react-bootstrap";
+import { PieChart, Pie, Cell } from "recharts";
 
 const Dashboard = () => {
     const navigate = useNavigate();
 
     const { authUser, handleRefresh, logout } = useAuth();
     const user = authUser();
+
+    const data = [
+        { name: "Group A", value: 400 },
+        { name: "Group B", value: 300 },
+        { name: "Group C", value: 300 },
+        { name: "Group D", value: 200 }
+    ];
+      
+    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+    
+    const RADIAN = Math.PI / 180;
+    const renderCustomizedLabel = ({
+        cx,
+        cy,
+        midAngle,
+        innerRadius,
+        outerRadius,
+        percent,
+        index
+    }) => {
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+        
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="white"
+                textAnchor={x > cx ? "start" : "end"}
+                dominantBaseline="central"
+            >
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
+        );
+    };
 
 	return (
 		<div className="py-2 py-md-4">
@@ -169,14 +206,47 @@ const Dashboard = () => {
                             </div>
                         </div>
                     </div>
+                    
+                    <div className="row d-flex justify-content-center mt-5">
+                        <h1 className="text-center space-mono-bold fw-bold" style={{textShadow: "1px 2px 2px black", fontSize: '50px'}}>
+                            <span className="text-success">Sales </span>
+                            <span className="text-primary">Chart</span>
+                        </h1>
+                    </div>
+                    <div className="row mt-3">
+                        <div className="col-12 col-sm-6 my-2 d-flex justify-content-center">
+                            <PieChart width={420} height={420}>
+                                <Pie
+                                    data={data}
+                                    cx={200}
+                                    cy={200}
+                                    labelLine={false}
+                                    label={renderCustomizedLabel}
+                                    outerRadius={200}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {data.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                            </PieChart>
+                        </div>
+                        <div className="col-12 col-sm-6 my-2">
+                            <div className="d-flex align-items-start justify-content-center flex-column h-100">
+                                <h2 className="fw-bold space-mono-bold">TOP 5 ITEMS IN THE LAST 7 DAYS</h2>
+                                <ul className="fw-bold space-mono-bold">
+                                    <li>Item A</li>
+                                    <li>Item B</li>
+                                    <li>Item C</li>
+                                    <li>Item D</li>
+                                    <li>Item E</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="row mt-5">
-						<div className="col-12 col-sm-6 my-2">
-							<img
-								src={SVG.profile_blue}
-								style={{ width: "100%", maxHeight: "250px" }}
-								alt=""
-							/>
-						</div>
 						<div className="col-12 col-sm-6 my-2" id="branch">
 							<h4 className="fw-normal text-center">Profile</h4>
 							<div className="d-flex flex-column gap-2 list-group">
@@ -197,6 +267,13 @@ const Dashboard = () => {
                             <Button variant="success" className="mt-3 w-50" onClick={() => navigate(`/dashboard/${user.username}/profile`)}>
                                 View
                             </Button>
+						</div>
+						<div className="col-12 col-sm-6 my-2">
+							<img
+								src={SVG.profile_blue}
+								style={{ width: "100%", maxHeight: "250px" }}
+								alt=""
+							/>
 						</div>
 					</div>
                 </div>

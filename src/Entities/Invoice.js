@@ -57,7 +57,7 @@ export class Invoice {
             reversalStatus: this.reversalStatus,
             transactionDate: this.transactionDate,
             paymentModes: this.paymentModes,
-            dtoSalesRecordsId: this.dtoSalesRecords,
+            dtoSalesRecords: this.dtoSalesRecords,
         }
     }
 }
