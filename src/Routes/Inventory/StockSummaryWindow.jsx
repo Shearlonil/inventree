@@ -20,8 +20,9 @@ import handleErrMsg from '../../Utils/error-handler';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
 import inventoryController from '../../Controllers/inventory-controller';
+import { StockSummary } from '../../Entities/StockSummary';
 
-const StockSummary = () => {
+const StockSummaryWindow = () => {
     const navigate = useNavigate();
     applyPlugin(jsPDF);
         
@@ -80,8 +81,13 @@ const StockSummary = () => {
 
         const temp = [...data];
         temp.forEach(t => {
-            delete t.itemId;
-            delete t.qtyMgrId;
+            const d = {
+                itemName: t.itemName,
+                storeQty: t.storeQty,
+                salesQty: t.salesQty,
+                totalQty: t.totalQty,
+            };
+            temp.push(d);
         });
         const wscols = [
             { wch: Math.max(...data.map(datum => datum.itemName.length)) },
@@ -112,15 +118,18 @@ const StockSummary = () => {
         const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
         const fileExtension = ".xlsx";
 
-        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", stockPrice: "Stock Price" } ];
+        const Heading = [ {itemName: "Description", storeQty: "Store Qty", salesQty: "Sales Qty", totalQty: "Total Qty", totalStockPrice: "Stock Price" } ];
 
-        let grossWorth = numeral(0);
-
-        const temp = [...data];
-        temp.forEach(t => {
-            delete t.itemId;
-            delete t.qtyMgrId;
-            grossWorth = numeral(grossWorth).add(t.stockPrice);
+        const temp = [];
+        data.forEach(t => {
+            const d = {
+                itemName: t.itemName,
+                storeQty: t.storeQty,
+                salesQty: t.salesQty,
+                totalQty: t.totalQty,
+                totalStockPrice: t.totalStockPrice
+            };
+            temp.push(d);
         });
 
         const wscols = [
@@ -131,13 +140,13 @@ const StockSummary = () => {
             { wch: 15 }
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "stockPrice"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "totalStockPrice"],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "stockPrice"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "totalStockPrice"],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -185,7 +194,7 @@ const StockSummary = () => {
         let netWorth = numeral(0);
 
         data.forEach(t => {
-            netWorth = numeral(netWorth).add(t.stockPrice);
+            netWorth = numeral(netWorth).add(t.totalStockPrice);
         });
 
         /*  ref:
@@ -215,7 +224,7 @@ const StockSummary = () => {
                 { header: 'Store Qty', dataKey: 'storeQty' },
                 { header: 'Sales Qty', dataKey: 'salesQty' },
                 { header: 'Total Qty', dataKey: 'totalQty' },
-                { header: 'Stock Price', dataKey: 'stockPrice' },
+                { header: 'Stock Price', dataKey: 'totalStockPrice' },
             ],
         });
         doc.text(`Total Net: ${numeral(netWorth).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 40);
@@ -237,7 +246,9 @@ const StockSummary = () => {
 
 				const response = await inventoryController.stockSummary(data.startDate.toISOString());
 				if(response && response.data){
-					setData(response.data);
+                    const arr = [];
+                    response.data.forEach(datum => arr.push(new StockSummary(datum)));
+					setData(arr);
 				}
 				setNetworkRequest(false);
 			}
@@ -329,9 +340,9 @@ const StockSummary = () => {
                             <tr className="shadow-sm">
                                 <th className='text-danger'>Description</th>
                                 <th className='text-danger'>Store Qty</th>
-                                <th className='text-danger'>Sales Qty</th>
+                                <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
-                                {/* <th className='text-danger'>Amount</th> */}
+                                <th className='text-danger'>Total Stock Price (AVG)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -341,7 +352,7 @@ const StockSummary = () => {
                                     <td>{_datum.storeQty}</td>
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
-                                    {/* <td>{_datum.soldOutQty}</td> */}
+                                    <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -352,4 +363,4 @@ const StockSummary = () => {
     )
 }
 
-export default StockSummary;
+export default StockSummaryWindow;

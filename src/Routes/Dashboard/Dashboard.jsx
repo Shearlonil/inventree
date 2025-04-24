@@ -1,24 +1,26 @@
-import React from "react";
-import SVG from "../../assets/Svg";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app-context/auth-user-context";
 import { Button } from "react-bootstrap";
 import { PieChart, Pie, Cell } from "recharts";
+import { subDays } from "date-fns";
+import { toast } from "react-toastify";
+
+import handleErrMsg from "../../Utils/error-handler";
+import SVG from "../../assets/Svg";
+import transactionsController from "../../Controllers/transactions-controller";
 
 const Dashboard = () => {
     const navigate = useNavigate();
 
     const { authUser, handleRefresh, logout } = useAuth();
     const user = authUser();
+    
+    const [networkRequest, setNetworkRequest] = useState(false);
 
-    const data = [
-        { name: "Group A", value: 400 },
-        { name: "Group B", value: 300 },
-        { name: "Group C", value: 300 },
-        { name: "Group D", value: 200 }
-    ];
+    const [salesChartData, setSalesChartData] = useState([ { name: "Fetching Data", value: 1, color: "#0088FE" } ]);
       
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
+    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
     
     const RADIAN = Math.PI / 180;
     const renderCustomizedLabel = ({
@@ -45,6 +47,65 @@ const Dashboard = () => {
                 {`${(percent * 100).toFixed(0)}%`}
             </text>
         );
+    };
+        
+    useEffect( () => {
+        initialize();
+    }, []);
+    
+    const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            const endDate = new Date();
+            endDate.setHours(23, 59, 59);
+            
+            const startDate = subDays(endDate, 7);
+            startDate.setHours(0, 0, 0);
+            const response = await transactionsController.summarizeSalesRecords(startDate.toISOString(), endDate.toISOString());
+            if(response && response.data && response.data.length > 0){
+                const arr = [];
+                response.data.sort( (a, b) => b.soldOutQty - a.soldOutQty );
+                let count = 0;
+                while (count < 5 && count < response.data.length) {
+                    const obj = {
+                        name : response.data[count].itemName,
+                        value : response.data[count].soldOutQty,
+                        color: COLORS[count],
+                    }
+                    arr.push(obj);
+                    count++;
+                }
+                setSalesChartData(arr);
+            }else {
+                setSalesChartData([
+                    {
+                        name: "No Data",
+                        value: 1,
+                        color: COLORS[4]
+                    }
+                ])
+            }
+
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
     };
 
 	return (
@@ -217,7 +278,7 @@ const Dashboard = () => {
                         <div className="col-12 col-sm-6 my-2 d-flex justify-content-center">
                             <PieChart width={420} height={420}>
                                 <Pie
-                                    data={data}
+                                    data={salesChartData}
                                     cx={200}
                                     cy={200}
                                     labelLine={false}
@@ -226,22 +287,21 @@ const Dashboard = () => {
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
-                                    {data.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    {salesChartData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
                             </PieChart>
                         </div>
                         <div className="col-12 col-sm-6 my-2">
-                            <div className="d-flex align-items-start justify-content-center flex-column h-100">
+                            <div className="d-flex align-items-start justify-content-center flex-column h-100 gap-3">
                                 <h2 className="fw-bold space-mono-bold">TOP 5 ITEMS IN THE LAST 7 DAYS</h2>
-                                <ul className="fw-bold space-mono-bold">
-                                    <li>Item A</li>
-                                    <li>Item B</li>
-                                    <li>Item C</li>
-                                    <li>Item D</li>
-                                    <li>Item E</li>
-                                </ul>
+                                {salesChartData.map((entry, index) => (
+                                    <div className="d-flex gap-3" key={`cell-${index}`}>
+                                        <div style={{height: '20px', width: '20px', backgroundColor: `${entry.color}`}}></div>
+                                        <span>{`${entry.name}`}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

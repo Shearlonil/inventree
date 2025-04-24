@@ -113,7 +113,7 @@ const LedgerDisplay = () => {
             const startDate = new Date();
             startDate.setHours(0, 0, 0);
             const endDate = new Date();
-            endDate.setHours(0, 0, 0);
+            endDate.setHours(23, 59, 59);
 
             setFilename(`${ledger.name} ${startDate} - ${endDate}`);
     
