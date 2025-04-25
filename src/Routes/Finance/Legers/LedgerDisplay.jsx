@@ -17,7 +17,6 @@ import ErrorMessage from '../../../Components/ErrorMessage';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import { useAuth } from '../../../app-context/auth-user-context';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
-import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
 import handleErrMsg from '../../../Utils/error-handler';
 import genericController from '../../../Controllers/generic-controller';
 import ledgerController from '../../../Controllers/ledger-controller';
@@ -26,6 +25,7 @@ import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
+import numeral from 'numeral';
 
 const LedgerDisplay = () => {
     const navigate = useNavigate();
@@ -73,10 +73,9 @@ const LedgerDisplay = () => {
     const [ledger, setLedger] = useState({});
     const [ledgerParent, setLedgerParent] = useState({});
     const [transactions, setTransactions] = useState([]);
-
-    //  for ledgers
-    const [ledgerOptions, setLedgerOptions] = useState([]);
-    const [ledgersLoading, setLedgersLoading] = useState(true);
+    
+    const [totalDr, setTotalDr] = useState(0);
+    const [totalCr, setTotalCr] = useState(0);
 
     const [filename, setFilename] = useState("");
                 
@@ -92,15 +91,10 @@ const LedgerDisplay = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const urls = [ `/api/ledgers/find/${id}`, `/api/ledgers/find/${id}/parent`, '/api/ledgers/active' ];
+            const urls = [ `/api/ledgers/find/${id}`, `/api/ledgers/find/${id}/parent` ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: ledgerRequest, 1: ledgerParentRequest, 2: activeLedgersRequest } = response;
-
-            if (activeLedgersRequest && activeLedgersRequest.data && activeLedgersRequest.data.length > 0) {
-				setLedgerOptions(activeLedgersRequest.data.map(ledger => ({label: ledger.name, value: ledger})));
-                setLedgersLoading(false);
-            }
-
+            const { 0: ledgerRequest, 1: ledgerParentRequest } = response;
+            
             if (ledgerRequest && ledgerRequest.data) {
                 const l = new Ledger(ledgerRequest.data);
                 l.creator = ledgerRequest.data.creator.username;
@@ -149,8 +143,6 @@ const LedgerDisplay = () => {
             case 'deleteLedger':
                 break;
             case 'selectLedger':
-                setDropDownMsg("Select Ledger")
-                setShowDropDownModal(true);
                 break;
             case 'renameLedger':
                 setDisplayMsg("Enter unique ledger name");
@@ -183,9 +175,6 @@ const LedgerDisplay = () => {
 
     const handleCloseConfirmModal = () => {
         setShowConfirmModal(false);
-    };
-
-	const handleLedgerSelected = async (ledger) => {
     };
     
     const handleInputOK = async (str) => {
@@ -387,7 +376,17 @@ const LedgerDisplay = () => {
     
                 const response = await ledgerController.ledgerTransactions(id, data.startDate.toISOString(), data.endDate.toISOString());
                 if(response && response.data){
-                    setTransactions(response.data.map(datum => new LedgerTransaction(datum)));
+                    let dr = numeral(0);
+                    let cr = numeral(0);
+                    setTransactions(
+                        response.data.map(datum => {
+                            dr = numeral(dr).add(datum.drAmount);
+                            cr = numeral(cr).add(datum.crAmount);
+                            return new LedgerTransaction(datum)
+                        })
+                    );
+                    setTotalCr(cr.value());
+                    setTotalDr(dr.value());
                 }
                 setNetworkRequest(false);
             }
@@ -607,8 +606,8 @@ const LedgerDisplay = () => {
                                 <th className='text-danger'>Date</th>
                                 <th className='text-danger'>Description</th>
                                 <th className='text-danger'>Vch No.</th>
-                                <th className='text-danger'>Dr</th>
-                                <th className='text-danger'>Cr</th>
+                                <th className='text-danger'>Debit</th>
+                                <th className='text-danger'>Credit</th>
                                 <th className='text-danger'>Balance</th>
                             </tr>
                         </thead>
@@ -617,7 +616,11 @@ const LedgerDisplay = () => {
                                 <tr className='' key={index}>
                                     <td>{_datum.date}</td>
                                     <td>{_datum.description}</td>
-                                    <td>{_datum.ledgerVchId}</td>
+                                    <td>
+                                        <Link to={`/finance/vouchers/${_datum.ledgerVchId}/view`}>
+                                            {_datum.ledgerVchId}
+                                        </Link>
+                                    </td>
                                     <td>{_datum.drAmount}</td>
                                     <td>{_datum.crAmount}</td>
                                     <td>{_datum.balance}</td>
@@ -626,31 +629,17 @@ const LedgerDisplay = () => {
                         </tbody>
                     </Table>
                 </div>
-                <div className='container my-3 p-3'>
-                    <div className='d-flex flex-wrap gap-3 justify-content-between align-items-center mx-auto'>
-                        <div className="">
-                            <p className='fw-bold h5 text-success'>Balance:</p>
-                            <h5><span>$680000</span></h5>
-                        </div>
-                        <div className="">
-                            <p className='fw-bold h5 text-danger'>Dr.:</p>
-                            <h5><span>$680000</span></h5>
-                        </div>
-                        <div className="">
-                            <p className='fw-bold h5 text-primary'>Cr.:</p>
-                            <h5><span>$680000</span></h5>
-                        </div>
-                    </div>
+            </div>
+            <div className="row">
+                <div className="col-md-6 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Debit</p>
+                    <h3 className='text-danger'> {numeral(totalDr).format('₦0,0.00')} </h3>
+                </div>
+                <div className="col-md-6 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Credit</p>
+                    <h3 className='text-danger'> {numeral(totalCr).format('₦0,0.00')} </h3>
                 </div>
             </div>
-            <DropDownDialog
-                show={showDropDownModal}
-                handleClose={handleCloseModal}
-                handleConfirm={handleLedgerSelected}
-                message={dropDownMsg}
-                optionsLoading={ledgersLoading}
-                options={ledgerOptions}
-            />
             <InputDialog
                 show={showInputModal}
                 handleClose={handleCloseModal}

@@ -49,6 +49,7 @@ import AccountGroupsView from "./Routes/Finance/AccountGroupsView";
 import GroupDisplay from "./Routes/Finance/GroupDisplay";
 import AccChartDisplay from "./Routes/Finance/AccChartDisplay";
 import AcctVoucherCreation from "./Routes/Finance/AcctVoucherCreation";
+import AcctVoucherDisplay from "./Routes/Finance/AccVoucherDisplay";
 
 function App() {
 	return (
@@ -113,6 +114,7 @@ function App() {
 				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
+					<Route path={"vouchers/:vch_id/view"} element={<AcctVoucherDisplay />} />
 					<Route path={"ledgers/:id/view"} element={<LedgerDisplay />} />
 					<Route path={"ledgers/trash"} element={<TrashedLedgers />} />
 					<Route path={"ledgers"} element={<LedgersView />} />

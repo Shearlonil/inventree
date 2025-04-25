@@ -7,6 +7,10 @@ const backup = async () => {
     return await httpService.get(`/api/finance`, { responseType: 'arraybuffer' });
 }
 
+const findLedgerVch = async (id) => {
+    return await httpService.get(`/api/finance/voucher/find/${id}`);
+}
+
 const createVoucher = async (ledgerTransactions) => {
     return await httpService.post(`/api/finance/voucher/create`, ledgerTransactions);
 }
@@ -37,6 +41,7 @@ const findAccChartById = async (id) => {
 
 export default {
     backup,
+    findLedgerVch,
     createVoucher,
     createGroup,
     renameGroup,

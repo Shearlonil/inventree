@@ -202,7 +202,7 @@ const AcctVoucherCreation = () => {
 	
 	const tableProps = {
 		//	table header
-		headers: ['Ledger', 'Description', 'Dr', 'Cr', 'Options'],
+		headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Options'],
 		//	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
 		objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount'],
 		//	React Menu
@@ -224,7 +224,7 @@ const AcctVoucherCreation = () => {
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    Create, View and modify accounting Legers. View ledger transactions by custom dates
+                    Create, View and modify accounting Vouchers. <br />NOTE: This page requires both FINANCE AND ACCOUNTING VOUCHERS permissions
                 </span>
             </div>
 			<div className="container">

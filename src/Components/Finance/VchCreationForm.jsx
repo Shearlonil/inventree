@@ -126,7 +126,7 @@ const VchCreationForm = (props) => {
                             className="py-3"
                             name="mode"
                             type="radio"
-                            label="Dr"
+                            label="Debit"
                             value="dr"
                             {...register("mode")}
                         />
@@ -134,7 +134,7 @@ const VchCreationForm = (props) => {
                             className="py-3"
                             name="mode"
                             type="radio"
-                            label="Cr"
+                            label="Credit"
                             value="cr"
                             {...register("mode")}
                         />

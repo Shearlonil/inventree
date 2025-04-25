@@ -348,10 +348,10 @@ function NavBar() {
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
-											navigate("/finance/vouchers/view");
+											navigate("/finance/vouchers/0/view");
 										}}
 										className={`nav-item ${
-											location.pathname === "/finance/vouchers/view" &&
+											location.pathname === "/finance/vouchers/0/view" &&
 											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 										}`}
 									>
