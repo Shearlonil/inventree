@@ -61,10 +61,10 @@ export class LedgerTransaction {
             ledgerId: this.ledgerId,
             ledgerName: this.ledgerName,
             ledgerVchId: this.ledgerVchId,
-            balance: this.balance,
+            balance: numeral(this.balance).value(),
             crAmount: numeral(this.crAmount).value(),
             drAmount: numeral(this.drAmount).value(),
-            date: this.date,
+            // date: this.date,
         }
     }
 }

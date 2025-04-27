@@ -15,6 +15,10 @@ const createVoucher = async (ledgerTransactions) => {
     return await httpService.post(`/api/finance/voucher/create`, ledgerTransactions);
 }
 
+const updateVoucher = async (id, ledgerTransactions) => {
+    return await httpService.post(`/api/finance/voucher/update/${id}`, ledgerTransactions);
+}
+
 const createGroup = async (dtoAccGroup) => {
     return await httpService.post(`/api/finance/groups/create`, dtoAccGroup);
 }
@@ -43,6 +47,7 @@ export default {
     backup,
     findLedgerVch,
     createVoucher,
+    updateVoucher,
     createGroup,
     renameGroup,
     moveAccGroupToGroup,

@@ -17,6 +17,7 @@ import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
 import financeController from "../../Controllers/finance-controller";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
+import { LedgerTransaction } from "../../Entities/LedgerTransaction";
 
 const AcctVoucherDisplay = () => {
     const navigate = useNavigate();
@@ -60,7 +61,7 @@ const AcctVoucherDisplay = () => {
 
     useEffect( () => {
         setVchId(vch_id);
-        if(user.hasAuth('FINANCE')){
+        if(user.hasAuth('FINANCE') && user.hasAuth('ACCOUNTING_VOUCHERS')){
             initialize();
         }else {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
@@ -71,10 +72,25 @@ const AcctVoucherDisplay = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await ledgerController.findAllActive();
+            let response = await ledgerController.findAll();
 
+            const ledgerArr = [];
             if (response && response.data) {
-                setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
+                ledgerArr.push(...response.data);
+                setLedgerOptions(response.data.filter(datum => datum.status).map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
+            }
+
+            if(vch_id > 0){
+                response = await financeController.findLedgerVch(vch_id);
+                const arr = [];
+                response.data.forEach(vchDetail => {
+                    const transaction = new LedgerTransaction(vchDetail);
+                    const ledger = ledgerArr.find(ledger => ledger.id == vchDetail.ledgerId);
+                    transaction.ledgerName = ledger.name;
+                    arr.push(transaction);
+                });
+                setLedgerTransactions(arr.sort((a, b) => a.id - b.id));
+                calcTotalAmounts(arr);
             }
 
             setNetworkRequest(false);
@@ -195,7 +211,7 @@ const AcctVoucherDisplay = () => {
     const saveTransactions = async () => {
         try {
             setNetworkRequest(true);
-            await financeController.createVoucher(ledgerTransactions);
+            await financeController.updateVoucher(vchId, ledgerTransactions);
 
             setLedgerTransactions([]);
             calcTotalAmounts([]);
@@ -299,7 +315,7 @@ const AcctVoucherDisplay = () => {
                 <OffcanvasMenu menuItems={vchOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Account Voucher View</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Voucher View</span>
                         <FaReceipt className="text-white" size={"30px"} />
                     </h2>
                 </div>

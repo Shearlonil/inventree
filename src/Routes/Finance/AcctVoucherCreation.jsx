@@ -42,7 +42,7 @@ const AcctVoucherCreation = () => {
     ];
 
     useEffect( () => {
-        if(user.hasAuth('FINANCE')){
+        if(user.hasAuth('FINANCE') && user.hasAuth('ACCOUNTING_VOUCHERS')){
 			initialize();
 		}else {
 			toast.error("Account doesn't support viewing this page. Please contact your supervisor");
@@ -216,10 +216,9 @@ const AcctVoucherCreation = () => {
 	return (
 		<div className="container">
 			<div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                <OffcanvasMenu variant='danger' />
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Account Voucher Creation</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Voucher Creation</span>
 						<FaReceipt className="text-white" size={"30px"} />
                     </h2>
                 </div>
