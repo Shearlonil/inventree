@@ -298,6 +298,7 @@ const Dashboard = () => {
                                 <h2 className="fw-bold space-mono-bold">TOP 5 ITEMS IN THE LAST 7 DAYS</h2>
                                 {salesChartData.map((entry, index) => (
                                     <div className="d-flex gap-3" key={`cell-${index}`}>
+                                        {/* https://stackoverflow.com/questions/49070926/i-want-to-create-a-small-square-colour-filled-box-in-html-css-and-most-import */}
                                         <div style={{height: '20px', width: '20px', backgroundColor: `${entry.color}`}}></div>
                                         <span>{`${entry.name}`}</span>
                                     </div>

@@ -279,7 +279,7 @@ const Trash = () => {
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trash (Items)</span>
-                        <img src={SVG.branch_colored_two} style={{ width: "50px", height: "50px" }} />
+                        <img src={SVG.shopping_items} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>

@@ -7,6 +7,12 @@ const clientDetails = {
 	gctContact: '08034262759'
 }
 
+/*
+	jsPDF reference
+	https://github.com/simonbengtsson/jsPDF-AutoTable/blob/main/examples/examples.js
+	https://simonbengtsson.github.io/jsPDF-AutoTable/
+*/
+
 //	menus for the ellipse menu-button
 const reactMenuItems = [
 	{ name: 'Cut', onClickParams: {evtName: 'cut'} },

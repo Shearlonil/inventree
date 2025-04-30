@@ -76,7 +76,12 @@ const UsersWindow = () => {
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
-                response.data.forEach( user => {
+                response.data.filter(datum => {
+                    if(datum.username.toLowerCase() === 'inventree' || datum.username.toLowerCase() === user.username.toLowerCase()){
+                        return false;
+                    }
+                    return true;
+                }).forEach( user => {
                     const u = new User();
                     //  u.id = user.id;
                     u.username = user.username;
@@ -86,7 +91,6 @@ const UsersWindow = () => {
                     u.phoneNo = user.phoneNo;
                     u.email = user.email;
                     u.regDate = user.dateOfReg;
-                    //  u.level = user.level;
                     switch (user.level) {
                         case 1:
                             u.level = 'Admin';
