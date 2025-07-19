@@ -50,6 +50,7 @@ import GroupDisplay from "./Routes/Finance/GroupDisplay";
 import AccChartDisplay from "./Routes/Finance/AccChartDisplay";
 import AcctVoucherCreation from "./Routes/Finance/AcctVoucherCreation";
 import AcctVoucherDisplay from "./Routes/Finance/AccVoucherDisplay";
+import UserSalesRecord from "./Routes/Dashboard/Users/UserSalesRecord";
 
 function App() {
 	return (
@@ -128,6 +129,7 @@ function App() {
 					<Route path={":username/profile"} element={<ProfileUpdate />} />
 					<Route path={"users/password/change"} element={<ChangePassword />} />
 					<Route path={"users/trash"} element={<UserTrash />} />
+					<Route path={"users/sales-record"} element={<UserSalesRecord />} />
 					<Route path={":username/details"} element={<UserDetails />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
 					<Route path={"invoices"} element={<InvoiceWindow />} />

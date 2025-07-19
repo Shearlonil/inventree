@@ -68,7 +68,7 @@ export class ReceiptSalesItem {
     get unitQty() { 
         return _summaryProps.get(this).qtyType.toLowerCase() === 'unit' ? 
             _summaryProps.get(this).qty : 
-            numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).qtyPerPkg);
+            numeral(_summaryProps.get(this).qty).multiply(_summaryProps.get(this).qtyPerPkg).value();
     }
     
     get unitStockPrice() { 

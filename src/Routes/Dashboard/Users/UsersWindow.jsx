@@ -56,6 +56,7 @@ const UsersWindow = () => {
         { label: "Search By First Name", onClickParams: {evtName: 'searchByFirstName'} },
         { label: "Sort By Username", onClickParams: {evtName: 'sortByUsername'} },
         { label: "Sort By First Name", onClickParams: {evtName: 'sortByFirstName'} },
+        { label: "Sales Records", onClickParams: {evtName: 'salesRecord'} },
         { label: "Show All", onClickParams: {evtName: 'showAll'} },
         { label: "Trash", onClickParams: {evtName: 'trash'} },
     ];
@@ -178,6 +179,9 @@ const UsersWindow = () => {
                     setPagedData(filteredUsers.slice(0, 0 + pageSize));
                 }
                 setCurrentPage(1);
+                break;
+            case 'salesRecord':
+                navigate('/dashboard/users/sales-record');
                 break;
         }
 	}

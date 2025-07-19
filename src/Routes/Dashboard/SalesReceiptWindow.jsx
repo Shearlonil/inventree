@@ -39,9 +39,12 @@ const SalesReceiptWindow = () => {
 	const receiptsOffCanvasMenu = [
 		{ label: "Search By Receipt No.", onClickParams: {evtName: 'searchByNo'} },
 		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
+		{ label: "Search by Customer", onClickParams: {evtName: 'searchByCustomer'} },
+		{ label: "Search by User", onClickParams: {evtName: 'searchByUser'} },
 		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
 		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
 		{ label: "Reprint", onClickParams: {evtName: 'reprint'} },
+		{ label: "Download", onClickParams: {evtName: 'download'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
     
@@ -542,7 +545,7 @@ const SalesReceiptWindow = () => {
             });
         });
         doc.text(`Total Gross Amount: ${numeral(totalGrossAmount).format('₦0,0.00')} | Total Net Amount: ${numeral(totalNetAmount).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
-        // doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+        doc.text(`Total Net Profit: ${numeral(totalNetProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
             
         doc.save(`${filename}` + fileExtension);
     }

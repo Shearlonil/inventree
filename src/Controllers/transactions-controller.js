@@ -87,6 +87,19 @@ const customerSalesReceiptsByDate = async (startDate, endDate, customer_id) => {
     });
 };
 
+const userGeneratedSalesReceiptsByDate = async (startDate, endDate, user_id) => {
+    return await httpService.post(`/api/transactions/receipts/user/get-within`, { startDate, endDate }, {
+        params: {
+            user_id
+        }
+    });
+};
+
+// search for sales records made by staff. used in UserSalesRecords window
+const staffSalesRecordsSummaryByDate = async (startDate, endDate, username) => {
+    return await httpService.post(`/api/transactions/receipts/user/${username}/get-within`, { startDate, endDate });
+};
+
 const searchPurchaseReceiptsByDate = async (startDate, endDate, reversalStatus) => {
     return await httpService.post(`/api/transactions/receipts/get-within`, { startDate, endDate }, {
         params: {
@@ -149,6 +162,8 @@ export default {
     searchPurchaseReceiptsByDate,
     itemSalesReceiptsByDate,
     customerSalesReceiptsByDate,
+    userGeneratedSalesReceiptsByDate,
+    staffSalesRecordsSummaryByDate,
     pdfPurchaseReceiptsByDateForExport,
     pdfPurchaseReceiptsByNoForExport,
     findPurchaseReceiptByNo,

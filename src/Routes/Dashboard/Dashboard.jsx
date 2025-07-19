@@ -242,7 +242,7 @@ const Dashboard = () => {
                                         />
                                     </div>
                                     <div className="d-flex flex-column text-start">
-                                        <span className="fs-6 noto-sans-font fw-bold">View Users</span>
+                                        <span className="fs-6 noto-sans-font fw-bold">Users</span>
                                         <span className="text-muted">View user accounts, active or inactive.</span>
                                     </div>
                                 </div>
@@ -287,9 +287,7 @@ const Dashboard = () => {
                                     fill="#8884d8"
                                     dataKey="value"
                                 >
-                                    {salesChartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
+                                    {salesChartData.map((entry, index) => ( <Cell key={`cell-${index}`} fill={entry.color} /> ))}
                                 </Pie>
                             </PieChart>
                         </div>
