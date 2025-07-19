@@ -27,6 +27,7 @@ import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
 import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 import printerController from '../../Controllers/printer-controller';
+import { clientDetails } from '../../../data';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -44,7 +45,7 @@ const SalesReceiptWindow = () => {
 		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
 		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
 		{ label: "Reprint", onClickParams: {evtName: 'reprint'} },
-		{ label: "Download", onClickParams: {evtName: 'download'} },
+		{ label: "Download Receipt", onClickParams: {evtName: 'download'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
     
@@ -68,6 +69,7 @@ const SalesReceiptWindow = () => {
     const [selectedReceipt, setSelectedReceipt] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [salesRecords, setSalesRecords] = useState([]);
+    const [totalDiscount, setTotalDiscount] = useState(0);
     const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
     
     const [filename, setFilename] = useState("");
@@ -136,6 +138,15 @@ const SalesReceiptWindow = () => {
 				setDisplayMsg(`Reprint receipt with No. ${selectedReceipt.id}`);
 				setShowConfirmModal(true);
                 break;
+            case 'download':
+                if(!selectedReceipt){
+                    toast.error("Please select a receipt");
+                    return;
+                }
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Download receipt with No. ${selectedReceipt.id}`);
+				setShowConfirmModal(true);
+                break;
         }
 	}
 
@@ -169,6 +180,9 @@ const SalesReceiptWindow = () => {
             case 'reprint':
 				reprint();
                 break;
+            case 'download':
+				download();
+                break;
         }
 	}
 
@@ -176,7 +190,7 @@ const SalesReceiptWindow = () => {
     const handleReceiptChange = (selectedReceipt) => {
         setSelectedReceipt(selectedReceipt.value);
         setSelectedInvoice(selectedReceipt.value.dtoInvoice);
-        setSalesRecords(buildTableData(selectedReceipt.value.dtoInvoice.dtoSalesRecords));
+        setSalesRecords(buildTableData(selectedReceipt.value, selectedReceipt.value.dtoInvoice));
     };
 
     //  Handle item selection clicked from table
@@ -184,7 +198,7 @@ const SalesReceiptWindow = () => {
         setValue('receipt_no', {label: selectedReceipt.id, value: selectedReceipt});
         setSelectedReceipt(selectedReceipt);
         setSelectedInvoice(selectedReceipt.dtoInvoice);
-        setSalesRecords(buildTableData(selectedReceipt.dtoInvoice.dtoSalesRecords));
+        setSalesRecords(buildTableData(selectedReceipt, selectedReceipt.dtoInvoice));
     };
 
     const paymentModeSet = (payments) => {
@@ -217,7 +231,6 @@ const SalesReceiptWindow = () => {
 		}
         
         selectedReceipt.paymentModes = paymentModes;
-        console.log(selectedReceipt);
         setSelectedReceipt(selectedReceipt);
         setDisplayMsg(`Activate receipt with No. ${selectedReceipt.id} with the following payment mode: ${selectedReceipt?.paymentModes.map(pm => pm.type + " = " + pm.amount + " ")}`);
 		setShowConfirmModal(true);
@@ -333,7 +346,6 @@ const SalesReceiptWindow = () => {
             
             const response = await transactionsController.activateReceipt(selectedReceipt);
             if(response && response.status === 200){
-                console.log(response.data);
                 selectedReceipt.reversalStatus = false;
                 setSelectedReceipt(selectedReceipt);
                 toast.info('activated');
@@ -418,6 +430,95 @@ const SalesReceiptWindow = () => {
 			}
         }
     }
+	
+	const download = async () => {
+        try {
+            setNetworkRequest(true);
+            /*  TWO WAYS TO WORD WRAP IN jsPDF
+                1. use method splitTextToSize
+                2. use maxWidth property options to text method
+            */
+            const unit = "mm";
+            const size = [80, 120]; // Use A1, A2, A3 or A4
+            const orientation = "portrait"; // portrait or landscape
+            const fileExtension = ".pdf";
+
+            const marginLeft = 40;
+            const doc = new jsPDF(orientation, unit, size);
+
+            doc.setFontSize(15);
+            doc.setFont("monospace", 'bold');
+
+            let splitTitle = doc.splitTextToSize(clientDetails.storeName, 80);
+            doc.text(splitTitle, marginLeft, 10, {align: 'center'});
+            
+            doc.setFontSize(6);
+            doc.setFont("times", 'normal');
+            doc.text(clientDetails.address, marginLeft, 15, {align: 'center', maxWidth: 80});
+            doc.text(clientDetails.phone, marginLeft, 20, {align: 'center'});
+
+            doc.text(`SALES BILL NO.: ${selectedReceipt.id}`, 5, 25, {align: 'left'});
+            doc.text(`DATE: ${format(selectedReceipt.transactionDate, 'dd/MM/yyyy HH:mm:ss')}`, 5, 30, {align: 'left'});
+            doc.text(`CASHIER.: ${selectedReceipt.cashier}`, 5, 35, {align: 'left'});
+            doc.text(`CUSTOMER: ${selectedReceipt.customerName}`, 5, 40, {align: 'left'});
+            
+            autoTable(doc, {
+                styles: { theme: 'striped', fontSize: 7 },
+                margin: { top: 42, left: 5 },
+                didDrawPage: (data) => {
+                    /*  Reseting top margin. The change will be reflected only after print the first page.
+                        ref:    https://github.com/simonbengtsson/jsPDF-AutoTable/issues/345
+                    */
+                    data.settings.margin.top = 10;
+                },
+                showHead: 'firstPage',
+                // head: [['Name', 'Email']],
+                body: salesRecords,
+                columns: [
+                    { header: 'QTY', dataKey: 'qty' },
+                    { header: 'CAT', dataKey: 'qtyType' },
+                    { header: 'DESCRIPTION', dataKey: 'name' },
+                    { header: 'AMOUNT', dataKey: 'totalAmount' },
+                ],
+                tableWidth: doc.internal.pageSize.getWidth() - 10,
+            });
+
+            doc.setFontSize(8);
+            doc.text(`DISCOUNT (N): ${numeral(totalDiscount).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 5, {align: 'center'});
+            doc.setFontSize(11);
+            doc.text(`TOTAL (N): ${numeral(totalTransactionAmount).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 10, {align: 'center'});
+            doc.line(5, doc.lastAutoTable.finalY + 15, doc.internal.pageSize.getWidth() - 5, doc.lastAutoTable.finalY + 15, 'S');
+
+            doc.setFontSize(6);
+            doc.text(clientDetails.appreciation, marginLeft, doc.lastAutoTable.finalY + 22, {align: 'center'});
+            doc.text(clientDetails.invoiceWarning, marginLeft, doc.lastAutoTable.finalY + 27, {align: 'center'});
+            doc.line(5, doc.lastAutoTable.finalY + 28, doc.internal.pageSize.getWidth() - 5, doc.lastAutoTable.finalY + 28, 'S');
+
+            doc.setFontSize(6);
+            doc.text(`Powered By ${clientDetails.poweredBy} - ${clientDetails.gctContact}`, marginLeft, doc.lastAutoTable.finalY + 32, {align: 'center'});
+
+            doc.save(`id_${selectedReceipt.id}_${format(selectedReceipt.transactionDate, 'dd/MM/yyyy HH:mm:ss')}` + fileExtension);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return activateReceipt();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
     
     const pdfExport = async () => {
         try {
@@ -467,9 +568,10 @@ const SalesReceiptWindow = () => {
     }
             
     //	setup table data from fetched stock record
-    const buildTableData = (arr = []) => {
+    const buildTableData = (selectedReceipt, dtoInvoice) => {
         const tableArr = [];
-        arr.forEach(item => {
+        let discount = numeral(0);
+        dtoInvoice.dtoSalesRecords.forEach(item => {
             const dtoItem = new TransactionItem();
             dtoItem.id = item.id;
             dtoItem.itemSoldOutPrice = item.itemSoldOutPrice;
@@ -478,9 +580,14 @@ const SalesReceiptWindow = () => {
             dtoItem.qtyType = item.qtyType;
             dtoItem.discount = item.discount ? item.discount : '0';
 
+            const tempDisc = numeral(dtoItem.discount).multiply(dtoItem.qty);
+            discount = numeral(discount).add(tempDisc);
+
             tableArr.push(dtoItem);
         });
         setTotalTransactionAmount(tableArr.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0));
+        
+        setTotalDiscount(numeral(discount).add(dtoInvoice.invoiceDiscount).add(selectedReceipt.ledgerDiscount));
         return tableArr;
     };
     
@@ -757,8 +864,9 @@ const SalesReceiptWindow = () => {
                                 <TableMain tableProps={tableProps} tableData={salesRecords} />
                             </div>
                         </div>
-                        <div className='pe-2 fw-bold h3 mt-5'>
-                            Total (₦): <span className='h3 text-danger fw-bold'>{numeral(totalTransactionAmount).format('₦0,0.00')}</span> 
+                        <div className='pe-2 fw-bold h3 mt-3 d-flex flex-column gap-2'>
+                            <div className='h5'>Total Discount (₦): <span className='text-danger fw-bold'>{numeral(totalDiscount).format('₦0,0.00')}</span> </div>
+                            <div>Total (₦): <span className='h3 text-success fw-bold'>{numeral(totalTransactionAmount).format('₦0,0.00')}</span> </div>
                         </div>
                     </div>
                 </div>

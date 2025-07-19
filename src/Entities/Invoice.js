@@ -10,7 +10,7 @@ export class Invoice {
                 username: jsonObject.username,
                 outpostName: jsonObject.outpostname,
                 outpostID: jsonObject.outpostID,
-                invoiceDiscount: jsonObject.invoiceDiscount,
+                invoiceDiscount: jsonObject.invoiceDiscount ? jsonObject.invoiceDiscount : 0,
                 transactionDate: jsonObject.invoice_date,
                 reversalStatus: jsonObject.reversalStatus,
                 dtoSalesRecords: dtoSalesRecords,

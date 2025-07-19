@@ -1,8 +1,9 @@
 const clientDetails = { 
 	storeName: "P&P Mini Mart", 
-	address: "Mr. Farouk",
-	phone: "",
+	address: "42, Broadway, Obasanjo street, Ita-eko, Abk.",
+	phone: "08000000000",
 	invoiceWarning: 'GOODS SOLD IN GOOD CONDITION ARE NOT RETURNABLE',
+	appreciation: 'THANKS FOR YOUR PATRONAGE',
 	poweredBy: 'Genius Computer Technologies',
 	gctContact: '08034262759'
 }

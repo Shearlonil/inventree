@@ -50,7 +50,7 @@ const UserSalesRecord = () => {
 
     const offCanvasMenu = [
         { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
-        { label: "Export to Excel", onClickParams: {evtName: 'xlsExport'} },
+        // { label: "Export to Excel", onClickParams: {evtName: 'xlsExport'} },
     ];
         
     const [networkRequest, setNetworkRequest] = useState(false);

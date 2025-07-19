@@ -11,7 +11,7 @@ export class Receipt {
                 cashier: jsonObject.cashier,
                 customerName: jsonObject.customerName,
                 customerId: jsonObject.customerId,
-                ledgerDiscount: jsonObject.ledgerDiscount,
+                ledgerDiscount: jsonObject.ledgerDiscount ? jsonObject.ledgerDiscount : 0,
                 transactionDate: jsonObject.transactionDate,
                 reversalStatus: jsonObject.reversalStatus,
                 paymentModes: jsonObject.paymentModes,
