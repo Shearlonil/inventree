@@ -3,10 +3,9 @@ import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import numeral from 'numeral';
-import FileSaver from 'file-saver';
-import * as XLSX from 'xlsx';
+import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { applyPlugin, autoTable } from 'jspdf-autotable'
 
@@ -17,6 +16,7 @@ import DateDialog from '../../Components/DialogBoxes/DateDialog';
 import handleErrMsg from '../../Utils/error-handler';
 import { useAuth } from '../../app-context/auth-user-context';
 import transactionsController from '../../Controllers/transactions-controller';
+import genericController from '../../Controllers/generic-controller';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import { Receipt } from '../../Entities/Receipt';
 import TableMain from '../../Components/TableView/TableMain';
@@ -25,12 +25,15 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
-import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 import printerController from '../../Controllers/printer-controller';
 import { clientDetails } from '../../../data';
+import EntityDateDialog from '../../Components/DialogBoxes/EntityDateDialog';
+import User from '../../Entities/User';
+import { Contact } from '../../Entities/Contact';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
+    const navigate = useNavigate();
     //  format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -57,15 +60,21 @@ const SalesReceiptWindow = () => {
     };
 
     const [networkRequest, setNetworkRequest] = useState(false);
-    //	indicate where id search or date search, 0 => date search	|	1 => id search
+    //	indicate where id search or date search, 0 => date search	|	1 => id search  |   2 => entity date search
     const [searchMode, setSearchMode] = useState(null);
     //	incase of id search, store in this state
     const [searchedId, setSearchedId] = useState(0);
     //	incase of date search, store in this state
     const [searchedDate, setSearchedDate] = useState(null);
+    //	incase of entity date search, store in this state
+    const [searchedEntityDate, setSearchedEntityDate] = useState(null);
+    const [searchedEntity, setSearchedEntity] = useState("");
 
     const [receipts, setReceipts] = useState([]);
     const [receiptOptions, setReceiptOptions] = useState([]);
+    const [entityOptions, setEntityOptions] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [customers, setCustomers] = useState([]);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [salesRecords, setSalesRecords] = useState([]);
@@ -84,13 +93,86 @@ const SalesReceiptWindow = () => {
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+    //  for entity dialog (users and customers)
+    const [showEntityModal, setShowEntityModal] = useState(false);
+    const [entityLoading, setEntityLoading] = useState(true);
     
     useEffect( () => {
         if(!user.hasAuth('RECEIPT_WINDOW')){
             toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/404');
         }
+        initialize();
     }, []);
+    
+    const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            const urls = [ `/api/users/active`, `/api/customers/active` ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: usersRequest, 1: customersRequest } = response;
+            
+            if (usersRequest && usersRequest.data && usersRequest.data.length > 0) {
+                const arr = [];
+                usersRequest.data.filter(datum => {
+                    if(datum.username.toLowerCase() === 'inventree'){
+                        return false;
+                    }
+                    return true;
+                }).forEach( user => {
+                    const u = new User();
+                    //  u.id = user.id;
+                    u.username = user.username;
+                    u.firstName = user.firstName;
+                    u.lastName = user.lastName;
+                    u.sex = user.sex;
+                    u.phoneNo = user.phoneNo;
+                    u.email = user.email;
+                    u.regDate = user.dateOfReg;
+                    switch (user.level) {
+                        case 1:
+                            u.level = 'Admin';
+                            break;
+                        case 2:
+                            u.level = 'Supervisor';
+                            break;
+                        case 3:
+                            u.level = 'Sales Assistant';
+                            break;
+                    }
+                    arr.push(u);
+                } );
+                setUsers(arr.map(user => ({label: user.username, value: user})));
+            }
+
+            if (customersRequest && customersRequest.data) {
+                const arr = [];
+                customersRequest.data.forEach( customer => arr.push(new Contact(customer)) );
+                setCustomers(arr.map(customer => ({label: customer.name, value: customer})));
+            }
+
+            setEntityLoading(false);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -147,6 +229,18 @@ const SalesReceiptWindow = () => {
 				setDisplayMsg(`Download receipt with No. ${selectedReceipt.id}`);
 				setShowConfirmModal(true);
                 break;
+            case 'searchByCustomer':
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Select customer`);
+				setShowEntityModal(true);
+                setEntityOptions(customers);
+                break;
+            case 'searchByUser':
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Select user`);
+				setShowEntityModal(true);
+                setEntityOptions(users);
+                break;
         }
 	}
 
@@ -154,6 +248,7 @@ const SalesReceiptWindow = () => {
 		setShowDateModal(false);
 		setShowInputModal(false);
 		setShowConfirmModal(false);
+        setShowEntityModal(false);
 	};
 
 	const handleClosePaymentModal = () => {
@@ -256,6 +351,8 @@ const SalesReceiptWindow = () => {
 
 			setSearchedId(id);
 			setSearchedDate(null);
+            setSearchedEntityDate(null);
+            setSearchedEntity("");
 			setValue('startDate', null);
 			setValue('endDate', null);
 
@@ -302,8 +399,10 @@ const SalesReceiptWindow = () => {
                 setSalesRecords([]);
                 setSelectedReceipt(null);
                 setSelectedInvoice(null);
-				setSearchedId(0);
                 setSearchMode(0);
+				setSearchedId(0);
+                setSearchedEntityDate(null);
+                setSearchedEntity("");
 				setSearchedDate(date);
 
                 setFilename(`Receipts ${date.startDate} - ${date.endDate}`);
@@ -326,6 +425,62 @@ const SalesReceiptWindow = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return dateSearch(date);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const entityDateSearch = async (data) => {
+        try {
+			if (data.startDate && data.endDate) {
+				setNetworkRequest(true);
+                setTotalTransactionAmount(0);
+                setReceipts([]);
+                setSalesRecords([]);
+                setSelectedReceipt(null);
+                setSelectedInvoice(null);
+				setSearchedId(0);
+                setSearchMode(2);
+				setSearchedDate(null);
+                setSearchedEntityDate(data);
+
+                let response;
+                if(confirmDialogEvtName === "searchByCustomer"){
+                    setFilename(`Receipts_for_${data.select.label}_${data.startDate} - ${data.endDate}`);
+                    setSearchedEntity('customer');
+                    response = await transactionsController.customerSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.select.value.id);
+                }else {
+                    setFilename(`Receipts_generated_by_${data.select.label} ${data.startDate} - ${data.endDate}`);
+                    setSearchedEntity('user');
+                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.select.label);
+                }
+                
+				if(response && response.data){
+                    const tableArr = [];
+                    response.data.forEach(res => tableArr.push(new Receipt(res)));
+                    tableArr.sort((a, b) => a.id - b.id);
+                    response.data.sort((a, b) => a.id - b.id);
+                    setReceipts(tableArr);
+                    setReceiptOptions(tableArr.map( receipt => ({label: receipt.id, value: receipt})));
+				}
+				setNetworkRequest(false);
+			}
+		} catch (error) {
+			setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return entityDateSearch(data);
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
@@ -524,25 +679,43 @@ const SalesReceiptWindow = () => {
         try {
             setNetworkRequest(true);
             let response;
-            if(searchMode === 0){
-                response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate.toISOString(), searchedDate.endDate.toISOString(), 
-                    searchedDate.reversal_status);
-                if(response && response.data){
-                    if(user.hasAuth('PROFIT_VIEW')){
-                        dayBookProfitPDF(response.data);
-                    }else {
-                        generatePDF(response.data);
+            switch (searchMode){
+                case 0:
+                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate.toISOString(), searchedDate.endDate.toISOString(), 
+                        searchedDate.reversal_status);
+                    if(response && response.data){
+                        if(user.hasAuth('PROFIT_VIEW')){
+                            dayBookProfitPDF(response.data);
+                        }else {
+                            generatePDF(response.data);
+                        }
                     }
-                }
-            }else {
-                response = await transactionsController.pdfPurchaseReceiptsByNoForExport(searchedId);
-                if(response && response.data){
-                    if(user.hasAuth('PROFIT_VIEW')){
-                        dayBookProfitPDF(response.data);
-                    }else {
-                        generatePDF(response.data);
+                    break;
+                case 1:
+                    response = await transactionsController.pdfPurchaseReceiptsByNoForExport(searchedId);
+                    if(response && response.data){
+                        if(user.hasAuth('PROFIT_VIEW')){
+                            dayBookProfitPDF(response.data);
+                        }else {
+                            generatePDF(response.data);
+                        }
                     }
-                }
+                case 2:
+                    if(searchedEntity === "customer"){
+                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(searchedEntityDate.startDate.toISOString(), 
+                            searchedEntityDate.endDate.toISOString(), searchedEntityDate.select.value.id);
+                    }else {
+                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(searchedEntityDate.startDate.toISOString(), 
+                            searchedEntityDate.endDate.toISOString(), searchedEntityDate.select.label);
+                    }
+                    if(response && response.data){
+                        if(user.hasAuth('PROFIT_VIEW')){
+                            dayBookProfitPDF(response.data);
+                        }else {
+                            generatePDF(response.data);
+                        }
+                    }
+                    break;
             }
             setNetworkRequest(false);
             
@@ -894,6 +1067,14 @@ const SalesReceiptWindow = () => {
                 show={showPaymentModal}
                 handleClose={handleClosePaymentModal}
                 handleConfirm={paymentModeSet}
+            />
+            <EntityDateDialog 
+                show={showEntityModal}
+                message={displayMsg}
+                entityOptions={entityOptions}
+                optionsLoading={entityLoading}
+                handleClose={handleCloseModal}
+                handleConfirm={entityDateSearch}
             />
         </div>
     )
