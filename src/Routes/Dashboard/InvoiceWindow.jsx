@@ -313,7 +313,7 @@ const InvoiceWindow = () => {
             const dtoItem = new TransactionItem();
             dtoItem.id = item.id;
             dtoItem.itemSoldOutPrice = item.itemSoldOutPrice;
-            dtoItem.itemName = item.itemName;
+            dtoItem.itemName = item.name;
             dtoItem.qty = item.qty;
             dtoItem.qtyType = item.qtyType;
             dtoItem.discount = item.discount ? item.discount : '0';
