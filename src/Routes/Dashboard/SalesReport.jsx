@@ -45,6 +45,10 @@ const SalesReport = () => {
     const startDate = watch("startDate");
 
     const dispensaryOffCanvasMenu = [
+        { label: "Sort By Name (ASC)", onClickParams: {evtName: 'sortByNameASC'} },
+        { label: "Sort By Name (DESC)", onClickParams: {evtName: 'sortByNameDESC'} },
+        { label: "Sort By Qty Sold (ASC)", onClickParams: {evtName: 'sortByQtyASC'} },
+        { label: "Sort By Qty Sold (DESC)", onClickParams: {evtName: 'sortByQtyDESC'} },
         { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
         { label: "Export to Excel", onClickParams: {evtName: 'xlsExport'} },
     ];
@@ -66,6 +70,7 @@ const SalesReport = () => {
     }, []);
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+        let arr = [];
 		switch (onclickParams.evtName) {
             case 'xlsExport':
                 if (user.hasAuth('PROFIT_VIEW')) {
@@ -80,6 +85,34 @@ const SalesReport = () => {
                 }else {
                     pdfExport();
                 }
+                break;
+            case 'sortByNameASC':
+                setData([]);
+                data.forEach(datum => arr.push(datum));
+                arr.sort(
+                    (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
+                );
+                setData(arr);
+                break;
+            case 'sortByNameDESC':
+                setData([]);
+                data.forEach(datum => arr.push(datum));
+                arr.sort(
+                    (a, b) => (a.itemName.toLowerCase() < b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() < a.itemName.toLowerCase()) ? -1 : 0)
+                );
+                setData(arr);
+                break;
+            case 'sortByQtyASC':
+                setData([]);
+                data.forEach(datum => arr.push(datum));
+                arr.sort( (a, b) => a.soldOutQty - b.soldOutQty );
+                setData(arr);
+                break;
+            case 'sortByQtyDESC':
+                setData([]);
+                data.forEach(datum => arr.push(datum));
+                arr.sort( (a, b) => b.soldOutQty - a.soldOutQty );
+                setData(arr);
                 break;
         }
 	}
@@ -290,7 +323,7 @@ const SalesReport = () => {
                     });
                     arr.sort(
                         (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
-                    )
+                    );
                     /*
                     IN PREVIOUS VERSION, displaying both items with sales records within the selected range and items without sales record.
                     //  filter out items with sales qty and sort by name

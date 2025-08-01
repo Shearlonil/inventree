@@ -154,7 +154,7 @@ const Settings = () => {
                         <Form.Label>Database backup</Form.Label>
                     </Col>
                     <Col className="mb-4 my-2 my-md-0 d-flex justify-content-center justify-content-md-start border-end border-primary border-4" md={"3"}>
-                        <Button className="w-75" variant='outline-danger' onClick={() => { backupDB() }} >
+                        <Button className="w-75" variant='outline-danger' onClick={() => { backupDB() }} disabled={networkRequest} >
                             { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
                             { (!networkRequest) && `Back Up` }
                         </Button>
@@ -165,7 +165,7 @@ const Settings = () => {
 						<ErrorMessage source={bakFileErrors.db_file} />
                     </Col>
                     <Col className="my-2 my-md-0 d-flex justify-content-center justify-content-md-start" md={"2"}>
-                        <Button className="w-75" variant='outline-danger' onClick={handleBakFileSubmit(onSubmit)} >
+                        <Button className="w-75" variant='outline-danger' onClick={handleBakFileSubmit(onSubmit)} disabled={networkRequest} >
                             { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
                             { (!networkRequest) && `Restore` }
                         </Button>
