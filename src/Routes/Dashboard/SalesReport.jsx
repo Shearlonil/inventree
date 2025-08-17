@@ -491,7 +491,7 @@ const SalesReport = () => {
                                 <th className='text-danger'>Item Name</th>
                                 {/* <th className='text-danger'>Store Qty</th>
                                 <th className='text-danger'>Shelf Qty</th> */}
-                                <th className='text-danger'>Total Qty</th>
+                                <th className='text-danger'>Available Qty</th>
                                 <th className='text-danger'>Sold Qty</th>
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Unit Stock Price (AVG)</th>}
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Total Stock Price</th>}
