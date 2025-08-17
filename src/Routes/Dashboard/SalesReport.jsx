@@ -59,6 +59,7 @@ const SalesReport = () => {
     const [totalStockPrice, setTotalStockPrice] = useState(0);
     const [totalSalesPrice, setTotalSalesPrice] = useState(0);
     const [totalGrossProfit, setTotalGrossProfit] = useState(0);
+    const [totalCash, setTotalCash] = useState(0);
     
     const [filename, setFilename] = useState("");
     
@@ -124,7 +125,7 @@ const SalesReport = () => {
         const fileExtension = ".xlsx";
 
         const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty", 
-            avgUnitSalesPrice: "Unit Sales Price (AVG)", totalSalesPrice: "Total Sales Price" } ];
+            avgUnitSalesPrice: "Unit Sales Price (AVG)", totalSalesPrice: "Total Sales Price (AVG)", cashCollected: "Cash" } ];
 
         const temp = [];
         data.forEach(datum => {
@@ -144,15 +145,16 @@ const SalesReport = () => {
             { wch: 15 },
             { wch: 20 },
             { wch: 15 },
+            { wch: 15 },
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice", "cashCollected"],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitSalesPrice", "totalSalesPrice", "cashCollected"],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -169,8 +171,8 @@ const SalesReport = () => {
         const fileExtension = ".xlsx";
 
         const Heading = [ {itemName: "Item Name", storeQty: "Store Qty", salesQty: "Shelf Qty", totalQty: "Total Qty", soldOutQty: "Sold Qty", 
-            avgUnitStockPrice: "Unit Stock Price (AVG)", totalStockPrice: "Total Stock Price", avgUnitSalesPrice: "Unit Sales Price (AVG)", 
-            totalSalesPrice: "Total Sales Price", grossProfit: "Gross Profit" } ];
+            avgUnitStockPrice: "Unit Stock Price (AVG)", totalStockPrice: "Total Stock Price (AVG)", avgUnitSalesPrice: "Unit Sales Price (AVG)", 
+            totalSalesPrice: "Total Sales Price (AVG)", cashCollected: "Cash", grossProfit: "Gross Profit" } ];
 
         const temp = [];
         data.forEach(datum => {
@@ -189,16 +191,21 @@ const SalesReport = () => {
             { wch: 15 },
             { wch: 20 },
             { wch: 15 },
+            { wch: 15 },
             { wch: 15 }
         ];
         const ws = XLSX.utils.json_to_sheet(Heading, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", "totalSalesPrice", "grossProfit"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", 
+                "totalSalesPrice", "cashCollected", "grossProfit"
+            ],
             skipHeader: true,
             origin: 0 //ok
         });
         ws["!cols"] = wscols;
         XLSX.utils.sheet_add_json(ws, temp, {
-            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", "totalSalesPrice", "grossProfit"],
+            header: ["itemName", "storeQty", "salesQty", "totalQty", "soldOutQty", "avgUnitStockPrice", "totalStockPrice", "avgUnitSalesPrice", 
+                "totalSalesPrice", "cashCollected", "grossProfit"
+            ],
             skipHeader: true,
             origin: -1 //ok
         });
@@ -239,9 +246,10 @@ const SalesReport = () => {
                 { header: 'Qty Sold', dataKey: 'soldOutQty' },
                 { header: 'Unit Sales Price (AVG)', dataKey: 'avgUnitSalesPrice' },
                 { header: 'Total Sales Price', dataKey: 'totalSalesPrice' },
+                { header: 'Cash', dataKey: 'cashCollected' },
             ],
         });
-        doc.text(`Total Sales Price: ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Cash: ${numeral(totalCash).format('₦0,0.00')} | Total Sales Price (AVG): ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
 
         doc.save(`${filename}` + fileExtension);
     }
@@ -279,11 +287,12 @@ const SalesReport = () => {
                 { header: 'Total Stock Price', dataKey: 'totalStockPrice' },
                 { header: 'Unit Sales Price (AVG)', dataKey: 'avgUnitSalesPrice' },
                 { header: 'Total Sales Price', dataKey: 'totalSalesPrice' },
+                { header: 'Cash', dataKey: 'cashCollected' },
                 { header: 'Gross Profit', dataKey: 'grossProfit' },
             ],
         });
-        doc.text(`Total Stock Price: ${numeral(totalStockPrice).format('₦0,0.00')} | Total Sales Price: ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
-        doc.text(`Total Gross Profit: ${numeral(totalGrossProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
+        doc.text(`Total Cash: ${numeral(totalCash).format('₦0,0.00')} | Total Sales Price (AVG): ${numeral(totalSalesPrice).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Stock Price: ${numeral(totalStockPrice).format('₦0,0.00')} | Total Gross Profit: ${numeral(totalGrossProfit).format('₦0,0.00')}`, marginLeft,  doc.lastAutoTable.finalY + 70);
 
         doc.save(`${filename}` + fileExtension);
     }
@@ -314,11 +323,13 @@ const SalesReport = () => {
                     let totalStockPrice = numeral(0);
                     let totalSalesPrice = numeral(0);
                     let totalGrossProfit = numeral(0);
+                    let totalCash = numeral(0);
                     response.data.forEach(datum => {
                         const salesRecord = new SalesSummary(datum);
                         totalStockPrice = numeral(totalStockPrice).add(salesRecord.totalStockPrice);
                         totalSalesPrice = numeral(totalSalesPrice).add(salesRecord.totalSalesPrice);
                         totalGrossProfit = numeral(totalGrossProfit).add(salesRecord.grossProfit);
+                        totalCash = numeral(totalCash).add(salesRecord.cashCollected);
                         arr.push(salesRecord);
                     });
                     arr.sort(
@@ -343,6 +354,7 @@ const SalesReport = () => {
                     setTotalGrossProfit(totalGrossProfit);
                     setTotalSalesPrice(totalSalesPrice);
                     setTotalStockPrice(totalStockPrice);
+                    setTotalCash(totalCash);
 					setData(arr);
 				}
 				setNetworkRequest(false);
@@ -477,14 +489,15 @@ const SalesReport = () => {
                         <thead>
                             <tr className="shadow-sm">
                                 <th className='text-danger'>Item Name</th>
-                                <th className='text-danger'>Store Qty</th>
-                                <th className='text-danger'>Shelf Qty</th>
+                                {/* <th className='text-danger'>Store Qty</th>
+                                <th className='text-danger'>Shelf Qty</th> */}
                                 <th className='text-danger'>Total Qty</th>
                                 <th className='text-danger'>Sold Qty</th>
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Unit Stock Price (AVG)</th>}
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Total Stock Price</th>}
                                 <th className='text-danger'>Unit Sales Price (AVG)</th>
                                 <th className='text-danger'>Total Sales Price</th>
+                                <th className='text-danger'>Cash</th>
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Gross Profit</th>}
                             </tr>
                         </thead>
@@ -492,14 +505,15 @@ const SalesReport = () => {
                             {data.map((_datum, index) => (
                                 <tr className='' key={index}>
                                     <td>{_datum.itemName}</td>
-                                    <td>{_datum.storeQty}</td>
-                                    <td>{_datum.salesQty}</td>
+                                    {/* <td>{_datum.storeQty}</td>
+                                    <td>{_datum.salesQty}</td> */}
                                     <td>{_datum.totalQty}</td>
                                     <td>{_datum.soldOutQty}</td>
                                     {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.avgUnitStockPrice).format('₦0,0.00')}</td>}
                                     {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>}
                                     <td>{numeral(_datum.avgUnitSalesPrice).format('₦0,0.00')}</td>
                                     <td>{numeral(_datum.totalSalesPrice).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.cashCollected).format('₦0,0.00')}</td>
                                     {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.grossProfit).format('₦0,0.00')}</td>}
                                 </tr>
                             ))}
@@ -508,15 +522,19 @@ const SalesReport = () => {
                 </div>
             </div>
             <div className="row">
-                <div className="col-md-4 col-sm-12 text-center mb-3">
-                    <p className="fw-bold text-primary h5">Total Sales Price</p>
+                <div className="col-md-3 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Cash Amount</p>
+                    <h3 className='text-danger'> {numeral(totalCash).format('₦0,0.00')} </h3>
+                </div>
+                <div className="col-md-3 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Sales (AVG)</p>
                     <h3 className='text-danger'> {numeral(totalSalesPrice).format('₦0,0.00')} </h3>
                 </div>
-                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-4 col-sm-12 text-center mb-3">
-                    <p className="fw-bold text-primary h5">Total Stock Price</p>
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-3 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Stock (AVG)</p>
                     <h3 className='text-danger'> {numeral(totalStockPrice).format('₦0,0.00')} </h3>
                 </div>}
-                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-4 col-sm-12 text-center mb-3">
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-3 col-sm-12 text-center mb-3">
                     <p className="fw-bold text-primary h5">Total Gross Profit</p>
                     <h3 className='text-danger'> {numeral(totalGrossProfit).format('₦0,0.00')} </h3>
                 </div>}

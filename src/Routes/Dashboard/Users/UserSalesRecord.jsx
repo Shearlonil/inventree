@@ -402,7 +402,7 @@ const UserSalesRecord = () => {
             </div>
             <div className="row">
                 <div className="col-12 text-center mb-3">
-                    <p className="fw-bold text-primary h5">Total Sales Price</p>
+                    <p className="fw-bold text-primary h5">Total Amount</p>
                     <h3 className='text-danger'> {numeral(totalAmount).format('₦0,0.00')} </h3>
                 </div>
             </div>

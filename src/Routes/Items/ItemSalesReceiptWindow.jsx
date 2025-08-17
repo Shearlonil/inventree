@@ -62,6 +62,7 @@ const ItemSalesReceiptWindow = () => {
     const [filename, setFilename] = useState("");
     
     const [totalAmount, setTotalAmount] = useState(0);
+    const [totalAvgSalesPrice, setTotalAvgSalesPrice] = useState(0);
     const [totalProfit, setTotalProfit] = useState(0);
         
     useEffect( () => {
@@ -290,6 +291,7 @@ const ItemSalesReceiptWindow = () => {
                 setData([]);
                 setTotalProfit(0);
                 setTotalAmount(0);
+                setTotalAvgSalesPrice(0);
 
                 data.startDate.setHours(0);
                 data.startDate.setMinutes(0);
@@ -325,8 +327,10 @@ const ItemSalesReceiptWindow = () => {
                     let tempSalesPrice = numeral(0);
                     let tempStockPrice = numeral(0);
                     let tempQty = numeral(0);
+                    let tempTotalAmount = numeral(0);
                     
                     arr.forEach(item => {
+                        tempTotalAmount = numeral(tempTotalAmount).add(item.totalAmount);
                         tempSalesPrice = numeral(tempSalesPrice).add(item.unitSalesPrice);
                         tempStockPrice = numeral(tempStockPrice).add(numeral(item.unitStockPrice).value());
                         tempQty = numeral(tempQty).add(item.unitQty);
@@ -338,7 +342,8 @@ const ItemSalesReceiptWindow = () => {
                     const totalAvgSalesPrice =  numeral(tempQty).multiply(numeral(avgUnitSalesPrice).value()).value();
                     
                     setTotalProfit(numeral(totalAvgSalesPrice).subtract(totalAvgStockPrice).value());
-                    setTotalAmount(totalAvgSalesPrice);
+                    setTotalAmount(tempTotalAmount);
+                    setTotalAvgSalesPrice(totalAvgSalesPrice);
                     setData(arr);
                 }
                 setNetworkRequest(false);
@@ -519,11 +524,15 @@ const ItemSalesReceiptWindow = () => {
                 </div>
             </div>
             <div className="row">
-                <div className="col-md-6 col-sm-12 text-center mb-3">
-                    <p className="fw-bold text-primary h5">Total Sales Price</p>
+                <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Cash</p>
                     <h3 className='text-danger'> {numeral(totalAmount).format('₦0,0.00')} </h3>
                 </div>
-                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-6 col-sm-12 text-center mb-3">
+                <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Sales Price (AVG)</p>
+                    <h3 className='text-danger'> {numeral(totalAvgSalesPrice).format('₦0,0.00')} </h3>
+                </div>
+                {user.hasAuth('PROFIT_VIEW') && <div className="col-md-4 col-sm-12 text-center mb-3">
                     <p className="fw-bold text-primary h5">Total Profit</p>
                     <h3 className='text-danger'> {numeral(totalProfit).format('₦0,0.00')} </h3>
                 </div>}

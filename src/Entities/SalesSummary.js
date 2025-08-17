@@ -13,6 +13,7 @@ export class SalesSummary {
                 storeQty: jsonObject.storeQty,
                 salesQty: jsonObject.salesQty,
                 soldOutQty: jsonObject.soldOutQty,
+                cashCollected: jsonObject.totalCash,
                 avgUnitSalesPrice: jsonObject.avgSalesPrice,
                 avgUnitStockPrice: jsonObject.avgStockPrice,
             });
@@ -39,6 +40,9 @@ export class SalesSummary {
     get soldOutQty() { return _salesSummaryProps.get(this).soldOutQty; }
     set soldOutQty(soldOutQty) { _salesSummaryProps.get(this).soldOutQty = soldOutQty }
     
+    get cashCollected() { return _salesSummaryProps.get(this).cashCollected }
+    set cashCollected(cashCollected) { _salesSummaryProps.get(this).cashCollected = cashCollected }
+    
     get avgUnitSalesPrice() { return _salesSummaryProps.get(this).avgUnitSalesPrice; }
     set avgUnitSalesPrice(avgUnitSalesPrice) { _salesSummaryProps.get(this).avgUnitSalesPrice = avgUnitSalesPrice }
     
@@ -61,6 +65,7 @@ export class SalesSummary {
             salesQty: this.salesQty,
             storeQty: this.storeQty,
             soldOutQty: this.soldOutQty,
+            cashCollected: this.cashCollected,
             avgUnitSalesPrice: this.avgUnitSalesPrice,
             avgUnitStockPrice: this.avgUnitStockPrice,
             totalStockPrice: this.totalStockPrice,
