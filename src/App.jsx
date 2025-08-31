@@ -51,6 +51,8 @@ import AccChartDisplay from "./Routes/Finance/AccChartDisplay";
 import AcctVoucherCreation from "./Routes/Finance/AcctVoucherCreation";
 import AcctVoucherDisplay from "./Routes/Finance/AccVoucherDisplay";
 import UserSalesRecord from "./Routes/Dashboard/Users/UserSalesRecord";
+import Income from "./Routes/Finance/Income";
+import Expenses from "./Routes/Finance/Expenses";
 
 function App() {
 	return (
@@ -114,6 +116,8 @@ function App() {
 					<Route path={""} element={<OutpostsWindow />} />
 				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
+					<Route path={"vouchers/income"} element={<Income />} />
+					<Route path={"vouchers/expenses"} element={<Expenses />} />
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
 					<Route path={"vouchers/:vch_id/view"} element={<AcctVoucherDisplay />} />
 					<Route path={"ledgers/:id/view"} element={<LedgerDisplay />} />

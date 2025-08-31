@@ -266,6 +266,42 @@ const Dashboard = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {user.hasAuth('ACCOUNTING_VOUCHERS') && <div className="col-md-4 col-sm-12">
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/finance/vouchers/expenses')} style={{minHeight: '110px'}}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className={`p-2 bg-warning-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
+                                        <img
+                                            style={{ width: "50px", height: "40px" }}
+                                            src={SVG.expenses}
+                                            alt=""
+                                        />
+                                    </div>
+                                    <div className="d-flex flex-column text-start">
+                                        <span className="fs-6 noto-sans-font fw-bold">Expenses</span>
+                                        <span className="text-muted">Add expenses on the fly to start calculating actual profit</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>}
+
+                        {user.hasAuth('ACCOUNTING_VOUCHERS') && <div className="col-md-4 col-sm-12">
+                            <div className="btn p-3 border w-100" onClick={() => navigate('/finance/vouchers/income')} style={{minHeight: '110px'}}>
+                                <div className="d-flex align-items-center gap-3">
+                                    <div className={`p-2 bg-danger-subtle text-center rounded-3 onHover`} style={{boxShadow: 'black 3px 2px 5px'}}>
+                                        <img
+                                            style={{ width: "50px", height: "40px" }}
+                                            src={SVG.income}
+                                            alt=""
+                                        />
+                                    </div>
+                                    <div className="d-flex flex-column text-start">
+                                        <span className="fs-6 noto-sans-font fw-bold">Income</span>
+                                        <span className="text-muted">Add income from other sources to your business</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>}
                     </div>
                     
                     <div className="row d-flex justify-content-center mt-5">

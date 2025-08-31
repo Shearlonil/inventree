@@ -64,6 +64,8 @@ const SVG = {
 	stock_rec_colored: new URL("./Svg/stock_colored.svg", import.meta.url).href,
 	stock_rec_monochrome: new URL("./Svg/stock_monochrome.svg", import.meta.url).href,
 	dispensary: new URL("./Svg/dispensary.svg", import.meta.url).href,
+	income: new URL("./Svg/income.svg", import.meta.url).href,
+	expenses: new URL("./Svg/expenses.svg", import.meta.url).href,
 };
 
 export default SVG;

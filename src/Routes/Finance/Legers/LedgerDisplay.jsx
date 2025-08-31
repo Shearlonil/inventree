@@ -4,7 +4,6 @@ import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
-import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import FileSaver from 'file-saver';
@@ -13,8 +12,6 @@ import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable'
 
 import SVG from '../../../assets/Svg';
-import ErrorMessage from '../../../Components/ErrorMessage';
-import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import { useAuth } from '../../../app-context/auth-user-context';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import handleErrMsg from '../../../Utils/error-handler';
@@ -26,6 +23,7 @@ import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
 import numeral from 'numeral';
+import StartEndDateSearch from '../../../Components/StartEndDateSearch';
 
 const LedgerDisplay = () => {
     const navigate = useNavigate();
@@ -33,22 +31,6 @@ const LedgerDisplay = () => {
 		
 	const { handleRefresh, logout, authUser } = useAuth();
 	const user = authUser();
-
-	const schema = object().shape({
-        startDate: date(),
-        endDate: date().min(ref("startDate"), "please update start date"),
-	});
-
-	const {
-		handleSubmit,
-		control,
-		setValue,
-		watch,
-		formState: { errors },
-	} = useForm({
-	  	resolver: yupResolver(schema)
-	});
-	const startDate = watch("startDate");
 
 	const ledgerOffCanvasMenu = [
 		// { label: "Select Ledger", onClickParams: {evtName: 'selectLedger'} },
@@ -360,7 +342,7 @@ const LedgerDisplay = () => {
         doc.save(`${filename}` + fileExtension);
     }
         
-    const onsubmit = async (data) => {
+    const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
@@ -396,7 +378,7 @@ const LedgerDisplay = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return onsubmit(data);
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -512,91 +494,8 @@ const LedgerDisplay = () => {
                     </div>
                 </div>
             </div>
-            <div className="border py-4 px-5 bg-white-subtle rounded-4" style={{ boxShadow: "black 3px 2px 5px" }}>
-                <Row className="align-items-center">
-                    <Col sm lg="4" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">Start Date</Form.Label>
-                        <Controller
-                            name="startDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Datetime
-                                    {...field}
-                                    timeFormat={false}
-                                    closeOnSelect={true}
-                                    dateFormat="DD/MM/YYYY"
-                                    inputProps={{
-                                        placeholder: "Choose start date",
-                                        className: "form-control",
-                                        readOnly: true, // Optional: makes input read-only
-                                    }}
-                                    onChange={(date) => {
-                                        setValue("endDate", date.toDate());
-                                        field.onChange(date ? date.toDate() : null);
-                                    }}
-                                    /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-                                        refs:
-                                            *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-                                            *	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-                                        there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-                                        the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-                                        or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-                                    renderInput={(props) => {
-                                        return <input {...props} value={field.value ? props.value : ''} />
-                                    }}
-                                />
-                            )}
-                        />
-                        <ErrorMessage source={errors.startDate} />
-                    </Col>
-                    <Col sm lg="4" className="mt-3 mt-md-0">
-                        <Form.Label className="fw-bold">End Date</Form.Label>
-                        <Controller
-                            name="endDate"
-                            control={control}
-                            render={({ field }) => (
-                                <Datetime
-                                    {...field}
-                                    timeFormat={false}
-                                    closeOnSelect={true}
-                                    dateFormat="DD/MM/YYYY"
-                                    inputProps={{
-                                        placeholder: "Choose end date",
-                                        className: "form-control",
-                                        readOnly: true, // Optional: makes input read-only
-                                    }}
-                                    onChange={(date) =>
-                                        field.onChange(date ? date.toDate() : null)
-                                    }
-                                    isValidDate={(current) => {
-                                        // Ensure end date is after start date
-                                        return (
-                                        !startDate || current.isSameOrAfter(startDate, "day")
-                                        );
-                                    }}
-                                    /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-                                        refs:
-                                            *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-                                            *	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-                                        there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-                                        the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-                                        or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-                                    renderInput={(props) => {
-                                        return <input {...props} value={field.value ? props.value : ''} />
-                                    }}
-                                />
-                            )}
-                        />
-                        <ErrorMessage source={errors.endDate} />
-                    </Col>
-                    <Col sm lg="3" className="align-self-end text-center mt-3">
-                        <Button className="w-100" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
-                            { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
-                            { (!networkRequest) && `Search` }
-                        </Button>
-                    </Col>
-                </Row>
-            </div>
+            
+            <StartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} />
             
             <div className="p-3 rounded-3 p-3 overflow-md-auto bg-secondary-subtle my-4" style={{ minHeight: "700px" }}>
                 <div className="border border rounded-3 p-1 bg-light my-3 shadow" style={{ maxHeight: "750px", minHeight: "750px", overflow: 'scroll' }}>

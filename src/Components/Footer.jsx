@@ -5,9 +5,12 @@ import { FaFacebook } from "react-icons/fa";
 
 import IMAGES from "../assets/Images";
 import SVG from "../assets/Svg";
+import { useAuth } from "../app-context/auth-user-context";
 
 const Footer = () => {
     const navigate = useNavigate();
+
+    const { getCurrentYear } = useAuth();
 
     return (<>
         <div className="container-fluid">
@@ -16,12 +19,12 @@ const Footer = () => {
                     <a href="/" className="me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
                         <img src={IMAGES.logo} width={"100"} alt="" />
                     </a>
-                    <span className="text-body-secondary">&copy; 2024 Inventree, Inc</span>
+                    <span className="text-body-secondary">&copy; {getCurrentYear()} Inventree, Inc</span>
                 </div>
                 <hr className="container d-md-none" />
                 <div className="col-12 col-md-4 text-center d-flex flex-column flex-md-row align-items-center justify-content-center gap-2">
                     <p>
-                        Powered by <i>Genius Computer Technologies</i>
+                        Powered by <i className="fw-bold text-primary">Genius Computer Technologies</i>
                     </p>
                     <img src={IMAGES.logo_gct} height={"20px"} width={"70px"} alt="" />
                 </div>

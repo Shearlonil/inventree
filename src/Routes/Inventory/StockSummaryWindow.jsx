@@ -304,7 +304,7 @@ const StockSummaryWindow = () => {
                                     closeOnSelect={true}
                                     dateFormat="DD/MM/YYYY"
                                     inputProps={{
-                                        placeholder: "Choose start date",
+                                        placeholder: "Choose date",
                                         className: "form-control",
                                         readOnly: true, // Optional: makes input read-only
                                     }}
