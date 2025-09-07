@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
+import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
@@ -38,8 +39,8 @@ const Income = () => {
 
     //	menus for the react-menu in table
     const menuItems = [
-        { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Edit', onClickParams: {evtName: 'edit' } },
+        { name: 'Delete', onClickParams: {evtName: 'delete'} },
     ];
 
     useEffect( () => {
@@ -54,10 +55,14 @@ const Income = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await ledgerController.findAllActive();
+            const response = await financeController.findChartLedgersByName("Revenue");
 
             if (response && response.data) {
-                setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
+                setLedgerOptions(
+                    response.data
+                        .filter(datum => datum.isDefault === false)
+                        .map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger}))
+                );
             }
 
             setNetworkRequest(false);
@@ -93,7 +98,7 @@ const Income = () => {
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'delete':
-                const indexPos = ledgerTransactions.findIndex(i => i.ledgerId === entity.ledgerId);
+                const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
                 if(indexPos > -1){
                     //	replace old item found at index position in ledgerTransactions array with edited one
                     ledgerTransactions.splice(indexPos, 1);
@@ -127,41 +132,19 @@ const Income = () => {
         try {
 			if (data.startDate && data.endDate) {
 				setNetworkRequest(true);
-                setData([]);
-                setTotalGrossProfit(0);
-                setTotalSalesPrice(0);
-                setTotalStockPrice(0);
-                
-				data.startDate.setHours(0);
-				data.startDate.setMinutes(0);
-				data.startDate.setSeconds(0);
-	
-				data.endDate.setHours(23);
-				data.endDate.setMinutes(59);
-				data.endDate.setSeconds(59);
+                setLedgerTransactions([]);
 
-                setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
-
-				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
+				const response = await financeController.getIncomeExpVoucherDetails('Revenue', data.startDate, data.endDate);
 				if(response && response.data){
                     const arr = [];
 
-                    let totalStockPrice = numeral(0);
-                    let totalSalesPrice = numeral(0);
-                    let totalGrossProfit = numeral(0);
                     let totalCash = numeral(0);
                     response.data.forEach(datum => {
-                        const salesRecord = new SalesSummary(datum);
-                        totalStockPrice = numeral(totalStockPrice).add(salesRecord.totalStockPrice);
-                        totalSalesPrice = numeral(totalSalesPrice).add(salesRecord.totalSalesPrice);
-                        totalGrossProfit = numeral(totalGrossProfit).add(salesRecord.grossProfit);
-                        totalCash = numeral(totalCash).add(salesRecord.cashCollected);
-                        arr.push(salesRecord);
+                        datum.date = format(datum.date, 'dd/MM/yyyy');
+                        totalCash = numeral(totalCash).add(datum.crAmount);
+                        arr.push(datum);
                     });
-                    arr.sort(
-                        (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
-                    );
-					setData(arr);
+					setLedgerTransactions(arr);
 				}
 				setNetworkRequest(false);
 			}
@@ -186,14 +169,14 @@ const Income = () => {
 		}
     };
 
-    const fnSave = async () => {
+    const fnSave = async (dtoTransaction) => {
         try {
             setNetworkRequest(true);
-            await financeController.createVoucher(ledgerTransactions);
-
-            setLedgerTransactions([]);
-            calcTotalAmounts([]);
-
+            const response = await financeController.createIncomeExpVoucher(dtoTransaction);
+            if(response && response.data){
+                const arr = [response.data, ...ledgerTransactions];
+                setLedgerTransactions(arr);
+            }
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
@@ -201,7 +184,7 @@ const Income = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return fnSave();
+                    return fnSave(dtoTransaction);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -213,6 +196,7 @@ const Income = () => {
                 // if error while refreshing, logout and delete all cookies
                 logout();
             }
+            toast.error(handleErrMsg(error).msg);
         }
     }
         
@@ -259,7 +243,7 @@ const Income = () => {
                 <div className="row p-3 rounded-2 my-3 py-4 border shadow">
                     <div className="col-12 col-md-4 my-3">
                         <aside className="p-3 bg-light shadow-lg">
-                            <IncomeExpVchForm fnSave={fnSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode='income' />
+                            <IncomeExpVchForm fnSave={fnSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
                         </aside>
                     </div>
                     <div className="col-12 col-md-8 my-3">
@@ -329,8 +313,8 @@ const Income = () => {
                 </div>
                 
             </div>
-            <div>
-                <TableMain tableProps={tableProps} tableData={pagedData} />
+            <div style={{ maxHeight: "750px", overflow: 'scroll' }}>
+                <TableMain tableProps={tableProps} tableData={ledgerTransactions} />
             </div>
             <ConfirmDialog
                 show={showConfirmModal}
@@ -344,7 +328,7 @@ const Income = () => {
                     <Modal.Title>Voucher Creation Form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <IncomeExpVchForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode='income' />
+                    <IncomeExpVchForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
                 </Modal.Body>
             </Modal>
         </div>

@@ -407,7 +407,7 @@ const SalesReceiptWindow = () => {
 
                 setFilename(`Receipts ${date.startDate} - ${date.endDate}`);
                 
-				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate.toISOString(), date.endDate.toISOString(), date.reversal_status);
+				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate, date.endDate, date.reversal_status);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -457,11 +457,11 @@ const SalesReceiptWindow = () => {
                 if(confirmDialogEvtName === "searchByCustomer"){
                     setFilename(`Receipts_for_${data.select.label}_${data.startDate} - ${data.endDate}`);
                     setSearchedEntity('customer');
-                    response = await transactionsController.customerSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.select.value.id);
+                    response = await transactionsController.customerSalesReceiptsByDate(data.startDate, data.endDate, data.select.value.id);
                 }else {
                     setFilename(`Receipts_generated_by_${data.select.label} ${data.startDate} - ${data.endDate}`);
                     setSearchedEntity('user');
-                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.select.label);
+                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
                 }
                 
 				if(response && response.data){
@@ -681,7 +681,7 @@ const SalesReceiptWindow = () => {
             let response;
             switch (searchMode){
                 case 0:
-                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate.toISOString(), searchedDate.endDate.toISOString(), 
+                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate, searchedDate.endDate, 
                         searchedDate.reversal_status);
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
@@ -702,11 +702,11 @@ const SalesReceiptWindow = () => {
                     }
                 case 2:
                     if(searchedEntity === "customer"){
-                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(searchedEntityDate.startDate.toISOString(), 
-                            searchedEntityDate.endDate.toISOString(), searchedEntityDate.select.value.id);
+                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(searchedEntityDate.startDate, 
+                            searchedEntityDate.endDate, searchedEntityDate.select.value.id);
                     }else {
-                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(searchedEntityDate.startDate.toISOString(), 
-                            searchedEntityDate.endDate.toISOString(), searchedEntityDate.select.label);
+                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(searchedEntityDate.startDate, 
+                            searchedEntityDate.endDate, searchedEntityDate.select.label);
                     }
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){

@@ -1,22 +1,23 @@
 import httpService from "../axios/http-service";
 
-const backup = async () => {
-    /*  without the responseType set to arraybuffer, the downloaded file will have padding. Making it impossible to decrypt on the server side
-        ref:    https://stackoverflow.com/questions/35680932/download-a-file-from-spring-boot-rest-service
-        fetahokey's answer*/
-    return await httpService.get(`/api/finance`, { responseType: 'arraybuffer' });
-}
-
 const findLedgerVch = async (id) => {
     return await httpService.get(`/api/finance/voucher/find/${id}`);
 }
 
-const createVoucher = async (ledgerTransactions) => {
-    return await httpService.post(`/api/finance/voucher/create`, ledgerTransactions);
+const createVoucher = async (dtoTransactions) => {
+    return await httpService.post(`/api/finance/voucher/create`, dtoTransactions);
 }
 
-const updateVoucher = async (id, ledgerTransactions) => {
-    return await httpService.post(`/api/finance/voucher/update/${id}`, ledgerTransactions);
+const getIncomeExpVoucherDetails = async (name, startDate, endDate) => {
+    return await httpService.post(`/api/finance/voucher/income-exp/${name}`, { startDate, endDate });
+}
+
+const createIncomeExpVoucher = async (dtoTransaction) => {
+    return await httpService.post(`/api/finance/voucher/income-exp/create`, dtoTransaction);
+}
+
+const updateVoucher = async (id, dtoTransactions) => {
+    return await httpService.post(`/api/finance/voucher/update/${id}`, dtoTransactions);
 }
 
 const createGroup = async (dtoAccGroup) => {
@@ -43,10 +44,21 @@ const findAccChartById = async (id) => {
     return await httpService.get(`/api/finance/charts/${id}`);
 }
 
+// find ledgers in groups and sub-groups under account chart specified by id
+const findChartLedgersById = async (id) => {
+    return await httpService.get(`/api/finance/chart/${id}/ledgers`);
+}
+
+// find ledgers in groups and sub-groups under account chart specified by name
+const findChartLedgersByName = async (name) => {
+    return await httpService.get(`/api/finance/chart/ledgers/${name}`);
+}
+
 export default {
-    backup,
     findLedgerVch,
     createVoucher,
+    getIncomeExpVoucherDetails,
+    createIncomeExpVoucher,
     updateVoucher,
     createGroup,
     renameGroup,
@@ -54,4 +66,6 @@ export default {
     moveAccGroupToChart,
     findAccGroupById,
     findAccChartById,
+    findChartLedgersById,
+    findChartLedgersByName,
 }

@@ -5,6 +5,7 @@ import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
 import { toast } from "react-toastify";
+import { format } from 'date-fns';
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import ledgerController from "../../Controllers/ledger-controller";
@@ -29,6 +30,7 @@ const AcctVoucherDisplay = () => {
     const [networkRequest, setNetworkRequest] = useState(false);
         
     const [ledgerOptions, setLedgerOptions] = useState([]);
+    const [ledgerArr, setLedgerArr] = useState([]);
     const [ledgerTransactions, setLedgerTransactions] = useState([]);
 
     const [entityToEdit, setEntityToEdit] = useState(null);
@@ -77,6 +79,7 @@ const AcctVoucherDisplay = () => {
             const ledgerArr = [];
             if (response && response.data) {
                 ledgerArr.push(...response.data);
+                setLedgerArr(ledgerArr);
                 setLedgerOptions(response.data.filter(datum => datum.status).map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
             }
 
@@ -85,7 +88,7 @@ const AcctVoucherDisplay = () => {
                 const arr = [];
                 response.data.forEach(vchDetail => {
                     const transaction = new LedgerTransaction(vchDetail);
-                    const ledger = ledgerArr.find(ledger => ledger.id == vchDetail.ledgerId);
+                    const ledger = ledgerArr.find(ledger => ledger.id === vchDetail.ledgerId);
                     transaction.ledgerName = ledger.name;
                     arr.push(transaction);
                 });
@@ -259,7 +262,15 @@ const AcctVoucherDisplay = () => {
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data) {
-				setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
+                const arr = [];
+                response.data.forEach(vchDetail => {
+                    const transaction = new LedgerTransaction(vchDetail);
+                    const ledger = ledgerArr.find(ledger => ledger.id === vchDetail.ledgerId);
+                    transaction.ledgerName = ledger.name;
+                    arr.push(transaction);
+                });
+                setLedgerTransactions(arr.sort((a, b) => a.id - b.id));
+                calcTotalAmounts(arr);
 			}
 			setNetworkRequest(false);
 		} catch (error) {
@@ -298,9 +309,9 @@ const AcctVoucherDisplay = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Options'],
+        headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Date', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount'],
+        objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount', 'date'],
         //	React Menu
         menus: {
             ReactMenu,

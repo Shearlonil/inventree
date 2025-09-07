@@ -6,6 +6,7 @@ import { Controller, useForm } from "react-hook-form";
 import Datetime from 'react-datetime';
 import { toast } from "react-toastify";
 import { format } from 'date-fns';
+import { toDate } from "date-fns-tz"
 import numeral from "numeral";
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -307,18 +308,13 @@ const PurchasesWindow = () => {
 				setTotalItemsCount(0);
 				setItems([]);
 				setPagedData([]);
-				data.startDate.setHours(0);
-				data.startDate.setMinutes(0);
-				data.startDate.setSeconds(0);
-	
-				data.endDate.setHours(23);
-				data.endDate.setMinutes(59);
-				data.endDate.setSeconds(59);
 
-				setReportTitle(`Purchases Report from ${format(data.startDate, "dd/MM/yyyy")} to ${format(data.endDate, "dd/MM/yyyy")}`);
-				setFilename(`Purchases Report from ${format(data.startDate, "dd/MM/yyyy")} to ${format(data.endDate, "dd/MM/yyyy")}`);
+				console.log(data.endDate, new Date(data.endDate), toDate(data.endDate));
+				
+				setReportTitle(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
+				setFilename(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate.toISOString(), data.endDate.toISOString());
+				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate, data.endDate);
 				if(response && response.data){
 					setItems(buildTableData(response.data.content));
 					setTotalItemsCount(response.data.page.totalElements);
@@ -358,7 +354,7 @@ const PurchasesWindow = () => {
 				setReportTitle(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 				setFilename(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, date.startDate.toISOString(), date.endDate.toISOString());
+				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, date.startDate, date.endDate);
 				if(response && response.data && response.data.length > 0){
 					setItems(buildTableData(response.data));
 					setTotalItemsCount(response.data.length);

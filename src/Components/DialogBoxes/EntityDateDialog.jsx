@@ -3,7 +3,7 @@ import { Button, Form, Modal } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import ErrorMessage from '../ErrorMessage';
 import { yupResolver } from '@hookform/resolvers/yup';
-import "react-datetime/css/react-datetime.css";
+import { format } from "date-fns";
 import Datetime from 'react-datetime';
 import { object, date, ref } from "yup";
 import Select from 'react-select';
@@ -30,13 +30,8 @@ const EntityDateDialog = ({ show, handleClose, handleConfirm, message, entityOpt
     
     const onSubmit = async (data) => {
         if (data.startDate && data.endDate) {
-            data.startDate.setHours(0);
-            data.startDate.setMinutes(0);
-            data.startDate.setSeconds(0);
-            
-            data.endDate.setHours(23);
-            data.endDate.setMinutes(59);
-            data.endDate.setSeconds(59);
+            data.startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+            data.endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
             
             handleConfirm(data);
             handleClose();

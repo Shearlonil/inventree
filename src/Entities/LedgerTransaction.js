@@ -15,6 +15,8 @@ export class LedgerTransaction {
                 drAmount: jsonObject?.drAmount,
                 balance: jsonObject?.balance,
                 date: jsonObject?.date,
+                //  see getter method for pupose of this field
+                localDateTime: jsonObject?.date,
             });
         }else {
             _transactionProps.set(this, {});
@@ -51,8 +53,15 @@ export class LedgerTransaction {
         _transactionProps.get(this).crAmount = 0
     }
             
-    get date() { return _transactionProps.get(this).date ? format(_transactionProps.get(this).date, 'dd/MM/yyyy HH:mm:ss') : ''; }
-    set date(date) { _transactionProps.get(this).date = date; }
+    get date() { return _transactionProps.get(this).date ? format(_transactionProps.get(this).date, 'dd/MM/yyyy') : ''; }   //  'dd/MM/yyyy HH:mm:ss'
+    set date(date) { 
+        _transactionProps.get(this).date = date;
+        _transactionProps.get(this).localDateTime = date;
+    }
+
+    /*  this property is created for sending date to backend. 'date' property isn't used because in the 'date' getter method, it is formatted to local date string
+        and using new Date(this.date) somehow inverts the position of day and month. Hence this field is created to hold the original date value */
+    get localDateTime() { return _transactionProps.get(this).localDateTime }
 
     toJSON(){
         return {
@@ -64,7 +73,7 @@ export class LedgerTransaction {
             balance: numeral(this.balance).value(),
             crAmount: numeral(this.crAmount).value(),
             drAmount: numeral(this.drAmount).value(),
-            // date: this.date,
+            date: this.localDateTime,
         }
     }
 }

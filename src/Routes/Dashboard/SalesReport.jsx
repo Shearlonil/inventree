@@ -283,18 +283,10 @@ const SalesReport = () => {
                 setTotalGrossProfit(0);
                 setTotalSalesPrice(0);
                 setTotalStockPrice(0);
-                
-				data.startDate.setHours(0);
-				data.startDate.setMinutes(0);
-				data.startDate.setSeconds(0);
-	
-				data.endDate.setHours(23);
-				data.endDate.setMinutes(59);
-				data.endDate.setSeconds(59);
 
                 setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
 
-				const response = await transactionsController.summarizeSalesRecords(data.startDate.toISOString(), data.endDate.toISOString());
+				const response = await transactionsController.summarizeSalesRecords(data.startDate, data.endDate);
 				if(response && response.data){
                     const arr = [];
 

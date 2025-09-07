@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
-import { Form, Table } from "react-bootstrap";
-import { format } from 'date-fns';
+import { Form } from "react-bootstrap";
 import Select from "react-select";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,6 +8,8 @@ import Datetime from 'react-datetime';
 import ErrorMessage from '../ErrorMessage';
 import { LedgerTransaction } from '../../Entities/LedgerTransaction';
 import numeral from 'numeral';
+import { isAfter } from "date-fns";
+import { toast } from 'react-toastify';
 
 const IncomeExpVchForm = (props) => {
     const { data, fnSave, ledgerOptions, networkRequest, mode }  = props;
@@ -33,6 +34,7 @@ const IncomeExpVchForm = (props) => {
             ledger: null,
             amount: 0,
             description: '',
+            startDate: new Date(),
         },
     });
     
@@ -49,12 +51,17 @@ const IncomeExpVchForm = (props) => {
     }, []);
 
     const onSubmit = (formData) => {
+        //  if future date detected, throw error
+        if(isAfter(formData.startDate, new Date())){
+            toast.error("Future date detected");
+            return;
+        }
         if(data){
             //  update mode
             data.ledgerId = formData.ledger.value.id;
             data.ledgerName = formData.ledger.value.name;
             data.description = formData.description;
-            if(mode?.toLowerCase() === 'exp'){
+            if(mode === 1){
                 //  Expenses always debited. Hence, cr for cash
                 data.drAmount = formData.amount;
             }else {
@@ -63,12 +70,12 @@ const IncomeExpVchForm = (props) => {
             }
             fnSave(data);
         }else {
-            console.log(formData);
             const transaction = new LedgerTransaction();
             transaction.ledgerId = formData.ledger.value.id;
             transaction.ledgerName = formData.ledger.value.name;
             transaction.description = formData.description;
-            if(mode?.toLowerCase() === 'exp'){
+            transaction.date = formData.startDate;
+            if(mode === 1){
                 //  Expenses always debited. Hence, cr for cash
                 transaction.drAmount = formData.amount;
             }else {
@@ -78,6 +85,7 @@ const IncomeExpVchForm = (props) => {
             fnSave(transaction);
         }
         reset();
+        setValue("startDate", new Date());
     };
 
     return (

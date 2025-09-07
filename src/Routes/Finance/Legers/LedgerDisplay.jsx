@@ -93,7 +93,7 @@ const LedgerDisplay = () => {
 
             setFilename(`${ledger.name} ${startDate} - ${endDate}`);
     
-            const dayTransactions = await ledgerController.ledgerTransactions(id, startDate.toISOString(), endDate.toISOString());
+            const dayTransactions = await ledgerController.ledgerTransactions(id, startDate, endDate);
             if(dayTransactions && dayTransactions.data){
                 setTransactions(dayTransactions.data.map(datum => new LedgerTransaction(datum)));
             }
@@ -346,17 +346,10 @@ const LedgerDisplay = () => {
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
-                data.startDate.setHours(0);
-                data.startDate.setMinutes(0);
-                data.startDate.setSeconds(0);
-    
-                data.endDate.setHours(23);
-                data.endDate.setMinutes(59);
-                data.endDate.setSeconds(59);
 
                 setFilename(`${ledger.name} ${data.startDate} - ${data.endDate}`);
     
-                const response = await ledgerController.ledgerTransactions(id, data.startDate.toISOString(), data.endDate.toISOString());
+                const response = await ledgerController.ledgerTransactions(id, data.startDate, data.endDate);
                 if(response && response.data){
                     let dr = numeral(0);
                     let cr = numeral(0);

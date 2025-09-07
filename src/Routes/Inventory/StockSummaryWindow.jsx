@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
-import "react-datetime/css/react-datetime.css";
+import { format } from "date-fns";
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
@@ -237,14 +237,11 @@ const StockSummaryWindow = () => {
 			if (data.startDate) {
 				setNetworkRequest(true);
                 setData([]);
-
-				data.startDate.setHours(23);
-				data.startDate.setMinutes(59);
-				data.startDate.setSeconds(59);
+                data.startDate = format(data.startDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
                 setFilename(`stock_summary_${data.startDate}`);
 
-				const response = await inventoryController.stockSummary(data.startDate.toISOString());
+				const response = await inventoryController.stockSummary(data.startDate);
 				if(response && response.data){
                     const arr = [];
                     response.data.forEach(datum => arr.push(new StockSummary(datum)));

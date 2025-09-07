@@ -209,7 +209,7 @@ const InvoiceWindow = () => {
                 setSearchMode(0);
 				setSearchedDate(date);
                 
-				const response = await transactionsController.searchInvoicesByDate(date.startDate.toISOString(), date.endDate.toISOString());
+				const response = await transactionsController.searchInvoicesByDate(date.startDate, date.endDate);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Invoice(res)));
