@@ -78,6 +78,8 @@ const PurchasesWindow = () => {
 
 	const [reportTitle, setReportTitle] = useState("Purchases");
 	const [filename, setFilename] = useState("");
+	const [beginDate, setBeginDate] = useState("");
+	const [endDate, setEndDate] = useState("");
 	
 	//	for pagination
 	const [pageSize] = useState(10);
@@ -303,18 +305,21 @@ const PurchasesWindow = () => {
 	const fnSearch = async (data) => {
 		try {
 			if (data.startDate && data.endDate) {
+				const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+				const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+				setBeginDate(startDate);
+				setEndDate(endDate);
+
 				setNetworkRequest(true);
 				setCurrentPage(1);
 				setTotalItemsCount(0);
 				setItems([]);
 				setPagedData([]);
 
-				console.log(data.endDate, new Date(data.endDate), toDate(data.endDate));
-				
 				setReportTitle(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 				setFilename(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.paginatePurchasesDateSearch(data.startDate, data.endDate);
+				const response = await inventoryController.paginatePurchasesDateSearch(startDate, endDate);
 				if(response && response.data){
 					setItems(buildTableData(response.data.content));
 					setTotalItemsCount(response.data.page.totalElements);
@@ -345,6 +350,11 @@ const PurchasesWindow = () => {
 	const itemDateSearch = async (date) => {
         try {
 			if (date.startDate && date.endDate) {
+				const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+				const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+				setBeginDate(startDate);
+				setEndDate(endDate);
+
 				setNetworkRequest(true);
 				setItems([]);
 				setPagedData([]);
@@ -354,7 +364,7 @@ const PurchasesWindow = () => {
 				setReportTitle(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 				setFilename(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, date.startDate, date.endDate);
+				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, startDate, endDate);
 				if(response && response.data && response.data.length > 0){
 					setItems(buildTableData(response.data));
 					setTotalItemsCount(response.data.length);
@@ -385,7 +395,6 @@ const PurchasesWindow = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
-			//	if data has id, then update mode
 			await inventoryController.updatePurchasedItem(item);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === item.id);

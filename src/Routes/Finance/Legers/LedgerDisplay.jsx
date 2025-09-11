@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Col, Form, Row, Table } from 'react-bootstrap';
-import { Controller, useForm } from 'react-hook-form';
-import { object, date, ref } from "yup";
-import { yupResolver } from "@hookform/resolvers/yup";
-import Datetime from 'react-datetime';
+import { Table } from 'react-bootstrap';
+import { format } from "date-fns";
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import FileSaver from 'file-saver';
@@ -60,6 +57,8 @@ const LedgerDisplay = () => {
     const [totalCr, setTotalCr] = useState(0);
 
     const [filename, setFilename] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
                 
     useEffect( () => {
         if(user.hasAuth('FINANCE')){
@@ -86,16 +85,26 @@ const LedgerDisplay = () => {
             if (ledgerParentRequest && ledgerParentRequest.data) {
                 setLedgerParent(ledgerParentRequest.data);
             }
-            const startDate = new Date();
-            startDate.setHours(0, 0, 0);
-            const endDate = new Date();
-            endDate.setHours(23, 59, 59);
+            const startDate = format(new Date(), "yyyy-MM-dd") + "T00:00:00.000Z";
+            const endDate = format(new Date(), "yyyy-MM-dd") + "T23:59:59.000Z";
 
             setFilename(`${ledger.name} ${startDate} - ${endDate}`);
+            setStartDate(startDate);
+            setEndDate(endDate);
     
             const dayTransactions = await ledgerController.ledgerTransactions(id, startDate, endDate);
             if(dayTransactions && dayTransactions.data){
-                setTransactions(dayTransactions.data.map(datum => new LedgerTransaction(datum)));
+                let dr = numeral(0);
+                let cr = numeral(0);
+                setTransactions(
+                    dayTransactions.data.map(datum => {
+                        dr = numeral(dr).add(datum.drAmount);
+                        cr = numeral(cr).add(datum.crAmount);
+                        return new LedgerTransaction(datum)
+                    })
+                );
+                setTotalCr(cr.value());
+                setTotalDr(dr.value());
             }
 
             setNetworkRequest(false);
@@ -322,7 +331,7 @@ const LedgerDisplay = () => {
 
         doc.setFontSize(15);
 
-        const title = "Sales Summary";
+        const title = `${ledger.name} ${startDate} - ${endDate}`;
 
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -345,11 +354,15 @@ const LedgerDisplay = () => {
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setNetworkRequest(true);
 
                 setFilename(`${ledger.name} ${data.startDate} - ${data.endDate}`);
+                setStartDate(startDate);
+                setEndDate(endDate);
     
-                const response = await ledgerController.ledgerTransactions(id, data.startDate, data.endDate);
+                const response = await ledgerController.ledgerTransactions(id, startDate, endDate);
                 if(response && response.data){
                     let dr = numeral(0);
                     let cr = numeral(0);
@@ -386,34 +399,34 @@ const LedgerDisplay = () => {
         }
     }
     
-        const toggle = async (checked, ledger) => {
-            try {
-                if(user.hasAuth('EDIT_lEDGER_CREDIT_SALES')){
-                    await ledgerController.setAllowCreditSales(id, checked);
-                }else {
-                    toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
-                    throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
-                }
-            } catch (error) {
-                //	Incase of 500 (Invalid Token received!), perform refresh
-                try {
-                    if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                        await handleRefresh();
-                        return toggle(checked, auth);
-                    }
-                    // Incase of 401 Unauthorized, navigate to 404
-                    if(error.response?.status === 401){
-                        navigate('/404');
-                    }
-                    // display error message
-                    toast.error(handleErrMsg(error).msg);
-                } catch (error) {
-                    // if error while refreshing, logout and delete all cookies
-                    logout();
-                }
-                throw error;
+    const toggle = async (checked, ledger) => {
+        try {
+            if(user.hasAuth('EDIT_lEDGER_CREDIT_SALES')){
+                await ledgerController.setAllowCreditSales(id, checked);
+            }else {
+                toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
+                throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
             }
-        };
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return toggle(checked, auth);
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+            throw error;
+        }
+    };
 
     return (
         <div className='container my-4'>

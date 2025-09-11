@@ -1,21 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Modal } from "react-bootstrap";
-import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
+import { format } from "date-fns";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { Modal } from "react-bootstrap";
 
 import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
 import { useAuth } from "../../app-context/auth-user-context";
-import VchCreationForm from "../../Components/Finance/VchCreationForm";
-import TableMain from "../../Components/TableView/TableMain";
+import IncomeExpVchForm from "../../Components/Finance/IncomeExpVchForm";
 import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
 import financeController from "../../Controllers/finance-controller";
+import IMAGES from '../../assets/Images';
+import StartEndDateSearch from "../../Components/StartEndDateSearch";
+import TableMain from "../../Components/TableView/TableMain";
 
 const Expenses = () => {
+    const navigate = useNavigate();
         
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -25,19 +29,16 @@ const Expenses = () => {
     const [ledgerOptions, setLedgerOptions] = useState([]);
     const [ledgerTransactions, setLedgerTransactions] = useState([]);
 
-    const [entityToEdit, setEntityToEdit] = useState(null);
+    const [entity, setEntity] = useState(null);
     const [showFormModal, setShowFormModal] = useState(false);
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
-    const [totalDrAmount, setTotalDrAmount] = useState(0);
-    const [totalCrAmount, setTotalCrAmount] = useState(0);
-
     //	menus for the react-menu in table
     const menuItems = [
-        { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Edit', onClickParams: {evtName: 'edit' } },
+        { name: 'Delete', onClickParams: {evtName: 'delete'} },
     ];
 
     useEffect( () => {
@@ -52,10 +53,14 @@ const Expenses = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await ledgerController.findAllActive();
+            const response = await financeController.findChartLedgersByName("Expenses");
 
             if (response && response.data) {
-                setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
+                setLedgerOptions(
+                    response.data
+                        .filter(datum => datum.isDefault === false)
+                        .map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger}))
+                );
             }
 
             setNetworkRequest(false);
@@ -83,38 +88,21 @@ const Expenses = () => {
     const handleShowFormModal = () => setShowFormModal(true);
 
     const handleCloseModal = () => {
-        setEntityToEdit(null);
+        setEntity(null);
         setShowFormModal(false);
         setShowConfirmModal(false);
-    };
-
-    const fnAdd = (data) => {
-        const indexPos = ledgerTransactions.findIndex(i => i.ledgerId === data.ledgerId);
-        if(indexPos > -1){
-            //	replace old item found at index position in ledgerTransactions array with edited one
-            ledgerTransactions.splice(indexPos, 1, data);
-            setLedgerTransactions([...ledgerTransactions]);
-            calcTotalAmounts(ledgerTransactions);
-        }else {
-            const temp = [...ledgerTransactions, data];
-            setLedgerTransactions(temp);
-            calcTotalAmounts(temp);
-        }
     };
 
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'delete':
-                const indexPos = ledgerTransactions.findIndex(i => i.ledgerId === entity.ledgerId);
-                if(indexPos > -1){
-                    //	replace old item found at index position in ledgerTransactions array with edited one
-                    ledgerTransactions.splice(indexPos, 1);
-                    setLedgerTransactions([...ledgerTransactions]);
-                }
-                calcTotalAmounts(ledgerTransactions);
+                setEntity(entity);
+                setConfirmDialogEvtName("delete");
+                setDisplayMsg(`Delete entry with description ${entity.description}?`)
+                setShowConfirmModal(true);
                 break;
             case 'edit':
-                setEntityToEdit(entity);
+                setEntity(entity);
                 setShowFormModal(true);
                 break;
         }
@@ -122,57 +110,59 @@ const Expenses = () => {
     
     const handleConfirmOK = async () => {
         setShowConfirmModal(false);
-        switch (confirmDialogEvtName) {
+        switch (confirmDialogEvtName.toLowerCase()) {
             case 'delete':
+                fnDelete();
                 break;
             case "save":
-                saveTransactions();
-                break;
-            case "cancel":
-                setLedgerTransactions([]);
-                calcTotalAmounts([]);
+                fnSave();
                 break;
         }
     }
 
-    const handleCancel = () => {
-        if(ledgerTransactions.length === 0){
-            return;
+    const fnConfirmSave = async (dtoTransaction) => {
+        setEntity(dtoTransaction);
+        setConfirmDialogEvtName("save");
+        //  if dtoTransaction has id, then update mode
+        if(dtoTransaction.id){
+            setDisplayMsg(`Update Expenses entry with ${dtoTransaction.description}?`)
+        }else {
+            setDisplayMsg(`Save Expenses entry?`)
         }
-        setDisplayMsg('Cancel transaction?');
-        setConfirmDialogEvtName('cancel');
         setShowConfirmModal(true);
-    };
+    }
 
-    const handleSave = () => {
-        if(ledgerTransactions.length === 0){
-            return;
-        }
-        if(numeral(totalDrAmount).difference(totalCrAmount)){
-            toast.error('Dr and Cr must balance');
-            return;
-        }
-        setDisplayMsg('Save transaction?');
-        setConfirmDialogEvtName('save');
-        setShowConfirmModal(true);
-    };
-
-    const saveTransactions = async () => {
+    const fnSearch = async (data) => {
         try {
-            setNetworkRequest(true);
-            await financeController.createVoucher(ledgerTransactions);
+            if (data.startDate && data.endDate) {
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
-            setLedgerTransactions([]);
-            calcTotalAmounts([]);
+                setNetworkRequest(true);
+                setLedgerTransactions([]);
 
-            setNetworkRequest(false);
+                const response = await financeController.getIncomeExpVoucherDetails('Expenses', startDate, endDate);
+                if(response && response.data){
+                    const arr = [];
+
+                    let totalCash = numeral(0);
+                    response.data.forEach(datum => {
+                        datum.dtoDateTime = datum.date;
+                        datum.date = format(datum.date, 'dd/MM/yyyy');
+                        totalCash = numeral(totalCash).add(datum.crAmount);
+                        arr.push(datum);
+                    });
+                    setLedgerTransactions(arr);
+                }
+                setNetworkRequest(false);
+            }
         } catch (error) {
             setNetworkRequest(false);
             //	Incase of 500 (Invalid Token received!), perform refresh
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return saveTransactions();
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -184,6 +174,87 @@ const Expenses = () => {
                 // if error while refreshing, logout and delete all cookies
                 logout();
             }
+        }
+    };
+
+    const fnSave = async () => {
+        try {
+            setNetworkRequest(true);
+            //  if dtoTransaction has id, then update mode
+            if(entity.id){
+                // explicitly set dtoDateTime to avoid 1hr lag when sending to backend
+                entity.dtoDateTime = format(entity.dtoDateTime, "yyyy-MM-dd") + "T00:00:00.000Z";
+                await financeController.updateIncomeExpVoucher(entity);
+                //	find index position of edited item in items arr
+                const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
+                if(indexPos > -1){
+                    //	replace old item found at index position in items array with edited one
+                    ledgerTransactions.splice(indexPos, 1, entity);
+                    setLedgerTransactions([...ledgerTransactions]);
+                    toast.success('Update successful');
+                }
+            }else {
+                //  new income transaction
+                const response = await financeController.createIncomeExpVoucher(entity);
+                if(response && response.data){
+                    const arr = [response.data, ...ledgerTransactions];
+                    setLedgerTransactions(arr);
+                }
+            }
+            handleCloseModal();
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return fnSave();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+            toast.error(handleErrMsg(error).msg);
+        }
+    }
+
+    const fnDelete = async () => {
+        try {
+            setNetworkRequest(true);
+            await financeController.deleteIncomeExpVoucher(entity);
+            const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
+            if(indexPos > -1){
+                //	replace old item found at index position in ledgerTransactions array with edited one
+                ledgerTransactions.splice(indexPos, 1);
+                setLedgerTransactions([...ledgerTransactions]);
+            }
+            calcTotalAmounts(ledgerTransactions);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return fnDelete();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+            toast.error(handleErrMsg(error).msg);
         }
     }
         
@@ -201,9 +272,9 @@ const Expenses = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Options'],
+        headers: ['Ledger', 'Description', 'Amount', 'Date', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount'],
+        objectProps: ['ledgerName', 'description', 'crAmount', 'date'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -229,14 +300,83 @@ const Expenses = () => {
             <div className="container">
                 <div className="row p-3 rounded-2 my-3 py-4 border shadow">
                     <div className="col-12 col-md-4 my-3">
-                        <aside className="p-3 d-none d-md-block bg-light shadow-lg">
-                            <VchCreationForm fnAdd={fnAdd} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
+                        <aside className="p-3 bg-light shadow-lg">
+                            <IncomeExpVchForm fnSave={fnConfirmSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} />
                         </aside>
                     </div>
-                    <div className="col-12 col-md-8 border border rounded-3 p-1 bg-light my-3 shadow">
-                        <TableMain tableProps={tableProps} tableData={ledgerTransactions} />
+                    <div className="col-12 col-md-8 my-3">
+                        <aside className="d-none d-md-block border border rounded-3 p-3 bg-light shadow h-100">
+                            <div id="carouselExample" className="carousel slide carousel-dark h-100" data-bs-ride="carousel">
+                                <div className="carousel-indicators">
+                                    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="0" className="active" aria-current="true" aria-label="Slide 1"></button>
+                                    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                                    <button type="button" data-bs-target="#carouselExample" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                                </div>
+                                <div className="carousel-inner h-100">
+                                    <div className="carousel-item h-100 active">
+                                        <div className="d-flex h-100">
+                                            <div className="col-6">
+                                                <img src={IMAGES.income_ex_three} className="w-100 h-100" alt="..." />
+                                            </div>
+                                            <div className="col-6 align-items-center d-flex">
+                                                <div className="">
+                                                    <h1>Quick Income/Expenses Records</h1>
+                                                    <p className="text-secondary fs-5">Add your business income/expenses on the fly to start tracking your profit.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="carousel-item h-100">
+                                        <div className="d-flex h-100">
+                                            <div className="col-6">
+                                                <img src={IMAGES.income_ex_one} className="w-100 h-100" alt="..." />
+                                            </div>
+                                            <div className="col-6 align-items-center d-flex">
+                                                <div className="">
+                                                    <h1>Income</h1>
+                                                    <p className="text-secondary fs-5">
+                                                        Add income records with ease. Start calculating actual profit by tracking your business income.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="carousel-item h-100">
+                                        <div className="d-flex h-100">
+                                            <div className="col-6">
+                                                <img src={IMAGES.income_ex_two} className="w-100 h-100" alt="..." />
+                                            </div>
+                                            <div className="col-6 align-items-center d-flex">
+                                                <div className="">
+                                                    <h1>Expenses</h1>
+                                                    <p className="text-secondary fs-5">
+                                                        With the click of a button, add your expenses. Start calculating actual profit by tracking your business expenses.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button className="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
+                                    <span className="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span className="visually-hidden">Previous</span>
+                                </button>
+                                <button className="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
+                                    <span className="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span className="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                        </aside>
                     </div>
                 </div>
+                <div className="row p-3">
+                    <h2 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Recent Expenses</h2>
+                    <StartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} />
+                </div>
+                
+            </div>
+            <div style={{ maxHeight: "750px", overflow: 'scroll' }}>
+                <TableMain tableProps={tableProps} tableData={ledgerTransactions} />
             </div>
             <ConfirmDialog
                 show={showConfirmModal}
@@ -244,20 +384,13 @@ const Expenses = () => {
                 handleConfirm={handleConfirmOK}
                 message={displayMsg}
             />
-            <div className="d-md-none" style={{ position: "fixed", bottom: "40px", right: "30px", cursor: "pointer", zIndex: 999}}>
-                <div variant="dark"
-                    style={{ boxShadow: '4px 4px 4px #9E9E9E', maxWidth: '50px' }}
-                    className="m-2 p-2 rounded bg-success text-white rounded-5 d-flex justify-content-center" onClick={handleShowFormModal}>
-                    <LuTicket className="text-white" size={'25px'} />
-                </div>
-            </div>
 
             <Modal show={showFormModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>
                     <Modal.Title>Voucher Creation Form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <VchCreationForm fnAdd={fnAdd} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
+                    <IncomeExpVchForm fnSave={fnConfirmSave} data={entity} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} />
                 </Modal.Body>
             </Modal>
         </div>

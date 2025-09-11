@@ -4,7 +4,6 @@ import { Controller, useForm } from 'react-hook-form';
 import ErrorMessage from '../ErrorMessage';
 import { yupResolver } from '@hookform/resolvers/yup';
 import Datetime from 'react-datetime';
-import { format } from "date-fns";
 import { object, date, ref, string, boolean } from "yup";
 
 const DateDialog = ({ show, handleClose, handleConfirm, message, showRadio }) => {
@@ -29,10 +28,7 @@ const DateDialog = ({ show, handleClose, handleConfirm, message, showRadio }) =>
 	const startDate = watch("startDate");
     
     const onSubmit = async (data) => {
-        if (data.startDate && data.endDate) {
-            data.startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
-            data.endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
-            
+        if (data.startDate && data.endDate) {            
             handleConfirm(data);
             handleClose();
         }

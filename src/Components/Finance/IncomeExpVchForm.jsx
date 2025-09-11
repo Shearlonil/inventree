@@ -39,12 +39,14 @@ const IncomeExpVchForm = (props) => {
     });
     
     useEffect( () => {
+        reset();
+        setValue("startDate", new Date());
         if(data){
             const ledgerOption = ledgerOptions.find(option => option.value.id === data.ledgerId);
             setValue("ledger", ledgerOption);
             setValue("description", data.description);
             setValue("amount", Math.max(numeral(data.crAmount).value(), numeral(data.drAmount).value()));
-            setValue("startDate", data.date);
+            setValue("startDate", data.dtoDateTime);
         }else {
             setValue("startDate", new Date());
         }
@@ -56,36 +58,25 @@ const IncomeExpVchForm = (props) => {
             toast.error("Future date detected");
             return;
         }
+        const transaction = new LedgerTransaction();
+        transaction.ledgerId = formData.ledger.value.id;
+        transaction.ledgerName = formData.ledger.value.name;
+        transaction.description = formData.description;
+        transaction.date = formData.startDate;
+        transaction.dtoDateTime = formData.startDate;
+        if(mode === 1){
+            //  Expenses always debited. Hence, cr for cash
+            transaction.drAmount = formData.amount;
+        }else {
+            //  Income always credited. Hence, dr for cash
+            transaction.crAmount = formData.amount;
+        }
         if(data){
             //  update mode
-            data.ledgerId = formData.ledger.value.id;
-            data.ledgerName = formData.ledger.value.name;
-            data.description = formData.description;
-            if(mode === 1){
-                //  Expenses always debited. Hence, cr for cash
-                data.drAmount = formData.amount;
-            }else {
-                //  Income always credited. Hence, dr for cash
-                data.crAmount = formData.amount;
-            }
-            fnSave(data);
-        }else {
-            const transaction = new LedgerTransaction();
-            transaction.ledgerId = formData.ledger.value.id;
-            transaction.ledgerName = formData.ledger.value.name;
-            transaction.description = formData.description;
-            transaction.date = formData.startDate;
-            if(mode === 1){
-                //  Expenses always debited. Hence, cr for cash
-                transaction.drAmount = formData.amount;
-            }else {
-                //  Income always credited. Hence, dr for cash
-                transaction.crAmount = formData.amount;
-            }
-            fnSave(transaction);
+            transaction.id = data.id;
+            transaction.ledgerVchId = data.ledgerVchId;
         }
-        reset();
-        setValue("startDate", new Date());
+        fnSave(transaction);
     };
 
     return (

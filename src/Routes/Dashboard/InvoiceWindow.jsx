@@ -32,7 +32,7 @@ const InvoiceWindow = () => {
 		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
 		{ label: "Activate Invoice", onClickParams: {evtName: 'activateInvoice'} },
 		{ label: "Reverse Invoice", onClickParams: {evtName: 'reverseInvoice'} },
-		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+		// { label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
 	];
     
     const tableProps = {
@@ -200,6 +200,8 @@ const InvoiceWindow = () => {
 	const dateSearch = async (date) => {
         try {
 			if (date.startDate && date.endDate) {
+                const startDate = format(date.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
                 setInvoices([]);
@@ -209,7 +211,7 @@ const InvoiceWindow = () => {
                 setSearchMode(0);
 				setSearchedDate(date);
                 
-				const response = await transactionsController.searchInvoicesByDate(date.startDate, date.endDate);
+				const response = await transactionsController.searchInvoicesByDate(startDate, endDate);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Invoice(res)));

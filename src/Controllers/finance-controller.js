@@ -16,6 +16,14 @@ const createIncomeExpVoucher = async (dtoTransaction) => {
     return await httpService.post(`/api/finance/voucher/income-exp/create`, dtoTransaction);
 }
 
+const updateIncomeExpVoucher = async (dtoTransaction) => {
+    return await httpService.post(`/api/finance/voucher/income-exp/update`, dtoTransaction);
+}
+
+const deleteIncomeExpVoucher = async (dtoTransaction) => {
+    return await httpService.post(`/api/finance/voucher/income-exp/delete`, dtoTransaction);
+}
+
 const updateVoucher = async (id, dtoTransactions) => {
     return await httpService.post(`/api/finance/voucher/update/${id}`, dtoTransactions);
 }
@@ -59,6 +67,8 @@ export default {
     createVoucher,
     getIncomeExpVoucherDetails,
     createIncomeExpVoucher,
+    updateIncomeExpVoucher,
+    deleteIncomeExpVoucher,
     updateVoucher,
     createGroup,
     renameGroup,

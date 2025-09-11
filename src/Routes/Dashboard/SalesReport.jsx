@@ -7,6 +7,7 @@ import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable'
+import { format } from "date-fns";
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -40,6 +41,8 @@ const SalesReport = () => {
     const [totalCash, setTotalCash] = useState(0);
     
     const [filename, setFilename] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     
     useEffect( () => {
         if(!user.hasAuth('SALES_RECORD')){
@@ -247,7 +250,7 @@ const SalesReport = () => {
 
         doc.setFontSize(15);
 
-        const title = "Sales Summary";
+        const title = `Sales Summary ${startDate} - ${endDate}`;
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -278,6 +281,11 @@ const SalesReport = () => {
 	const fnSearch = async (data) => {
 		try {
 			if (data.startDate && data.endDate) {
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
+
 				setNetworkRequest(true);
                 setData([]);
                 setTotalGrossProfit(0);
@@ -286,7 +294,7 @@ const SalesReport = () => {
 
                 setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
 
-				const response = await transactionsController.summarizeSalesRecords(data.startDate, data.endDate);
+				const response = await transactionsController.summarizeSalesRecords(startDate, endDate);
 				if(response && response.data){
                     const arr = [];
 

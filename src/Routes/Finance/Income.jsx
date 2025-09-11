@@ -29,13 +29,11 @@ const Income = () => {
     const [ledgerOptions, setLedgerOptions] = useState([]);
     const [ledgerTransactions, setLedgerTransactions] = useState([]);
 
-    const [entityToEdit, setEntityToEdit] = useState(null);
+    const [entity, setEntity] = useState(null);
     const [showFormModal, setShowFormModal] = useState(false);
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
-    //  data returned from DataPagination
-    const [pagedData, setPagedData] = useState([]);
 
     //	menus for the react-menu in table
     const menuItems = [
@@ -90,7 +88,7 @@ const Income = () => {
     const handleShowFormModal = () => setShowFormModal(true);
 
     const handleCloseModal = () => {
-        setEntityToEdit(null);
+        setEntity(null);
         setShowFormModal(false);
         setShowConfirmModal(false);
     };
@@ -98,16 +96,13 @@ const Income = () => {
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
             case 'delete':
-                const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
-                if(indexPos > -1){
-                    //	replace old item found at index position in ledgerTransactions array with edited one
-                    ledgerTransactions.splice(indexPos, 1);
-                    setLedgerTransactions([...ledgerTransactions]);
-                }
-                calcTotalAmounts(ledgerTransactions);
+                setEntity(entity);
+                setConfirmDialogEvtName("delete");
+                setDisplayMsg(`Delete entry with description ${entity.description}?`)
+                setShowConfirmModal(true);
                 break;
             case 'edit':
-                setEntityToEdit(entity);
+                setEntity(entity);
                 setShowFormModal(true);
                 break;
         }
@@ -115,31 +110,44 @@ const Income = () => {
     
     const handleConfirmOK = async () => {
         setShowConfirmModal(false);
-        switch (confirmDialogEvtName) {
+        switch (confirmDialogEvtName.toLowerCase()) {
             case 'delete':
+                fnDelete();
                 break;
             case "save":
                 fnSave();
                 break;
-            case "cancel":
-                setLedgerTransactions([]);
-                calcTotalAmounts([]);
-                break;
         }
+    }
+
+    const fnConfirmSave = async (dtoTransaction) => {
+        setEntity(dtoTransaction);
+        setConfirmDialogEvtName("save");
+        //  if dtoTransaction has id, then update mode
+        if(dtoTransaction.id){
+            setDisplayMsg(`Update Income entry with ${dtoTransaction.description}?`)
+        }else {
+            setDisplayMsg(`Save Income entry?`)
+        }
+        setShowConfirmModal(true);
     }
 
     const fnSearch = async (data) => {
         try {
 			if (data.startDate && data.endDate) {
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+
 				setNetworkRequest(true);
                 setLedgerTransactions([]);
 
-				const response = await financeController.getIncomeExpVoucherDetails('Revenue', data.startDate, data.endDate);
+				const response = await financeController.getIncomeExpVoucherDetails('Revenue', startDate, endDate);
 				if(response && response.data){
                     const arr = [];
 
                     let totalCash = numeral(0);
                     response.data.forEach(datum => {
+                        datum.dtoDateTime = datum.date;
                         datum.date = format(datum.date, 'dd/MM/yyyy');
                         totalCash = numeral(totalCash).add(datum.crAmount);
                         arr.push(datum);
@@ -169,14 +177,31 @@ const Income = () => {
 		}
     };
 
-    const fnSave = async (dtoTransaction) => {
+    const fnSave = async () => {
         try {
             setNetworkRequest(true);
-            const response = await financeController.createIncomeExpVoucher(dtoTransaction);
-            if(response && response.data){
-                const arr = [response.data, ...ledgerTransactions];
-                setLedgerTransactions(arr);
+            //  if dtoTransaction has id, then update mode
+            if(entity.id){
+                // explicitly set dtoDateTime to avoid 1hr lag when sending to backend
+                entity.dtoDateTime = format(entity.dtoDateTime, "yyyy-MM-dd") + "T00:00:00.000Z";
+                await financeController.updateIncomeExpVoucher(entity);
+                //	find index position of edited item in items arr
+                const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
+                if(indexPos > -1){
+                    //	replace old item found at index position in items array with edited one
+                    ledgerTransactions.splice(indexPos, 1, entity);
+                    setLedgerTransactions([...ledgerTransactions]);
+                    toast.success('Update successful');
+                }
+            }else {
+                //  new income transaction
+                const response = await financeController.createIncomeExpVoucher(entity);
+                if(response && response.data){
+                    const arr = [response.data, ...ledgerTransactions];
+                    setLedgerTransactions(arr);
+                }
             }
+            handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
@@ -184,7 +209,40 @@ const Income = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return fnSave(dtoTransaction);
+                    return fnSave();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+            toast.error(handleErrMsg(error).msg);
+        }
+    }
+
+    const fnDelete = async () => {
+        try {
+            setNetworkRequest(true);
+            await financeController.deleteIncomeExpVoucher(entity);
+            const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
+            if(indexPos > -1){
+                //	replace old item found at index position in ledgerTransactions array with edited one
+                ledgerTransactions.splice(indexPos, 1);
+                setLedgerTransactions([...ledgerTransactions]);
+            }
+            calcTotalAmounts(ledgerTransactions);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return fnDelete();
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -243,7 +301,7 @@ const Income = () => {
                 <div className="row p-3 rounded-2 my-3 py-4 border shadow">
                     <div className="col-12 col-md-4 my-3">
                         <aside className="p-3 bg-light shadow-lg">
-                            <IncomeExpVchForm fnSave={fnSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
+                            <IncomeExpVchForm fnSave={fnConfirmSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
                         </aside>
                     </div>
                     <div className="col-12 col-md-8 my-3">
@@ -258,12 +316,27 @@ const Income = () => {
                                     <div className="carousel-item h-100 active">
                                         <div className="d-flex h-100">
                                             <div className="col-6">
+                                                <img src={IMAGES.income_ex_three} className="w-100 h-100" alt="..." />
+                                            </div>
+                                            <div className="col-6 align-items-center d-flex">
+                                                <div className="">
+                                                    <h1>Quick Income/Expenses Records</h1>
+                                                    <p className="text-secondary fs-5">Add your business income/expenses on the fly to start tracking your profit.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="carousel-item h-100">
+                                        <div className="d-flex h-100">
+                                            <div className="col-6">
                                                 <img src={IMAGES.income_ex_one} className="w-100 h-100" alt="..." />
                                             </div>
-                                            <div className="col-6">
+                                            <div className="col-6 align-items-center d-flex">
                                                 <div className="">
-                                                    <h5>First slide label</h5>
-                                                    <p>Some representative placeholder content for the first slide.</p>
+                                                    <h1>Income</h1>
+                                                    <p className="text-secondary fs-5">
+                                                        Add income records with ease. Start calculating actual profit by tracking your business income.
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -273,23 +346,12 @@ const Income = () => {
                                             <div className="col-6">
                                                 <img src={IMAGES.income_ex_two} className="w-100 h-100" alt="..." />
                                             </div>
-                                            <div className="col-6">
+                                            <div className="col-6 align-items-center d-flex">
                                                 <div className="">
-                                                    <h5>First slide label</h5>
-                                                    <p>Some representative placeholder content for the first slide.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="carousel-item h-100">
-                                        <div className="d-flex h-100">
-                                            <div className="col-6">
-                                                <img src={IMAGES.income_ex_three} className="w-100 h-100" alt="..." />
-                                            </div>
-                                            <div className="col-6">
-                                                <div className="">
-                                                    <h5>First slide label</h5>
-                                                    <p>Some representative placeholder content for the first slide.</p>
+                                                    <h1>Expenses</h1>
+                                                    <p className="text-secondary fs-5">
+                                                        With the click of a button, add your expenses. Start calculating actual profit by tracking your business expenses.
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
@@ -328,7 +390,7 @@ const Income = () => {
                     <Modal.Title>Voucher Creation Form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <IncomeExpVchForm fnSave={fnSave} data={entityToEdit} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
+                    <IncomeExpVchForm fnSave={fnConfirmSave} data={entity} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={0} />
                 </Modal.Body>
             </Modal>
         </div>

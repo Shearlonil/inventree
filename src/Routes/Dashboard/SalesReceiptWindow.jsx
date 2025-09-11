@@ -67,7 +67,7 @@ const SalesReceiptWindow = () => {
     //	incase of date search, store in this state
     const [searchedDate, setSearchedDate] = useState(null);
     //	incase of entity date search, store in this state
-    const [searchedEntityDate, setSearchedEntityDate] = useState(null);
+    const [searchedEntityData, setSearchedEntityData] = useState(null);
     const [searchedEntity, setSearchedEntity] = useState("");
 
     const [receipts, setReceipts] = useState([]);
@@ -82,6 +82,8 @@ const SalesReceiptWindow = () => {
     const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
     
     const [filename, setFilename] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     
     //	for payment dialog
     const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -351,7 +353,7 @@ const SalesReceiptWindow = () => {
 
 			setSearchedId(id);
 			setSearchedDate(null);
-            setSearchedEntityDate(null);
+            setSearchedEntityData(null);
             setSearchedEntity("");
 			setValue('startDate', null);
 			setValue('endDate', null);
@@ -393,6 +395,9 @@ const SalesReceiptWindow = () => {
 	const dateSearch = async (date) => {
         try {
 			if (date.startDate && date.endDate) {
+                const startDate = format(date.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
                 setReceipts([]);
@@ -401,13 +406,13 @@ const SalesReceiptWindow = () => {
                 setSelectedInvoice(null);
                 setSearchMode(0);
 				setSearchedId(0);
-                setSearchedEntityDate(null);
+                setSearchedEntityData(null);
                 setSearchedEntity("");
 				setSearchedDate(date);
 
                 setFilename(`Receipts ${date.startDate} - ${date.endDate}`);
                 
-				const response = await transactionsController.searchPurchaseReceiptsByDate(date.startDate, date.endDate, date.reversal_status);
+				const response = await transactionsController.searchPurchaseReceiptsByDate(startDate, endDate, date.reversal_status);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -442,6 +447,9 @@ const SalesReceiptWindow = () => {
 	const entityDateSearch = async (data) => {
         try {
 			if (data.startDate && data.endDate) {
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
                 setReceipts([]);
@@ -451,13 +459,13 @@ const SalesReceiptWindow = () => {
 				setSearchedId(0);
                 setSearchMode(2);
 				setSearchedDate(null);
-                setSearchedEntityDate(data);
+                setSearchedEntityData(data);
 
                 let response;
                 if(confirmDialogEvtName === "searchByCustomer"){
                     setFilename(`Receipts_for_${data.select.label}_${data.startDate} - ${data.endDate}`);
                     setSearchedEntity('customer');
-                    response = await transactionsController.customerSalesReceiptsByDate(data.startDate, data.endDate, data.select.value.id);
+                    response = await transactionsController.customerSalesReceiptsByDate(startDate, endDate, data.select.value.id);
                 }else {
                     setFilename(`Receipts_generated_by_${data.select.label} ${data.startDate} - ${data.endDate}`);
                     setSearchedEntity('user');
@@ -676,13 +684,16 @@ const SalesReceiptWindow = () => {
     }
     
     const pdfExport = async () => {
+        let startDate;
+        let endDate;
         try {
             setNetworkRequest(true);
             let response;
             switch (searchMode){
                 case 0:
-                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(searchedDate.startDate, searchedDate.endDate, 
-                        searchedDate.reversal_status);
+                    startDate = format(searchedDate.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                    endDate = format(searchedDate.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(startDate, endDate, searchedDate.reversal_status);
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
                             dayBookProfitPDF(response.data);
@@ -701,12 +712,12 @@ const SalesReceiptWindow = () => {
                         }
                     }
                 case 2:
+                    startDate = format(searchedEntityData.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                    endDate = format(searchedEntityData.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                     if(searchedEntity === "customer"){
-                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(searchedEntityDate.startDate, 
-                            searchedEntityDate.endDate, searchedEntityDate.select.value.id);
+                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
                     }else {
-                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(searchedEntityDate.startDate, 
-                            searchedEntityDate.endDate, searchedEntityDate.select.label);
+                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.label);
                     }
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
@@ -775,7 +786,7 @@ const SalesReceiptWindow = () => {
 
         doc.setFontSize(20);
 
-        const title = "Receipts Summary";
+        const title = `Receipts Summary ${startDate} - ${endDate}`;
 
         doc.text(title, marginLeft, 40);
         const receipts = [];
@@ -841,7 +852,7 @@ const SalesReceiptWindow = () => {
 
         doc.setFontSize(20);
 
-        const title = "Receipts Summary";
+        const title = `Receipts Summary ${startDate} - ${endDate}`;
 
         doc.text(title, marginLeft, 40);
         const receipts = [];

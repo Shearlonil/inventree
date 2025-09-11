@@ -3,7 +3,6 @@ import { Button, Col, Form, Row } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { format } from "date-fns";
 import Datetime from 'react-datetime';
 
 import { ThreeDotLoading } from './react-loading-indicators/Indicator';
@@ -30,8 +29,6 @@ const StartEndDateSearch = (props) => {
     
     const onSubmit = (data) => {
         if (data.startDate && data.endDate) {
-            data.startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
-            data.endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
             fnSearch(data);
         }
     };
