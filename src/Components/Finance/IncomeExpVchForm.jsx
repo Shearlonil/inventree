@@ -5,11 +5,13 @@ import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import Datetime from 'react-datetime';
-import ErrorMessage from '../ErrorMessage';
-import { LedgerTransaction } from '../../Entities/LedgerTransaction';
 import numeral from 'numeral';
 import { isAfter } from "date-fns";
 import { toast } from 'react-toastify';
+
+import { LedgerTransaction } from '../../Entities/LedgerTransaction';
+import ErrorMessage from '../ErrorMessage';
+import { ThreeDotLoading } from '../react-loading-indicators/Indicator';
 
 const IncomeExpVchForm = (props) => {
     const { data, fnSave, ledgerOptions, networkRequest, mode }  = props;
@@ -39,8 +41,13 @@ const IncomeExpVchForm = (props) => {
     });
     
     useEffect( () => {
-        reset();
-        setValue("startDate", new Date());
+        /*  added the refresh function in useEffect hook to eliminate possiblity of receiving an infinite loop.
+            The refresh method is called from the parent component to refresh fields.
+            ref:
+            https://stackoverflow.com/questions/68642060/trigger-child-function-from-parent-component-using-react-hooks
+            https://stackoverflow.com/questions/37949981/call-child-method-from-parent
+        */
+        refresh();
         if(data){
             const ledgerOption = ledgerOptions.find(option => option.value.id === data.ledgerId);
             setValue("ledger", ledgerOption);
@@ -50,7 +57,7 @@ const IncomeExpVchForm = (props) => {
         }else {
             setValue("startDate", new Date());
         }
-    }, []);
+    }, [props.refresh]);
 
     const onSubmit = (formData) => {
         //  if future date detected, throw error
@@ -78,6 +85,11 @@ const IncomeExpVchForm = (props) => {
         }
         fnSave(transaction);
     };
+
+    const refresh = () => {
+        reset();
+        setValue("startDate", new Date());
+    }
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -160,11 +172,9 @@ const IncomeExpVchForm = (props) => {
                 />
                 <ErrorMessage source={errors.startDate} />
             </Form.Group>
-            <button
-                className="btn btn-success rounded-1"
-                onClick={handleSubmit(onSubmit)}
-            >
-                {data === undefined ? "Save" : "Update"}
+            <button className="btn btn-success rounded-1" onClick={handleSubmit(onSubmit)} disabled={networkRequest}>
+                { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+                { (!networkRequest) && data === undefined ? "Save" : "Update"}
             </button>
         </div>
     )

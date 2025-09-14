@@ -279,7 +279,7 @@ const LedgersView = () => {
                 const ledger = new Ledger(response.data);
                 const arr = [...filteredLedgers, ledger];
                 ledgers.push(ledger);
-                setLedgers(ledger);
+                setLedgers(ledgers);
                 setFilteredLedgers([...arr]);
                 /*  GO TO PAGE WHERE NEW LEDGER IS.  */
                 setCurrentPage(Math.ceil((totalItemsCount + 1) / pageSize));

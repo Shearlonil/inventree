@@ -6,7 +6,6 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 
-import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
 import { useAuth } from "../../app-context/auth-user-context";
 import IncomeExpVchForm from "../../Components/Finance/IncomeExpVchForm";
@@ -17,6 +16,7 @@ import financeController from "../../Controllers/finance-controller";
 import IMAGES from '../../assets/Images';
 import StartEndDateSearch from "../../Components/StartEndDateSearch";
 import TableMain from "../../Components/TableView/TableMain";
+import { LedgerTransaction } from "../../Entities/LedgerTransaction";
 
 const Expenses = () => {
     const navigate = useNavigate();
@@ -34,6 +34,7 @@ const Expenses = () => {
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
+    const [refresh, doRefresh] = useState(false);
 
     //	menus for the react-menu in table
     const menuItems = [
@@ -147,10 +148,17 @@ const Expenses = () => {
 
                     let totalCash = numeral(0);
                     response.data.forEach(datum => {
-                        datum.dtoDateTime = datum.date;
-                        datum.date = format(datum.date, 'dd/MM/yyyy');
-                        totalCash = numeral(totalCash).add(datum.crAmount);
-                        arr.push(datum);
+                        const transaction = new LedgerTransaction();
+                        transaction.id = datum.id;
+                        transaction.ledgerId = datum.ledgerId;
+                        transaction.ledgerVchId = datum.ledgerVchId;
+                        transaction.ledgerName = datum.ledgerName;
+                        transaction.description = datum.description;
+                        transaction.drAmount = datum.drAmount;
+                        transaction.dtoDateTime = datum.date;
+                        transaction.date = datum.date;
+                        totalCash = numeral(totalCash).add(datum.drAmount);
+                        arr.push(transaction);
                     });
                     setLedgerTransactions(arr);
                 }
@@ -193,13 +201,24 @@ const Expenses = () => {
                     setLedgerTransactions([...ledgerTransactions]);
                     toast.success('Update successful');
                 }
+                doRefresh(prev => !prev);
             }else {
                 //  new income transaction
                 const response = await financeController.createIncomeExpVoucher(entity);
                 if(response && response.data){
-                    const arr = [response.data, ...ledgerTransactions];
+                    const transaction = new LedgerTransaction();
+                    transaction.id = response.data.id;
+                    transaction.ledgerId = response.data.ledgerId;
+                    transaction.ledgerVchId = response.data.ledgerVchId;
+                    transaction.ledgerName = response.data.ledgerName;
+                    transaction.description = response.data.description;
+                    transaction.drAmount = response.data.drAmount;
+                    transaction.dtoDateTime = response.data.date;
+                    transaction.date = response.data.date;
+                    const arr = [transaction, ...ledgerTransactions];
                     setLedgerTransactions(arr);
                 }
+                doRefresh(prev => !prev);
             }
             handleCloseModal();
             setNetworkRequest(false);
@@ -236,6 +255,7 @@ const Expenses = () => {
                 setLedgerTransactions([...ledgerTransactions]);
             }
             calcTotalAmounts(ledgerTransactions);
+            handleCloseModal();
         } catch (error) {
             setNetworkRequest(false);
             //	Incase of 500 (Invalid Token received!), perform refresh
@@ -274,7 +294,7 @@ const Expenses = () => {
         //	table header
         headers: ['Ledger', 'Description', 'Amount', 'Date', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['ledgerName', 'description', 'crAmount', 'date'],
+        objectProps: ['ledgerName', 'description', 'drAmount', 'date'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -301,7 +321,7 @@ const Expenses = () => {
                 <div className="row p-3 rounded-2 my-3 py-4 border shadow">
                     <div className="col-12 col-md-4 my-3">
                         <aside className="p-3 bg-light shadow-lg">
-                            <IncomeExpVchForm fnSave={fnConfirmSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} />
+                            <IncomeExpVchForm fnSave={fnConfirmSave} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} refresh={refresh} />
                         </aside>
                     </div>
                     <div className="col-12 col-md-8 my-3">
@@ -390,7 +410,7 @@ const Expenses = () => {
                     <Modal.Title>Voucher Creation Form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <IncomeExpVchForm fnSave={fnConfirmSave} data={entity} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} />
+                    <IncomeExpVchForm fnSave={fnConfirmSave} data={entity} networkRequest={networkRequest} ledgerOptions={ledgerOptions} mode={1} refresh={refresh} />
                 </Modal.Body>
             </Modal>
         </div>
