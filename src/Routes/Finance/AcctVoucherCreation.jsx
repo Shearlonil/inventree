@@ -4,6 +4,7 @@ import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
 import { toast } from "react-toastify";
+import { format, isAfter } from "date-fns";
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import ledgerController from "../../Controllers/ledger-controller";
@@ -15,6 +16,7 @@ import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
 import financeController from "../../Controllers/finance-controller";
+import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
 
 const AcctVoucherCreation = () => {
 		
@@ -30,15 +32,21 @@ const AcctVoucherCreation = () => {
 	const [showFormModal, setShowFormModal] = useState(false);
 	const [displayMsg, setDisplayMsg] = useState("");
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
+	const [showSingleDateDialog, setShowSingleDateDialog] = useState(false);
 	const [confirmDialogEvtName, setConfirmDialogEvtName] = useState(null);
 
 	const [totalDrAmount, setTotalDrAmount] = useState(0);
 	const [totalCrAmount, setTotalCrAmount] = useState(0);
+	const [transactionDate, setTransactionDate] = useState(new Date());
 
     //	menus for the react-menu in table
     const menuItems = [
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'Edit', onClickParams: {evtName: 'edit' } },
+    ];
+
+    const offCanvasMenu = [
+        { label: "Adjust Date", onClickParams: {evtName: 'adjustDate'} },
     ];
 
     useEffect( () => {
@@ -87,9 +95,13 @@ const AcctVoucherCreation = () => {
 		setEntityToEdit(null);
         setShowFormModal(false);
 		setShowConfirmModal(false);
+		setShowSingleDateDialog(false);
     };
 
 	const fnAdd = (data) => {
+		data.date = transactionDate;
+        // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
+		data.dtoDateTime = format(transactionDate, "yyyy-MM-dd") + "T12:00:00.000Z";
 		const indexPos = ledgerTransactions.findIndex(i => i.ledgerId === data.ledgerId);
 		if(indexPos > -1){
 			//	replace old item found at index position in ledgerTransactions array with edited one
@@ -102,6 +114,15 @@ const AcctVoucherCreation = () => {
 			calcTotalAmounts(temp);
 		}
 	};
+
+	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+		switch (onclickParams.evtName) {
+            case 'adjustDate':
+				setConfirmDialogEvtName(onclickParams.evtName);
+				setShowSingleDateDialog(true);
+                break;
+        }
+	}
 
     const handleTableReactMenuItemClick = async (onclickParams, entity, e) => {
         switch (onclickParams.evtName) {
@@ -134,6 +155,20 @@ const AcctVoucherCreation = () => {
 				calcTotalAmounts([]);
 				break;
 		}
+	}
+	
+	const handleDateChanged = (date) => {
+		//  if future date detected, throw error
+		if(isAfter(date.startDate, new Date())){
+			toast.error("Future date detected");
+			return;
+		}
+		setTransactionDate(date.startDate);
+		ledgerTransactions.forEach(lt => {
+			lt.dtoDateTime = date.startDate;
+			lt.date = date.startDate;
+		});
+		setLedgerTransactions(ledgerTransactions);
 	}
 
     const handleCancel = () => {
@@ -202,9 +237,9 @@ const AcctVoucherCreation = () => {
 	
 	const tableProps = {
 		//	table header
-		headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Options'],
+		headers: ['Ledger', 'Description', 'Debit', 'Credit', 'Date', 'Options'],
 		//	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-		objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount'],
+		objectProps: ['ledgerName', 'description', 'drAmount', 'crAmount', 'date'],
 		//	React Menu
 		menus: {
 			ReactMenu,
@@ -216,6 +251,9 @@ const AcctVoucherCreation = () => {
 	return (
 		<div className="container">
 			<div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
+                <div>
+                    <OffcanvasMenu menuItems={offCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Voucher Creation</span>
@@ -226,17 +264,23 @@ const AcctVoucherCreation = () => {
                     Create, View and modify accounting Vouchers. <br />NOTE: This page requires both FINANCE AND ACCOUNTING VOUCHERS permissions
                 </span>
             </div>
-			<div className="container">
-				<div className="row p-3 rounded-2 my-3 py-4 border shadow">
-					<div className="col-12 col-md-4 my-3">
-						<aside className="p-3 d-none d-md-block bg-light shadow-lg">
-							<VchCreationForm fnAdd={fnAdd} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
-						</aside>
+			<div className="container p-0">
+				<div className="p-3 rounded-2 border shadow">
+					<div className="row m-1">
+						<div className="col-12 col-md-4 my-3">
+							<aside className="p-3 d-none d-md-block bg-light shadow-lg">
+								<VchCreationForm fnAdd={fnAdd} networkRequest={networkRequest} ledgerOptions={ledgerOptions} />
+							</aside>
+						</div>
+						<div className="col-12 col-md-8 border border rounded-3 p-1 bg-light my-3 shadow">
+							<TableMain tableProps={tableProps} tableData={ledgerTransactions} />
+						</div>
 					</div>
-					<div className="col-12 col-md-8 border border rounded-3 p-1 bg-light my-3 shadow">
-						<TableMain tableProps={tableProps} tableData={ledgerTransactions} />
+					<div className="row m-1">
+						<span className="text-danger fw-bold">Date: {format(transactionDate, 'dd/MM/yyyy')}</span>
 					</div>
 				</div>
+				
 				<div className="d-flex flex-end justify-content-end gap-5 p-3">
 					<div className="text-center">
 						<p className="fw-bold">Total Debit</p>
@@ -269,6 +313,13 @@ const AcctVoucherCreation = () => {
 					<LuTicket className="text-white" size={'25px'} />
 				</div>
 			</div>
+
+            <SingleDateSelectDialog
+                show={showSingleDateDialog}
+                handleClose={handleCloseModal}
+                handleConfirm={handleDateChanged}
+                message={"Set Transaction date"}
+            />
 
             <Modal show={showFormModal} onHide={handleCloseModal}>
                 <Modal.Header closeButton>

@@ -350,6 +350,8 @@ const SalesReceiptWindow = () => {
             setTotalTransactionAmount(0);
             setSelectedReceipt(null);
             setSelectedInvoice(null);
+            setStartDate(null);
+            setEndDate(null);
 
 			setSearchedId(id);
 			setSearchedDate(null);
@@ -393,10 +395,14 @@ const SalesReceiptWindow = () => {
 	}
 	
 	const dateSearch = async (date) => {
+        /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+            isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
 			if (date.startDate && date.endDate) {
-                const startDate = format(date.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const startDate = format(date.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
 
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
@@ -410,7 +416,7 @@ const SalesReceiptWindow = () => {
                 setSearchedEntity("");
 				setSearchedDate(date);
 
-                setFilename(`Receipts ${date.startDate} - ${date.endDate}`);
+                setFilename(`Receipts ${format(new Date(date.startDate), "dd/MM/yyyy")} - ${format(new Date(date.endDate), "dd/MM/yyyy")}`);
                 
 				const response = await transactionsController.searchPurchaseReceiptsByDate(startDate, endDate, date.reversal_status);
 				if(response && response.data){
@@ -445,10 +451,14 @@ const SalesReceiptWindow = () => {
 	}
 	
 	const entityDateSearch = async (data) => {
+        /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+            isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
 			if (data.startDate && data.endDate) {
-                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
 
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
@@ -463,11 +473,15 @@ const SalesReceiptWindow = () => {
 
                 let response;
                 if(confirmDialogEvtName === "searchByCustomer"){
-                    setFilename(`Receipts_for_${data.select.label}_${data.startDate} - ${data.endDate}`);
+                    setFilename(
+                        `Receipts_for_${data.select.label}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
+                    );
                     setSearchedEntity('customer');
                     response = await transactionsController.customerSalesReceiptsByDate(startDate, endDate, data.select.value.id);
                 }else {
-                    setFilename(`Receipts_generated_by_${data.select.label} ${data.startDate} - ${data.endDate}`);
+                    setFilename(
+                        `Receipts_generated_by_${data.select.label}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
+                    );
                     setSearchedEntity('user');
                     response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
                 }
@@ -684,6 +698,8 @@ const SalesReceiptWindow = () => {
     }
     
     const pdfExport = async () => {
+        /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+            isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         let startDate;
         let endDate;
         try {
@@ -691,8 +707,10 @@ const SalesReceiptWindow = () => {
             let response;
             switch (searchMode){
                 case 0:
-                    startDate = format(searchedDate.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                    startDate = format(searchedDate.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                     endDate = format(searchedDate.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                    setStartDate(startDate);
+                    setEndDate(endDate);
                     response = await transactionsController.pdfPurchaseReceiptsByDateForExport(startDate, endDate, searchedDate.reversal_status);
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
@@ -712,8 +730,10 @@ const SalesReceiptWindow = () => {
                         }
                     }
                 case 2:
-                    startDate = format(searchedEntityData.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                    startDate = format(searchedEntityData.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                     endDate = format(searchedEntityData.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                    setStartDate(startDate);
+                    setEndDate(endDate);
                     if(searchedEntity === "customer"){
                         response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
                     }else {
@@ -786,7 +806,7 @@ const SalesReceiptWindow = () => {
 
         doc.setFontSize(20);
 
-        const title = `Receipts Summary ${startDate} - ${endDate}`;
+        const title = `Receipts Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
 
         doc.text(title, marginLeft, 40);
         const receipts = [];
@@ -852,7 +872,7 @@ const SalesReceiptWindow = () => {
 
         doc.setFontSize(20);
 
-        const title = `Receipts Summary ${startDate} - ${endDate}`;
+        const title = `Receipts Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
 
         doc.text(title, marginLeft, 40);
         const receipts = [];

@@ -12,6 +12,7 @@ import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { applyPlugin, autoTable } from 'jspdf-autotable'
+import { format } from 'date-fns';
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -60,6 +61,8 @@ const ItemSalesReceiptWindow = () => {
     const [itemsLoading, setItemsLoading] = useState(true);
     
     const [filename, setFilename] = useState("");
+    const [start, setStart] = useState("");
+    const [end, setEnd] = useState("");
     
     const [totalAmount, setTotalAmount] = useState(0);
     const [totalAvgSalesPrice, setTotalAvgSalesPrice] = useState(0);
@@ -258,7 +261,7 @@ const ItemSalesReceiptWindow = () => {
 
         doc.setFontSize(15);
 
-        const title = "Sales Record";
+        const title = `Sales Record ${format(new Date(start), "dd/MM/yyyy")} - ${format(new Date(end), "dd/MM/yyyy")}`;
 
         doc.text(title, marginLeft, 40);
 
@@ -279,12 +282,15 @@ const ItemSalesReceiptWindow = () => {
                 { header: 'Profit Margin', dataKey: 'profit' },
             ],
         });
-        doc.text(`Total Amount: ${numeral(totalAmount).format('₦0,0.00')} | Total Profit: ${numeral(totalProfit).format('₦0,0.00')}`, marginLeft, doc.lastAutoTable.finalY + 40);
+        doc.text(`Total Amount: ${numeral(totalAmount).format('₦0,0.00')} | Total Profit: ${numeral(totalProfit).format('₦0,0.00')}`, 
+            marginLeft, doc.lastAutoTable.finalY + 40);
         
         doc.save(`${filename}` + fileExtension);
     }
 
     const onsubmit = async (data) => {
+        /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+            isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
@@ -292,8 +298,10 @@ const ItemSalesReceiptWindow = () => {
                 setTotalProfit(0);
                 setTotalAmount(0);
                 setTotalAvgSalesPrice(0);
+                setStart(data.startDate);
+                setEnd(data.endDate);
 
-                data.startDate.setHours(0);
+                data.startDate.setHours(1);
                 data.startDate.setMinutes(0);
                 data.startDate.setSeconds(0);
     
@@ -301,7 +309,9 @@ const ItemSalesReceiptWindow = () => {
                 data.endDate.setMinutes(59);
                 data.endDate.setSeconds(59);
 
-                setFilename(`sales_summary_${data.product.value.itemName}_${data.startDate} - ${data.endDate}`);
+                setFilename(
+                    `sales_summary_${data.product.value.itemName}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
+                );
 
                 const response = await transactionsController.itemSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.product.value.id);
                 if(response && response.data){

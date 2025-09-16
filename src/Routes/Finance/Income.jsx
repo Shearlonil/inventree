@@ -136,7 +136,7 @@ const Income = () => {
     const fnSearch = async (data) => {
         try {
 			if (data.startDate && data.endDate) {
-                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
 				setNetworkRequest(true);
@@ -191,7 +191,7 @@ const Income = () => {
             //  if dtoTransaction has id, then update mode
             if(entity.id){
                 // explicitly set dtoDateTime to avoid 1hr lag when sending to backend
-                entity.dtoDateTime = format(entity.dtoDateTime, "yyyy-MM-dd") + "T00:00:00.000Z";
+                entity.dtoDateTime = format(entity.dtoDateTime, "yyyy-MM-dd") + "T12:00:00.000Z";
                 await financeController.updateIncomeExpVoucher(entity);
                 //	find index position of edited item in items arr
                 const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);

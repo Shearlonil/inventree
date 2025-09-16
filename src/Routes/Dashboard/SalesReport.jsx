@@ -211,7 +211,7 @@ const SalesReport = () => {
 
         doc.setFontSize(15);
 
-        const title = "Sales Summary";
+        const title = `Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -250,7 +250,7 @@ const SalesReport = () => {
 
         doc.setFontSize(15);
 
-        const title = `Sales Summary ${startDate} - ${endDate}`;
+        const title = `Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -281,7 +281,9 @@ const SalesReport = () => {
 	const fnSearch = async (data) => {
 		try {
 			if (data.startDate && data.endDate) {
-                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+                    isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setStartDate(startDate);
                 setEndDate(endDate);
@@ -292,7 +294,7 @@ const SalesReport = () => {
                 setTotalSalesPrice(0);
                 setTotalStockPrice(0);
 
-                setFilename(`sales_summary_${data.startDate} - ${data.endDate}`);
+                setFilename(`sales_summary_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
 				const response = await transactionsController.summarizeSalesRecords(startDate, endDate);
 				if(response && response.data){

@@ -49,6 +49,8 @@ const InvoiceWindow = () => {
     const [searchedId, setSearchedId] = useState(0);
     //	incase of date search, store in this state
     const [searchedDate, setSearchedDate] = useState(null);
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
 
     const [invoices, setInvoices] = useState([]);
     const [invoiceOptions, setInvoiceOptions] = useState([]);
@@ -159,6 +161,8 @@ const InvoiceWindow = () => {
 			setSearchMode(1);
             setTotalTransactionAmount(0);
             setSelectedInvoice(null);
+            setStartDate(null);
+            setEndDate(null);
 
 			setSearchedId(id);
 			setSearchedDate(null);
@@ -198,10 +202,14 @@ const InvoiceWindow = () => {
 	}
 	
 	const dateSearch = async (date) => {
+        /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
+            isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
 			if (date.startDate && date.endDate) {
-                const startDate = format(date.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                const startDate = format(date.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
 				setNetworkRequest(true);
                 setTotalTransactionAmount(0);
                 setInvoices([]);
@@ -249,7 +257,6 @@ const InvoiceWindow = () => {
             
             const response = await transactionsController.activateInvoice(selectedInvoice.id);
             if(response && response.status === 200){
-                console.log(response.data);
                 selectedInvoice.reversalStatus = false;
                 setSelectedInvoice(selectedInvoice);
                 toast.info('activated');

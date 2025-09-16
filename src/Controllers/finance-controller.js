@@ -28,6 +28,10 @@ const updateVoucher = async (id, dtoTransactions) => {
     return await httpService.post(`/api/finance/voucher/update/${id}`, dtoTransactions);
 }
 
+const updateVoucherDate = async (id, date) => {
+    return await httpService.post(`/api/finance/voucher/update/${id}`, { date, date});
+}
+
 const createGroup = async (dtoAccGroup) => {
     return await httpService.post(`/api/finance/groups/create`, dtoAccGroup);
 }
@@ -70,6 +74,7 @@ export default {
     updateIncomeExpVoucher,
     deleteIncomeExpVoucher,
     updateVoucher,
+    updateVoucherDate,
     createGroup,
     renameGroup,
     moveAccGroupToGroup,
