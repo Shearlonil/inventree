@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { format } from 'date-fns';
+import { format, isAfter } from 'date-fns';
 import numeral from 'numeral';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -30,6 +30,7 @@ import { clientDetails } from '../../../data';
 import EntityDateDialog from '../../Components/DialogBoxes/EntityDateDialog';
 import User from '../../Entities/User';
 import { Contact } from '../../Entities/Contact';
+import SingleDateSelectDialog from '../../Components/DialogBoxes/SingleDateSelectDialog';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -47,6 +48,7 @@ const SalesReceiptWindow = () => {
 		{ label: "Search by User", onClickParams: {evtName: 'searchByUser'} },
 		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
 		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
+		{ label: "Adjust Receipt Date", onClickParams: {evtName: 'adjustReceiptDate'} },
 		{ label: "Reprint", onClickParams: {evtName: 'reprint'} },
 		{ label: "Download Receipt", onClickParams: {evtName: 'download'} },
 		{ label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
@@ -80,6 +82,7 @@ const SalesReceiptWindow = () => {
     const [salesRecords, setSalesRecords] = useState([]);
     const [totalDiscount, setTotalDiscount] = useState(0);
     const [totalTransactionAmount, setTotalTransactionAmount] = useState(0);
+    const [tempDate, setTempDate] = useState(new Date());
     
     const [filename, setFilename] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -98,6 +101,7 @@ const SalesReceiptWindow = () => {
     //  for entity dialog (users and customers)
     const [showEntityModal, setShowEntityModal] = useState(false);
     const [entityLoading, setEntityLoading] = useState(true);
+    const [showSingleDateDialog, setShowSingleDateDialog] = useState(false);
     
     useEffect( () => {
         if(!user.hasAuth('RECEIPT_WINDOW')){
@@ -188,6 +192,14 @@ const SalesReceiptWindow = () => {
             case 'searchByDate':
 				setShowDateModal(true);
                 break;
+            case 'adjustReceiptDate':
+                if(!selectedReceipt){
+                    toast.error("Please select a receipt");
+                    return;
+                }
+                setConfirmDialogEvtName(onclickParams.evtName);
+                setShowSingleDateDialog(true);
+                break;
             case 'activateReceipt':
                 if(!selectedReceipt){
                     toast.error("Please select a receipt");
@@ -256,6 +268,8 @@ const SalesReceiptWindow = () => {
 	const handleClosePaymentModal = () => {
 		setShowPaymentModal(false);
 	};
+
+    const closeSingleDateDialog = () => setShowSingleDateDialog(false);
 	
 	const handleConfirmOK = async () => {
 		setShowConfirmModal(false);
@@ -280,6 +294,9 @@ const SalesReceiptWindow = () => {
             case 'download':
 				download();
                 break;
+            case 'adjustReceiptDate':
+                updateTransactionDate();
+                break;
         }
 	}
 
@@ -297,6 +314,17 @@ const SalesReceiptWindow = () => {
         setSelectedInvoice(selectedReceipt.dtoInvoice);
         setSalesRecords(buildTableData(selectedReceipt, selectedReceipt.dtoInvoice));
     };
+        
+    const handleDateChanged = (date) => {
+        //  if future date detected, throw error
+        if(isAfter(date.startDate, new Date())){
+            toast.error("Future date detected");
+            return;
+        }
+        setTempDate(date.startDate);
+        setDisplayMsg(`Update Receipt date with id ${selectedReceipt.id} to ${format(date.startDate, 'dd/MM/yyyy')}`);
+        setShowConfirmModal(true);
+    }
 
     const paymentModeSet = (payments) => {
         const paymentModes = [];
@@ -516,6 +544,41 @@ const SalesReceiptWindow = () => {
 			}
 		}
 	}
+
+    const updateTransactionDate = async () => {
+        try {
+            setNetworkRequest(true);
+            // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
+            const date = new Date();
+            let dtoDate = format(tempDate, "yyyy-MM-dd") + `T${date.getHours()}:${date.getMinutes()}:00.000Z`;
+            const response = await transactionsController.updateReceiptDate(selectedReceipt.id, dtoDate);
+            if(response && response.status === 200){
+                selectedReceipt.transactionDate = dtoDate;
+                setSelectedReceipt(selectedReceipt);
+                toast.info('Date updated');
+            }
+
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return updateTransactionDate();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    }
 	
 	const activateReceipt = async () => {
         try {
@@ -1106,6 +1169,13 @@ const SalesReceiptWindow = () => {
                 optionsLoading={entityLoading}
                 handleClose={handleCloseModal}
                 handleConfirm={entityDateSearch}
+            />
+
+            <SingleDateSelectDialog
+                show={showSingleDateDialog}
+                handleClose={closeSingleDateDialog}
+                handleConfirm={handleDateChanged}
+                message={"Update Receipt Transaction date"}
             />
         </div>
     )

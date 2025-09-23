@@ -165,6 +165,10 @@ const AcctVoucherDisplay = () => {
 				setShowInputModal(true);
                 break;
             case 'editVchDate':
+                if(vchId == 0){
+                    toast.info('No voucher selected. Please perform search');
+                    break;
+                }
                 setConfirmDialogEvtName(onclickParams.evtName);
                 setShowSingleDateDialog(true);
                 break;
@@ -209,7 +213,7 @@ const AcctVoucherDisplay = () => {
                 break;
         }
     }
-        
+    
     const handleDateChanged = (date) => {
         //  if future date detected, throw error
         if(isAfter(date.startDate, new Date())){
@@ -246,11 +250,14 @@ const AcctVoucherDisplay = () => {
     const updateTransactionDate = async () => {
         try {
             setNetworkRequest(true);
-            await financeController.updateVoucherDate(vchId, ledgerTransactions);
+            // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
+            const date = new Date();
+            let dtoDate = format(tempDate, "yyyy-MM-dd") + "T12:00:00.000Z";
+            await financeController.updateVoucherDate(vchId, dtoDate);
             setTransactionDate(tempDate);
             ledgerTransactions.forEach(lt => {
-                lt.dtoDateTime = date.startDate;
-                lt.date = date.startDate;
+                lt.dtoDateTime = tempDate;
+                lt.date = tempDate;
             });
             setLedgerTransactions(ledgerTransactions);
 

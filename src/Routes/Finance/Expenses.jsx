@@ -40,6 +40,7 @@ const Expenses = () => {
     const menuItems = [
         { name: 'Edit', onClickParams: {evtName: 'edit' } },
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
+        { name: 'View Voucher', onClickParams: {evtName: 'voucherView'} },
     ];
 
     useEffect( () => {
@@ -105,6 +106,9 @@ const Expenses = () => {
             case 'edit':
                 setEntity(entity);
                 setShowFormModal(true);
+                break;
+            case 'voucherView':
+                window.open(`/finance/vouchers/${entity.ledgerVchId}/view`, '_blank')?.focus();
                 break;
         }
     };

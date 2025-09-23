@@ -29,7 +29,7 @@ const updateVoucher = async (id, dtoTransactions) => {
 }
 
 const updateVoucherDate = async (id, date) => {
-    return await httpService.post(`/api/finance/voucher/update/${id}`, { date, date});
+    return await httpService.post(`/api/finance/voucher/update/${id}/date`, { startDate: date, endDate: date });
 }
 
 const createGroup = async (dtoAccGroup) => {
