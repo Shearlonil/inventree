@@ -140,6 +140,11 @@ const findPurchaseReceiptByNo = async (receiptId) => {
     });
 };
 
+//  invoices without receipts
+const incompleteTrasactions = async () => {
+    return await httpService.get(`/api/transactions/invoices/incomplete`);
+};
+
 const searchInvoicesByDate = async (startDate, endDate) => {
     return await httpService.post(`/api/transactions/invoices/get-within`, { startDate, endDate });
 };
@@ -154,6 +159,10 @@ const findInvoiceByNo = async (id) => {
 
 const summarizeSalesRecords = async (startDate, endDate) => {
     return await httpService.post(`/api/transactions/sales/summary`, { startDate, endDate });
+};
+
+const yearMonthlySales = async () => {
+    return await httpService.get(`/api/transactions/sales/monthly`);
 };
 
 const updateReceiptDate = async (id, date) => {
@@ -181,8 +190,10 @@ export default {
     pdfPurchaseReceiptsByDateForExport,
     pdfPurchaseReceiptsByNoForExport,
     findPurchaseReceiptByNo,
+    incompleteTrasactions,
     searchInvoicesByDate,
     findInvoiceByNo,
     summarizeSalesRecords,
+    yearMonthlySales,
     updateReceiptDate,
 }

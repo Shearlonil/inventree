@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../app-context/auth-user-context";
 import { Button } from "react-bootstrap";
-import { PieChart, Pie, Cell } from "recharts";
+import { PieChart, Pie, Cell, BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { subDays } from "date-fns";
+import numeral from "numeral";
 import { toast } from "react-toastify";
 
 import handleErrMsg from "../../Utils/error-handler";
@@ -13,12 +14,15 @@ import transactionsController from "../../Controllers/transactions-controller";
 const Dashboard = () => {
     const navigate = useNavigate();
 
-    const { authUser, handleRefresh, logout } = useAuth();
+    const { authUser, handleRefresh, logout, getCurrentYear } = useAuth();
     const user = authUser();
     
     const [networkRequest, setNetworkRequest] = useState(false);
 
     const [salesChartData, setSalesChartData] = useState([ { name: "Fetching Data", value: 1, color: "#0088FE" } ]);
+    const [yearMonthlySalesData, setYearMonthlySalesData] = useState(null);
+    const [topMonth, setTopMonth] = useState(null);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       
     const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
     
@@ -48,7 +52,7 @@ const Dashboard = () => {
             </text>
         );
     };
-        
+    
     useEffect( () => {
         initialize();
     }, []);
@@ -56,6 +60,12 @@ const Dashboard = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            const yearMonthlySalesReponse = await transactionsController.yearMonthlySales();
+            if(yearMonthlySalesReponse && yearMonthlySalesReponse.data){
+                const temp = yearMonthlySalesReponse.data.map((datum, idx) => ({ month: months[idx], amount: datum}));
+                setTopMonth([...temp].sort((a, b) => b.amount - a.amount)[0]);
+                setYearMonthlySalesData(temp);
+            }
             const endDate = new Date();
             endDate.setHours(23, 59, 59);
             
@@ -116,6 +126,47 @@ const Dashboard = () => {
                     <span className="bungee-regular text-primary"> {user.username} </span>
                 </h1>
                 <hr />
+
+                {user.hasAuth('PROFIT_VIEW') && <div className="row">
+                    <div className="col-12 col-sm-8 my-2 d-flex flex-column justify-content-center">
+                        <h5 className="bungee-regular mt-4 text-danger">
+                            Monthly Sales - {getCurrentYear()}
+                        </h5>
+                        {/* NOTE: aspect={1.2} prop makes the ResponsiveContainer visible (don't know why).
+                            But it means making both dimension scale without explicitly setting the width and/or height.
+                            interpreted as width = 1.2 height
+                            ref: https://stackoverflow.com/questions/52134350/set-height-and-width-for-responsive-chart-using-recharts-barchart
+                        */}
+                        <ResponsiveContainer aspect={1.99}>
+                            <BarChart
+                                data={yearMonthlySalesData}
+                                margin={{
+                                top: 5,
+                                right: 30,
+                                left: 20,
+                                bottom: 5,
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="month" />
+                                <YAxis />
+                                <Tooltip />
+                                <Legend />
+                                <Bar dataKey="amount" fill="#82ca9d" activeBar={<Rectangle fill="gold" stroke="purple" />} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                    <div className="col-12 col-sm-4 my-2 d-flex flex-column justify-content-center align-items-center">
+                        <h5>Total Sales</h5>
+                        <h1 className="bungee-regular text-danger fw-bold">
+                            {numeral(yearMonthlySalesData?.map((datum, idx) => datum.amount).reduce((accum, curVal) => accum + curVal)).format('₦0,0.00')}
+                        </h1>
+                        <h6>Top performing month:</h6>
+                        <h4 className="fw-bold">{topMonth?.month}</h4>
+                        <h3 className="bungee-regular text-primary fw-bold">{numeral(topMonth?.amount).format('₦0,0.00')}</h3>
+                    </div>
+                </div>}
 
 				<h3 className="mt-5 fw-bold noto-sans-font">
 					Quick<span className="text-success"> Menu</span>
@@ -306,8 +357,8 @@ const Dashboard = () => {
                     
                     <div className="row d-flex justify-content-center mt-5">
                         <h1 className="text-center space-mono-bold fw-bold" style={{textShadow: "1px 2px 2px black", fontSize: '50px'}}>
-                            <span className="text-success">Sales </span>
-                            <span className="text-primary">Chart</span>
+                            <span className="text-success">Top </span>
+                            <span className="text-primary">Products</span>
                         </h1>
                     </div>
                     <div className="row mt-3">

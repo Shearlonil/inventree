@@ -1,17 +1,73 @@
-import React from "react";
-import SVG from "../assets/Svg";
-import { HomeWrapper } from "../Components/Styles/HomeStyles";
-
+import { useEffect, useState } from "react";
 import { IoIosRefresh } from "react-icons/io";
 import { TbUsersGroup } from "react-icons/tb";
 import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdSell } from "react-icons/md";
+
+import SVG from "../assets/Svg";
+import { HomeWrapper } from "../Components/Styles/HomeStyles";
 import Sliced from "../Components/SlicedEffect/Sliced";
 import { clientDetails } from "../../data";
+import { useAuth } from "../app-context/auth-user-context";
+import genericController from "../Controllers/generic-controller";
 
 const Home = () => {
 	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
+	
+	const { authUser, handleRefresh, logout } = useAuth();
+		
+	const [networkRequest, setNetworkRequest] = useState(false);
+	const [activeUserCount, setActiveUserCount] = useState(0);
+	const [activeItemCount, setActiveItemCount] = useState(0);
+	const [activeCustomerCount, setActiveCustomerCount] = useState(0);
+	const [activeVendorCount, setActiveVendorCount] = useState(0);
+	const [incompleteTrasactionCount, setIncompleteTrasactionCount] = useState(0);
+		
+	useEffect( () => {
+		initialize();
+	}, []);
+    
+    const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+			const urls = [ `/api/users/count/active`, `/api/items/count/active`, `/api/customers/count/active`, `/api/vendors/count/active`, 
+				'/api/transactions/invoices/count/incomplete' 
+			];
+			const response = await genericController.performGetRequests(urls);
+            const { 0: usersRequest, 1: itemsRequest, 2: customersRequest, 3: vendorsRequest, 4: incompleteTransactionRequest } = response;
+			if (usersRequest && usersRequest.data) {
+				setActiveUserCount(usersRequest.data);
+			}
+			if (itemsRequest && itemsRequest.data) {
+				setActiveItemCount(itemsRequest.data);
+			}
+			if (customersRequest && customersRequest.data) {
+				setActiveCustomerCount(customersRequest.data);
+			}
+			if (vendorsRequest && vendorsRequest.data) {
+				setActiveVendorCount(vendorsRequest.data);
+			}
+			if (incompleteTransactionRequest && incompleteTransactionRequest.data) {
+				setIncompleteTrasactionCount(incompleteTransactionRequest.data);
+			}
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                // logout();
+            }
+        }
+    };
 
 	return (
 		<HomeWrapper>
@@ -65,9 +121,9 @@ const Home = () => {
 							<h3 className="fw-bold">Incomplete Transactions</h3>
 							<div>
 								<div className="d-flex justify-content-between">
-									<span className="space-mono-bold h2">"3"</span>
+									<span className="space-mono-bold h2">{incompleteTrasactionCount}</span>
 									<button className="btn">
-										<IoIosRefresh size={"40"} />
+										{/* <IoIosRefresh size={"40"} /> */}
 									</button>
 								</div>
 							</div>
@@ -88,7 +144,7 @@ const Home = () => {
 								<h6 className="fw-bold">Active Users</h6>
 							</div>
 							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
-								2
+								{activeUserCount}
 							</p>
 						</div>
 					</div>
@@ -99,7 +155,7 @@ const Home = () => {
 								<h6 className="fw-bold">Active Items</h6>
 							</div>
 							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
-								324
+								{activeItemCount}
 							</p>
 						</div>
 					</div>
@@ -111,7 +167,7 @@ const Home = () => {
 								<h6 className="fw-bold">Active Customers</h6>
 							</div>
 							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
-								0
+								{activeCustomerCount}
 							</p>
 						</div>
 					</div>
@@ -122,7 +178,7 @@ const Home = () => {
 								<h6 className="fw-bold">Active Vendors</h6>
 							</div>
 							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
-								0
+								{activeVendorCount}
 							</p>
 						</div>
 					</div>
@@ -154,9 +210,9 @@ const Home = () => {
 								<p className="list-group-item list-group-item-action shadow-sm rounded-2 p-1 px-2">
 									Outpost are like branches & with{" "}
 									<span className="bg-info-subtle px-1 rounded space-mono-regular small">
-										Inventree
+										Inventree, 
 									</span>{" "}
-									you can create.
+									you can create, manage and share items within outposts on the fly
 								</p>
 							</div>
 						</div>

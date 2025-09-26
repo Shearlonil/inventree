@@ -32,7 +32,7 @@ const InvoiceWindow = () => {
 		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
 		{ label: "Activate Invoice", onClickParams: {evtName: 'activateInvoice'} },
 		{ label: "Reverse Invoice", onClickParams: {evtName: 'reverseInvoice'} },
-		// { label: "Export to PDF", onClickParams: {evtName: 'exportToPDF'} },
+		{ label: "Incomplete Transactions", onClickParams: {evtName: 'incompleteTransactions'} },
 	];
     
     const tableProps = {
@@ -80,7 +80,10 @@ const InvoiceWindow = () => {
 				setDisplayMsg("Please enter Invoice No.");
 				setShowInputModal(true);
                 break;
-            case 'exportToPDF':
+            case 'incompleteTransactions':
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Find all active invoices without receipts?`);
+				setShowConfirmModal(true);
                 break;
             case 'searchByDate':
 				setShowDateModal(true);
@@ -128,6 +131,9 @@ const InvoiceWindow = () => {
                 break;
             case 'reverseInvoice':
 				reverseInvoice();
+                break;
+            case 'incompleteTransactions':
+                incompleteTransactions();
                 break;
         }
 	}
@@ -301,6 +307,41 @@ const InvoiceWindow = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return reverseInvoice();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+        }
+    }
+	
+	const incompleteTransactions = async () => {
+        try {
+            setNetworkRequest(true);
+            
+            const response = await transactionsController.incompleteTrasactions();
+            if(response && response.data){
+                const tableArr = [];
+                response.data.forEach(res => tableArr.push(new Invoice(res)));
+                tableArr.sort((a, b) => a.id - b.id);
+                response.data.sort((a, b) => a.id - b.id);
+                setInvoices(tableArr);
+                setInvoiceOptions(tableArr.map( invoice => ({label: invoice.id, value: invoice})));
+            }
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return incompleteTransactions();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
