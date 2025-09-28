@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -520,7 +520,11 @@ const ItemSalesReceiptWindow = () => {
                         <tbody>
                             {data.map((_datum, index) => (
                                 <tr className='' key={index}>
-                                    <td>{_datum.id}</td>
+                                    <td>
+                                        <Link to={`/items/sales-record/receipt/${_datum.id}/view`}>
+                                            {_datum.id}
+                                        </Link>
+                                    </td>
                                     <td>{_datum.itemName}</td>
                                     <td>{_datum.qty}</td>
                                     <td>{_datum.qtyType}</td>

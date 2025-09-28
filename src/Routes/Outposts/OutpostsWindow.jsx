@@ -26,7 +26,7 @@ const OutpostsWindow = () => {
     const menuItems = [
         { name: 'Rename', onClickParams: {evtName: 'rename' } },
         { name: 'Delete', onClickParams: {evtName: 'delete'} },
-        { name: 'Stock Summary', onClickParams: {evtName: 'stockSummary'} },
+        { name: 'Stock Valueation', onClickParams: {evtName: 'stockValuation'} },
     ];
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -147,8 +147,8 @@ const OutpostsWindow = () => {
                     return;
                 }
                 break;
-            case 'stockSummary':
-                window.open(`/outposts/stock/${entity.id}`, '_blank')?.focus();
+            case 'stockValuation':
+                window.open(`/inventory/outpost/stock-valuation/${entity.id}`, '_blank')?.focus();
                 break;
         }
     };

@@ -113,12 +113,12 @@ const StoreWindow = () => {
             const { 0: pkgRequest, 1: tractRequest } = response;
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
-            if(pkgRequest){
+            if(pkgRequest && pkgRequest.data){
 				setPkgOptions(pkgRequest.data.map( pkg => ({label: pkg.name, value: pkg})));
             }
 
             //	check if the request to fetch vendors doesn't fail before setting values to display
-            if(tractRequest){
+            if(tractRequest && tractRequest.data){
                 setTractOptions(tractRequest.data.map( tract => ({label: tract.name, value: tract})));
             }
             setNetworkRequest(false);

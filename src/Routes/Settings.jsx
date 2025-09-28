@@ -77,6 +77,7 @@ const Settings = () => {
             }
 			setNetworkRequest(false);
         } catch (error) {
+			setNetworkRequest(false);
             toast.error(handleErrMsg(error).msg);
         }
     }
@@ -88,6 +89,7 @@ const Settings = () => {
             toast.info("Database decryption successful")
 			setNetworkRequest(false);
         } catch (error) {
+			setNetworkRequest(false);
             toast.error(handleErrMsg(error).msg);
         }
     }

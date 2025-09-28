@@ -53,6 +53,7 @@ import AcctVoucherDisplay from "./Routes/Finance/AccVoucherDisplay";
 import UserSalesRecord from "./Routes/Dashboard/Users/UserSalesRecord";
 import Income from "./Routes/Finance/Income";
 import Expenses from "./Routes/Finance/Expenses";
+import OutpostStockValuation from "./Routes/Inventory/OutpostStockValuation";
 
 function App() {
 	return (
@@ -84,6 +85,7 @@ function App() {
 				<Route path="/inventory" element={<ProtectedRoute />}>
 					<Route path={"purchases"} element={<PurchasesWindow />} />
 					<Route path={"stock-valuation"} element={<StockValuationWindow />} />
+					<Route path={"outpost/stock-valuation/:outpost_id"} element={<OutpostStockValuation />} />
 				</Route>
 				<Route path="/sections" element={<ProtectedRoute />}>
 					<Route path={":tractName/items"} element={<TractsItemsView />} />
@@ -109,7 +111,10 @@ function App() {
 						<Route path={""} element={<GrossWindow />} />
 					</Route>
 					<Route path={"trash"} element={<Trash />} />
-					<Route path={"sales-record"} element={<ItemSalesReceiptWindow />} />
+					<Route path="sales-record" element={<ProtectedRoute />}>
+						<Route path={"receipt/:receipt_id/view"} element={<SalesReceiptWindow />} />
+						<Route path={""} element={<ItemSalesReceiptWindow />} />
+					</Route>
 				</Route>
 				<Route path="/outposts" element={<ProtectedRoute />}>
 					<Route path={"trash"} element={<OutpostTrash />} />

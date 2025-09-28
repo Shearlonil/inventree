@@ -5,7 +5,7 @@ import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { format, isAfter } from 'date-fns';
 import numeral from 'numeral';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import { applyPlugin, autoTable } from 'jspdf-autotable'
 
@@ -35,7 +35,8 @@ import SingleDateSelectDialog from '../../Components/DialogBoxes/SingleDateSelec
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
     const navigate = useNavigate();
-    //  format(selectedReceipt?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
+    const { receipt_id } = useParams();
+
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
 
@@ -155,6 +156,10 @@ const SalesReceiptWindow = () => {
                 const arr = [];
                 customersRequest.data.forEach( customer => arr.push(new Contact(customer)) );
                 setCustomers(arr.map(customer => ({label: customer.name, value: customer})));
+            }
+
+            if(receipt_id){
+                idSearch(receipt_id);
             }
 
             setEntityLoading(false);

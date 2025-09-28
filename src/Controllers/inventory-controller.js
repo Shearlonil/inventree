@@ -150,6 +150,14 @@ const stockValuation = async (startDate, tract_id) => {
     return await httpService.post(`/api/inventory/stock/valuation/${tract_id}`, { startDate, endDate: startDate });
 };
 
+const outpostStockValuation = async (startDate, outpost_id, tract_id) => {
+    return await httpService.post(`/api/inventory/outpost/stock/valuation/${outpost_id}`, { startDate, endDate: startDate }, {
+        params: {
+            tract_id
+        },
+    });
+};
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -172,5 +180,6 @@ export default {
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
     updatePurchasedItem,
-    stockValuation
+    stockValuation,
+    outpostStockValuation,
 }

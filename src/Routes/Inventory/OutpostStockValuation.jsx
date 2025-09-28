@@ -4,9 +4,9 @@ import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
-import { add, format } from "date-fns";
+import { format } from "date-fns";
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -22,11 +22,12 @@ import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indic
 import ErrorMessage from '../../Components/ErrorMessage';
 import inventoryController from '../../Controllers/inventory-controller';
 import { StockSummary } from '../../Entities/StockSummary';
-import tractController from '../../Controllers/tract-controller';
+import genericController from '../../Controllers/generic-controller';
 
-const StockValuationWindow = () => {
-    const navigate = useNavigate();
+const OutpostStockValuation = () => {
     applyPlugin(jsPDF);
+    const navigate = useNavigate();
+    const { outpost_id } = useParams();
         
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
@@ -51,6 +52,7 @@ const StockValuationWindow = () => {
         
     const [networkRequest, setNetworkRequest] = useState(false);
     const [data, setData] = useState([]);
+    const [outpost, setOutpost] = useState(null);
     const [totalStock, setTotalStock] = useState(0);
     
     const [filename, setFilename] = useState("");
@@ -65,7 +67,10 @@ const StockValuationWindow = () => {
 
     const initialize = async () => {
         try {
-            const tractsRequest = await tractController.fetchAllActive();
+            setNetworkRequest(true);
+            const urls = [ `/api/tracts/active`, `/api/outposts/find/${outpost_id}` ];
+            const response = await genericController.performGetRequests(urls);
+            const { 0: tractsRequest, 1: outpostRequest } = response;
 
             //	check if the request to fetch items doesn't fail before setting values to display
             if(tractsRequest && tractsRequest.data){
@@ -81,6 +86,11 @@ const StockValuationWindow = () => {
                 setTractOptions([({label: temp.name, value: temp}), ...arr]);
                 setTractsLoading(false);
             }
+
+            if(outpostRequest && outpostRequest.data){
+                setOutpost(outpostRequest.data);
+            }
+            setNetworkRequest(false);
         } catch (error) {
             //	Incase of 500 (Invalid Token received!), perform refresh
             try {
@@ -101,8 +111,8 @@ const StockValuationWindow = () => {
         }
     };
 
-	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
-		switch (onclickParams.evtName) {
+    const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
+        switch (onclickParams.evtName) {
             case 'xlsExport':
                 if(user.hasAuth('PROFIT_VIEW')){
                     exportStoreWorthToCSV();
@@ -118,7 +128,7 @@ const StockValuationWindow = () => {
                 }
                 break;
         }
-	}
+    }
 
     const exportToCSV = () => {
         //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
@@ -281,10 +291,13 @@ const StockValuationWindow = () => {
         doc.save(`${filename}` + fileExtension);
     }
 
-	const onsubmit = async (data) => {
-		try {
-			if (data.startDate) {
-				setNetworkRequest(true);
+    const onsubmit = async (data) => {
+        try {
+            if(outpost === null){
+                throw new Error("Outpost not valid");
+            }
+            if (data.startDate) {
+                setNetworkRequest(true);
                 setData([]);
                 setTotalStock(0);
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
@@ -292,8 +305,8 @@ const StockValuationWindow = () => {
 
                 setFilename(`stock_valuation_${tempDate}`);
 
-				const response = await inventoryController.stockValuation(tempDate, data.section.value.id);
-				if(response && response.data){
+                const response = await inventoryController.outpostStockValuation(tempDate, outpost_id, data.section.value.id);
+                if(response && response.data){
                     let totalStock = numeral(0);
                     const arr = [];
                     response.data.forEach(datum => {
@@ -305,47 +318,47 @@ const StockValuationWindow = () => {
                         (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
                     );
                     setTotalStock(totalStock);
-					setData(arr);
-				}
-				setNetworkRequest(false);
-			}
-		} catch (error) {
-			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onsubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-		}
-	}
+                    setData(arr);
+                }
+                setNetworkRequest(false);
+            }
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return onsubmit(data);
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    }
 
     return (
         <div className='container my-4'>
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 text-white align-items-center" >
-				<div>
-					<OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
-				</div>
-				<div className="text-center d-flex">
-					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Stock Valuation</span>
-						<img src={SVG.report_colored} style={{ width: "50px", height: "50px" }} />
-					</h2>
-				</div>
+                <div>
+                    <OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
+                </div>
+                <div className="text-center d-flex">
+                    <h2 className="display-6 p-3 mb-0">
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>{outpost?.name} Stock Valuation</span>
+                        <img src={SVG.report_colored} style={{ width: "50px", height: "50px" }} />
+                    </h2>
+                </div>
                 <span className='text-center m-1'>
                     Generate Stock summary report with custom dates and export to Excel/PDF. View closing stock at any given date
                 </span>
-			</div>
+            </div>
             
             <div className="border py-4 px-5 bg-white-subtle rounded-4 my-4" style={{ boxShadow: "black 3px 2px 5px" }} >
                 <Row className="align-items-center">
@@ -446,4 +459,4 @@ const StockValuationWindow = () => {
     )
 }
 
-export default StockValuationWindow;
+export default OutpostStockValuation;

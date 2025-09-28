@@ -16,6 +16,8 @@ import handleErrMsg from '../../Utils/error-handler';
 import transactionsController from '../../Controllers/transactions-controller';
 import { SalesSummary } from '../../Entities/SalesSummary';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
+import outpostController from '../../Controllers/outpost-controller';
+import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 
 const SalesReport = () => {
     const navigate = useNavigate();
@@ -34,6 +36,10 @@ const SalesReport = () => {
         
     const [networkRequest, setNetworkRequest] = useState(false);
     const [data, setData] = useState([]);
+        
+    //  for outposts
+    const [outpostOptions, setOutpostOptions] = useState([]);
+    const [outpostsLoading, setOutpostsLoading] = useState(true);
 
     const [totalStockPrice, setTotalStockPrice] = useState(0);
     const [totalSalesPrice, setTotalSalesPrice] = useState(0);
@@ -49,7 +55,47 @@ const SalesReport = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
+        initialize();
     }, []);
+
+    const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            const response = await outpostController.findAllActive();
+
+            //	check if the request to fetch items doesn't fail before setting values to display
+            if(response && response.data){
+                const temp = {
+                    status: true,
+                    creator: "pharmOyin",
+                    creationDate: "2022-06-01T08:57:05.000+00:00",
+                    name: "All",
+                    id: 0
+                }
+                const arr = response.data.map( outpost => ({label: outpost.name, value: outpost}) );
+                setOutpostOptions([({label: temp.name, value: temp}), ...arr]);
+                setOutpostsLoading(false);
+            }
+            setNetworkRequest(false);
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
         let arr = [];
@@ -378,7 +424,8 @@ const SalesReport = () => {
 			</div>
             
             <div className='my-4'>
-                <StartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} />
+                <EntityStartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} entityOptions={outpostOptions} entityLoading={outpostsLoading} 
+                    entityString={"Outpost"} />
             </div>
             
             <div className="p-3 rounded-3 p-3 overflow-md-auto bg-secondary-subtle my-4" style={{ minHeight: "800px" }}>
