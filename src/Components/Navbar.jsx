@@ -228,14 +228,14 @@ function NavBar() {
 								{<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
-										navigate("/inventory/stock-summary");
+										navigate("/inventory/stock-valuation");
 									}}
 									className={`nav-item ${
-										location.pathname === "/inventory/stock-summary" &&
+										location.pathname === "/inventory/stock-valuation" &&
 										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
 									}`}
 								>
-									Stock Summary
+									Stock Valuation
 								</NavDropdown.Item>}
 							</NavDropdown>}
 

@@ -146,8 +146,8 @@ const updatePurchasedItem = async (item) => {
     return await httpService.put(`/api/inventory/purchases/item/update`, item);
 }
 
-const stockSummary = async (startDate) => {
-    return await httpService.post(`/api/inventory/stock/summary`, { startDate, endDate: startDate });
+const stockValuation = async (startDate, tract_id) => {
+    return await httpService.post(`/api/inventory/stock/valuation/${tract_id}`, { startDate, endDate: startDate });
 };
 
 export default {
@@ -172,5 +172,5 @@ export default {
     paginatePurchasesDateSearch,
     paginatePurchasesIdSearch,
     updatePurchasedItem,
-    stockSummary
+    stockValuation
 }

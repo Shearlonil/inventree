@@ -42,7 +42,7 @@ import Trash from "./Routes/Items/Trash";
 import LedgersView from "./Routes/Finance/Legers/LedgersView";
 import TrashedLedgers from "./Routes/Finance/Legers/TrashedLedgers";
 import SalesReport from "./Routes/Dashboard/SalesReport";
-import StockSummaryWindow from "./Routes/Inventory/StockSummaryWindow";
+import StockValuationWindow from "./Routes/Inventory/StockValuationWindow";
 import Settings from "./Routes/Settings";
 import ItemSalesReceiptWindow from "./Routes/Items/ItemSalesReceiptWindow";
 import AccountGroupsView from "./Routes/Finance/AccountGroupsView";
@@ -83,7 +83,7 @@ function App() {
           		</Route>
 				<Route path="/inventory" element={<ProtectedRoute />}>
 					<Route path={"purchases"} element={<PurchasesWindow />} />
-					<Route path={"stock-summary"} element={<StockSummaryWindow />} />
+					<Route path={"stock-valuation"} element={<StockValuationWindow />} />
 				</Route>
 				<Route path="/sections" element={<ProtectedRoute />}>
 					<Route path={":tractName/items"} element={<TractsItemsView />} />

@@ -350,8 +350,8 @@ const PurchasesWindow = () => {
 	const itemDateSearch = async (date) => {
         try {
 			if (date.startDate && date.endDate) {
-				const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
-				const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+				const startDate = format(date.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+				const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 				setBeginDate(startDate);
 				setEndDate(endDate);
 

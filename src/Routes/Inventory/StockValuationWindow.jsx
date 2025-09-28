@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
@@ -12,6 +12,7 @@ import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import { autoTable, applyPlugin } from 'jspdf-autotable'
+import Select from 'react-select';
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -21,8 +22,9 @@ import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indic
 import ErrorMessage from '../../Components/ErrorMessage';
 import inventoryController from '../../Controllers/inventory-controller';
 import { StockSummary } from '../../Entities/StockSummary';
+import tractController from '../../Controllers/tract-controller';
 
-const StockSummaryWindow = () => {
+const StockValuationWindow = () => {
     const navigate = useNavigate();
     applyPlugin(jsPDF);
         
@@ -30,6 +32,7 @@ const StockSummaryWindow = () => {
     const user = authUser();
 
     const schema = object().shape({
+        section: object().required("Select a section"),
         startDate: date(),
     });
     
@@ -49,8 +52,55 @@ const StockSummaryWindow = () => {
         
     const [networkRequest, setNetworkRequest] = useState(false);
     const [data, setData] = useState([]);
+    const [totalStock, setTotalStock] = useState(0);
     
     const [filename, setFilename] = useState("");
+        
+    //  for tracts
+    const [tractOptions, setTractOptions] = useState([]);
+    const [tractsLoading, setTractsLoading] = useState(true);
+    
+    useEffect( () => {
+        initialize();
+    }, []);
+
+    const initialize = async () => {
+        try {
+            const tractsRequest = await tractController.fetchAllActive();
+
+            //	check if the request to fetch items doesn't fail before setting values to display
+            if(tractsRequest){
+                const temp = {
+                    isDefault: true,
+                    creator: "pharmOyin",
+                    creationDate: "2022-06-01T08:57:05.000+00:00",
+                    itemsCount: 0,
+                    name: "All",
+                    id: 0
+                }
+                const arr = tractsRequest.data.map( tract => ({label: tract.name, value: tract}) );
+                setTractOptions([({label: temp.name, value: temp}), ...arr]);
+                setTractsLoading(false);
+            }
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -237,14 +287,25 @@ const StockSummaryWindow = () => {
 			if (data.startDate) {
 				setNetworkRequest(true);
                 setData([]);
-                data.startDate = format(data.startDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setTotalStock(0);
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
+                const tempDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
 
-                setFilename(`stock_summary_${data.startDate}`);
+                setFilename(`stock_valuation_${tempDate}`);
 
-				const response = await inventoryController.stockSummary(data.startDate);
+				const response = await inventoryController.stockValuation(tempDate, data.section.value.id);
 				if(response && response.data){
+                    let totalStock = numeral(0);
                     const arr = [];
-                    response.data.forEach(datum => arr.push(new StockSummary(datum)));
+                    response.data.forEach(datum => {
+                        const stockSummary = new StockSummary(datum);
+                        totalStock = numeral(totalStock).add(stockSummary.totalStockPrice);
+                        arr.push(stockSummary);
+                    });
+                    arr.sort(
+                        (a, b) => (a.itemName.toLowerCase() > b.itemName.toLowerCase()) ? 1 : ((b.itemName.toLowerCase() > a.itemName.toLowerCase()) ? -1 : 0)
+                    );
+                    setTotalStock(totalStock);
 					setData(arr);
 				}
 				setNetworkRequest(false);
@@ -278,7 +339,7 @@ const StockSummaryWindow = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Stock Summary</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Stock Valuation</span>
 						<img src={SVG.report_colored} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
@@ -289,6 +350,26 @@ const StockSummaryWindow = () => {
             
             <div className="border py-4 px-5 bg-white-subtle rounded-4 my-4" style={{ boxShadow: "black 3px 2px 5px" }} >
                 <Row className="align-items-center">
+                    <Col sm lg="4" className="mt-3 mt-md-0">
+                        <Form.Label className="fw-bold">Select Section</Form.Label>
+                        <Controller
+                            name="section"
+                            control={control}
+                            render={({ field: { onChange, value } }) => (
+                                <Select
+                                    required
+                                    name="section"
+                                    placeholder="Select..."
+                                    className="text-dark col-12"
+                                    isLoading={tractsLoading}
+                                    options={tractOptions}
+                                    value={value}
+                                    onChange={ (val) => onChange(val) }
+                                />
+                            )}
+                        />
+                        <ErrorMessage source={errors.section} />
+                    </Col>
                     <Col sm lg="4" className="mt-3 mt-md-0">
                         <Form.Label className="fw-bold">Date</Form.Label>
                         <Controller
@@ -339,7 +420,7 @@ const StockSummaryWindow = () => {
                                 <th className='text-danger'>Store Qty</th>
                                 <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
-                                <th className='text-danger'>Total Stock Price (AVG)</th>
+                                {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Total Stock Price (AVG)</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -349,15 +430,21 @@ const StockSummaryWindow = () => {
                                     <td>{_datum.storeQty}</td>
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
-                                    <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>
+                                    {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>}
                                 </tr>
                             ))}
                         </tbody>
                     </Table>
                 </div>
             </div>
+            <div className="row">
+                {user && user.hasAuth('PROFIT_VIEW') && <div className="col-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Total Stock</p>
+                    <h3 className='text-danger'> {numeral(totalStock).format('₦0,0.00')} </h3>
+                </div>}
+            </div>
         </div>
     )
 }
 
-export default StockSummaryWindow;
+export default StockValuationWindow;
