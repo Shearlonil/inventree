@@ -194,6 +194,8 @@ export default {
     pdfCustomerSalesReceiptsByDateForExport,
     userGeneratedSalesReceiptsByDate,
     userGeneratedSalesReceiptsByDateForExport,
+    outpostSalesReceiptsByDate,
+    outpostSalesReceiptsByDateForExport,
     staffSalesRecordsSummaryByDate,
     pdfPurchaseReceiptsByDateForExport,
     pdfPurchaseReceiptsByNoForExport,

@@ -537,7 +537,7 @@ const SalesReceiptWindow = () => {
                         `${data.select.label}_Receipts_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                     );
                     setSearchedEntity('outpost');
-                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
+                    response = await transactionsController.outpostSalesReceiptsByDate(data.startDate, data.endDate, data.select.value.id);
                 }
                 
 				if(response && response.data){
@@ -825,8 +825,10 @@ const SalesReceiptWindow = () => {
                     setEndDate(endDate);
                     if(searchedEntity === "customer"){
                         response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
-                    }else {
+                    }else if(searchedEntity === "user"){
                         response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.label);
+                    }else if(searchedEntity === "outpost"){
+                        response = await transactionsController.outpostSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
                     }
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){

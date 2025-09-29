@@ -298,7 +298,7 @@ const ItemSalesReceiptWindow = () => {
 
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
-                const endDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
+                const endDate = format(data.endDate, "yyyy-MM-dd") + "T12:00:00.000Z";
 
                 setFilename(
                     `sales_summary_${data.entity.value.itemName}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
