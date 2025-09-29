@@ -103,6 +103,14 @@ const userGeneratedSalesReceiptsByDateForExport = async (startDate, endDate, use
     return await httpService.post(`/api/transactions/receipts/user/${username}/get-within/export/pdf`, { startDate, endDate });
 };
 
+const outpostSalesReceiptsByDate = async (startDate, endDate, outpost_id) => {
+    return await httpService.post(`/api/transactions/receipts/outpost/${outpost_id}/get-within`, { startDate, endDate });
+};
+
+const outpostSalesReceiptsByDateForExport = async (startDate, endDate, outpost_id) => {
+    return await httpService.post(`/api/transactions/receipts/outpost/${outpost_id}/get-within/export/pdf`, { startDate, endDate });
+};
+
 // search for sales records made by staff. used in UserSalesRecords window
 const staffSalesRecordsSummaryByDate = async (startDate, endDate, username) => {
     return await httpService.post(`/api/transactions/user/sales-records/${username}/get-within`, { startDate, endDate });

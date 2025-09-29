@@ -526,11 +526,17 @@ const SalesReceiptWindow = () => {
                     );
                     setSearchedEntity('customer');
                     response = await transactionsController.customerSalesReceiptsByDate(startDate, endDate, data.select.value.id);
-                }else {
+                }else if(confirmDialogEvtName === "searchByUser"){
                     setFilename(
                         `Receipts_generated_by_${data.select.label}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                     );
                     setSearchedEntity('user');
+                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
+                }else {
+                    setFilename(
+                        `${data.select.label}_Receipts_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
+                    );
+                    setSearchedEntity('outpost');
                     response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
                 }
                 
