@@ -23,6 +23,7 @@ import SVG from '../../../assets/Svg';
 import transactionsController from '../../../Controllers/transactions-controller';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import handleErrMsg from '../../../Utils/error-handler';
+import EntityStartEndDateSearch from '../../../Components/EntityStartEndDate';
 
 const UserSalesRecord = () => {
     applyPlugin(jsPDF);
@@ -61,8 +62,8 @@ const UserSalesRecord = () => {
     
     const [filename, setFilename] = useState("");
     const [fileHeaderTitle, setFileHeaderTitle] = useState("");
-    const [startDateString, setStartDateString] = useState("");
-    const [endDateString, setEndDateString] = useState("");
+    const [start, setStart] = useState("");
+    const [end, setEnd] = useState("");
     
     const [totalAmount, setTotalAmount] = useState(0);
         
@@ -171,7 +172,7 @@ const UserSalesRecord = () => {
         const title = fileHeaderTitle;
 
         doc.text(title, marginLeft, 40);
-        doc.text("Date: " + format(startDateString, 'dd/MM/yyyy') + " - " + format(endDateString, 'dd/MM/yyyy'), marginLeft, 60);
+        doc.text("Date: " + format(start, 'dd/MM/yyyy') + " - " + format(end, 'dd/MM/yyyy'), marginLeft, 60);
         autoTable(doc, {
             styles: { theme: 'striped' },
             margin: { top: 70 },
@@ -188,27 +189,23 @@ const UserSalesRecord = () => {
         doc.save(`${filename}` + fileExtension);
     }
 
-    const onsubmit = async (data) => {
+    const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
                 setData([]);
                 setTotalAmount(0);
 
-                data.startDate.setHours(0);
-                data.startDate.setMinutes(0);
-                data.startDate.setSeconds(0);
-    
-                data.endDate.setHours(23);
-                data.endDate.setMinutes(59);
-                data.endDate.setSeconds(59);
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
+                const endDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
 
-                setFilename(`sales_by_${data.user.value.username}_${data.startDate} - ${data.endDate}`);
-                setFileHeaderTitle(`Sales by ${data.user.value.username}`);
-                setStartDateString(data.startDate.toISOString());
-                setEndDateString(data.endDate.toISOString());
+                setFilename(`sales_by_${data.entity.value.username}_${format(new Date(data.startDate),"dd/MM/yyyy")} - ${format(new Date(data.endDate),"dd/MM/yyyy")}`);
+                setFileHeaderTitle(`Sales by ${data.entity.value.username}`);
+                setStart(data.startDate);
+                setEnd(data.endDate);
 
-                const response= await transactionsController.staffSalesRecordsSummaryByDate(data.startDate.toISOString(),data.endDate.toISOString(),data.user.value.username);
+                const response= await transactionsController.staffSalesRecordsSummaryByDate(startDate, endDate, data.entity.value.username);
                 if(response && response.data){
                     const arr = [];
                     
@@ -240,7 +237,7 @@ const UserSalesRecord = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return onsubmit(data);
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -271,6 +268,9 @@ const UserSalesRecord = () => {
                     Generate sales record by user with custom dates and export to Excel/PDF and also monitor stock levels
                 </span>
             </div>
+            
+            <EntityStartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} entityOptions={userOptions} entityLoading={usersLoading} 
+                entityString={"User"} />
 
             <div className="container row mx-auto my-3 p-3 rounded-3 bg-light" style={{ boxShadow: "black 3px 2px 5px" }}>
                 <div className="col-md-3 col-12 mb-3">
@@ -371,7 +371,7 @@ const UserSalesRecord = () => {
                 </div>
                 
                 <div className="col-md-3 col-12 mt-4">
-                    <Button className="w-100 mt-2" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
+                    <Button className="w-100 mt-2" onClick={handleSubmit(fnSearch)} disabled={networkRequest}>
                         { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
                         { (!networkRequest) && `Search` }
                     </Button>

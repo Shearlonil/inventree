@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Button, Table } from 'react-bootstrap';
-import { Controller, useForm } from 'react-hook-form';
+import { Table } from 'react-bootstrap';
+import { useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import Datetime from 'react-datetime';
-import Select from 'react-select';
 import { toast } from 'react-toastify';
 import { Link, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
@@ -20,9 +18,8 @@ import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import transactionsController from '../../Controllers/transactions-controller';
 import itemController from '../../Controllers/item-controller';
-import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
-import ErrorMessage from '../../Components/ErrorMessage';
 import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
+import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 
 const ItemSalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -38,9 +35,7 @@ const ItemSalesReceiptWindow = () => {
     });
     
     const {
-        handleSubmit,
         control,
-        setValue,
         watch,
         formState: { errors },
     } = useForm({
@@ -288,7 +283,7 @@ const ItemSalesReceiptWindow = () => {
         doc.save(`${filename}` + fileExtension);
     }
 
-    const onsubmit = async (data) => {
+    const fnSearch = async (data) => {
         /*  Setting start date to 1 instead of 0 to avoid story that touch (1 hour lag from front end, causing a previous date with 23 hour). Time
             isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
@@ -301,19 +296,15 @@ const ItemSalesReceiptWindow = () => {
                 setStart(data.startDate);
                 setEnd(data.endDate);
 
-                data.startDate.setHours(1);
-                data.startDate.setMinutes(0);
-                data.startDate.setSeconds(0);
-    
-                data.endDate.setHours(23);
-                data.endDate.setMinutes(59);
-                data.endDate.setSeconds(59);
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
+                const endDate = format(data.startDate, "yyyy-MM-dd") + "T12:00:00.000Z";
 
                 setFilename(
-                    `sales_summary_${data.product.value.itemName}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
+                    `sales_summary_${data.entity.value.itemName}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                 );
 
-                const response = await transactionsController.itemSalesReceiptsByDate(data.startDate.toISOString(), data.endDate.toISOString(), data.product.value.id);
+                const response = await transactionsController.itemSalesReceiptsByDate(startDate, endDate, data.entity.value.id);
                 if(response && response.data){
                     const arr = [];
                     
@@ -364,7 +355,7 @@ const ItemSalesReceiptWindow = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return onsubmit(data);
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -396,111 +387,8 @@ const ItemSalesReceiptWindow = () => {
                 </span>
             </div>
 
-            <div className="container row mx-auto my-3 p-3 rounded-3 bg-light" style={{ boxShadow: "black 3px 2px 5px" }}>
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5 mb-2">Select Item</p>
-                    <Controller
-                        name="product"
-                        control={control}
-                        render={({ field: { onChange, value } }) => (
-                            <Select
-                                required
-                                name="product"
-                                placeholder="Select..."
-                                className="text-dark col-12"
-                                isLoading={itemsLoading}
-                                options={itemOptions}
-                                value={value}
-                                onChange={ (val) => onChange(val) }
-                            />
-                        )}
-                    />
-                    <ErrorMessage source={errors.product} />
-                </div>
-                {/*  */}
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5 mb-2">Start Date:</p>
-                    <Controller
-                        name="startDate"
-                        control={control}
-                        render={({ field }) => (
-                            <Datetime
-                                {...field}
-                                timeFormat={false}
-                                closeOnSelect={true}
-                                dateFormat="DD/MM/YYYY"
-                                inputProps={{
-                                    placeholder: "Choose start date",
-                                    className: "form-control",
-                                    readOnly: true, // Optional: makes input read-only
-                                }}
-                                onChange={(date) => {
-                                    setValue("endDate", date.toDate());
-                                    field.onChange(date ? date.toDate() : null);
-                                }}
-                                /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-                                    refs:
-                                        *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-                                        *	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-                                    there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-                                    the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-                                    or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-                                renderInput={(props) => {
-                                    return <input {...props} value={field.value ? props.value : ''} />
-                                }}
-                            />
-                        )}
-                    />
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5 mb-2">End Date:</p>
-                    <Controller
-                        name="endDate"
-                        control={control}
-                        render={({ field }) => (
-                            <Datetime
-                                {...field}
-                                timeFormat={false}
-                                closeOnSelect={true}
-                                dateFormat="DD/MM/YYYY"
-                                inputProps={{
-                                    placeholder: "Choose end date",
-                                    className: "form-control",
-                                    readOnly: true, // Optional: makes input read-only
-                                }}
-                                onChange={(date) =>
-                                    field.onChange(date ? date.toDate() : null)
-                                }
-                                isValidDate={(current) => {
-                                    // Ensure end date is after start date
-                                    return (
-                                    !startDate || current.isSameOrAfter(startDate, "day")
-                                    );
-                                }}
-                                /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
-                                    refs:
-                                        *	https://stackoverflow.com/questions/46053202/how-to-clear-the-value-entered-in-react-datetime
-                                        *	https://stackoverflow.com/questions/69536272/reactjs-clear-date-input-after-clicking-clear-button
-                                    there's clearly a rendering bug in component if you try to pass a null or empty value in controlled component mode: 
-                                    the internal input still got the former value entered with the calendar (uncontrolled ?) despite the fact that that.state.value
-                                    or field.value is null : I've been able to "patch" it with the renderInput prop :*/
-                                renderInput={(props) => {
-                                    return <input {...props} value={field.value ? props.value : ''} />
-                                }}
-                            />
-                        )}
-                    />
-                </div>
-                
-                <div className="col-md-3 col-12 mt-4">
-                    <Button className="w-100 mt-2" onClick={handleSubmit(onsubmit)} disabled={networkRequest}>
-                        { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
-                        { (!networkRequest) && `Search` }
-                    </Button>
-                </div>
-            </div>
+            <EntityStartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} entityOptions={itemOptions} entityLoading={itemsLoading} 
+                entityString={"Item"} />
             
             <div className="p-3 rounded-3 p-3 overflow-md-auto bg-secondary-subtle my-4" style={{ minHeight: "800px" }}>
                 <div className="border border rounded-3 p-1 bg-light my-3 shadow" style={{ maxHeight: "750px", overflow: 'scroll' }}>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import numeral from 'numeral';
 import { toast } from 'react-toastify';
@@ -15,7 +15,6 @@ import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import transactionsController from '../../Controllers/transactions-controller';
 import { SalesSummary } from '../../Entities/SalesSummary';
-import StartEndDateSearch from '../../Components/StartEndDateSearch';
 import outpostController from '../../Controllers/outpost-controller';
 import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 
@@ -49,6 +48,7 @@ const SalesReport = () => {
     const [filename, setFilename] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [outpost, setOutpost] = useState(null);
     
     useEffect( () => {
         if(!user.hasAuth('SALES_RECORD')){
@@ -257,7 +257,7 @@ const SalesReport = () => {
 
         doc.setFontSize(15);
 
-        const title = `Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `${outpost.name} Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -296,7 +296,7 @@ const SalesReport = () => {
 
         doc.setFontSize(15);
 
-        const title = `Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `${outpost.name} Sales Summary ${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
         
         doc.text(title, marginLeft, 40);
         autoTable(doc, {
@@ -333,6 +333,7 @@ const SalesReport = () => {
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setStartDate(startDate);
                 setEndDate(endDate);
+                setOutpost(data.entity.value);
 
 				setNetworkRequest(true);
                 setData([]);
@@ -340,9 +341,9 @@ const SalesReport = () => {
                 setTotalSalesPrice(0);
                 setTotalStockPrice(0);
 
-                setFilename(`sales_summary_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
+                setFilename(`${data.entity.value.name}_sales_summary_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
-				const response = await transactionsController.summarizeSalesRecords(startDate, endDate);
+				const response = await transactionsController.summarizeSalesRecords(data.entity.value.id, startDate, endDate);
 				if(response && response.data){
                     const arr = [];
 
@@ -423,10 +424,8 @@ const SalesReport = () => {
                 </span>
 			</div>
             
-            <div className='my-4'>
-                <EntityStartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} entityOptions={outpostOptions} entityLoading={outpostsLoading} 
-                    entityString={"Outpost"} />
-            </div>
+            <EntityStartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} entityOptions={outpostOptions} entityLoading={outpostsLoading} 
+                entityString={"Outpost"} />
             
             <div className="p-3 rounded-3 p-3 overflow-md-auto bg-secondary-subtle my-4" style={{ minHeight: "800px" }}>
                 <div className="border border rounded-3 p-1 bg-light my-3 shadow" style={{ maxHeight: "750px", overflow: 'scroll' }}>

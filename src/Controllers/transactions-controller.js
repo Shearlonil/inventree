@@ -157,8 +157,8 @@ const findInvoiceByNo = async (id) => {
     });
 };
 
-const summarizeSalesRecords = async (startDate, endDate) => {
-    return await httpService.post(`/api/transactions/sales/summary`, { startDate, endDate });
+const summarizeSalesRecords = async (outpost_id, startDate, endDate) => {
+    return await httpService.post(`/api/transactions/sales/summary/${outpost_id}`, { startDate, endDate });
 };
 
 const yearMonthlySales = async () => {

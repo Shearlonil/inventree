@@ -71,7 +71,7 @@ const Dashboard = () => {
             
             const startDate = subDays(endDate, 7);
             startDate.setHours(0, 0, 0);
-            const response = await transactionsController.summarizeSalesRecords(startDate.toISOString(), endDate.toISOString());
+            const response = await transactionsController.summarizeSalesRecords(0, startDate.toISOString(), endDate.toISOString());
             if(response && response.data && response.data.length > 0){
                 const arr = [];
                 response.data.sort( (a, b) => b.soldOutQty - a.soldOutQty );

@@ -31,6 +31,7 @@ import EntityDateDialog from '../../Components/DialogBoxes/EntityDateDialog';
 import User from '../../Entities/User';
 import { Contact } from '../../Entities/Contact';
 import SingleDateSelectDialog from '../../Components/DialogBoxes/SingleDateSelectDialog';
+import { Outpost } from '../../Entities/Outpost';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -47,6 +48,7 @@ const SalesReceiptWindow = () => {
 		{ label: "Search by Date", onClickParams: {evtName: 'searchByDate'} },
 		{ label: "Search by Customer", onClickParams: {evtName: 'searchByCustomer'} },
 		{ label: "Search by User", onClickParams: {evtName: 'searchByUser'} },
+		{ label: "Search by Outpost", onClickParams: {evtName: 'searchByOutpost'} },
 		{ label: "Activate Receipt", onClickParams: {evtName: 'activateReceipt'} },
 		{ label: "Reverse Receipt", onClickParams: {evtName: 'reverseReceipt'} },
 		{ label: "Adjust Receipt Date", onClickParams: {evtName: 'adjustReceiptDate'} },
@@ -78,6 +80,7 @@ const SalesReceiptWindow = () => {
     const [entityOptions, setEntityOptions] = useState([]);
     const [users, setUsers] = useState([]);
     const [customers, setCustomers] = useState([]);
+    const [outposts, setOutposts] = useState([]);
     const [selectedReceipt, setSelectedReceipt] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [salesRecords, setSalesRecords] = useState([]);
@@ -115,9 +118,9 @@ const SalesReceiptWindow = () => {
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const urls = [ `/api/users/active`, `/api/customers/active` ];
+            const urls = [ `/api/users/active`, `/api/customers/active`, `/api/outposts/active` ];
             const response = await genericController.performGetRequests(urls);
-            const { 0: usersRequest, 1: customersRequest } = response;
+            const { 0: usersRequest, 1: customersRequest, 2: outpostRequest } = response;
             
             if (usersRequest && usersRequest.data && usersRequest.data.length > 0) {
                 const arr = [];
@@ -156,6 +159,12 @@ const SalesReceiptWindow = () => {
                 const arr = [];
                 customersRequest.data.forEach( customer => arr.push(new Contact(customer)) );
                 setCustomers(arr.map(customer => ({label: customer.name, value: customer})));
+            }
+
+            if (outpostRequest && outpostRequest.data) {
+                const arr = [];
+                outpostRequest.data.forEach( outpost => arr.push(new Outpost(outpost)) );
+                setOutposts(arr.map(outpost => ({label: outpost.name, value: outpost})));
             }
 
             if(receipt_id){
@@ -259,6 +268,12 @@ const SalesReceiptWindow = () => {
 				setDisplayMsg(`Select user`);
 				setShowEntityModal(true);
                 setEntityOptions(users);
+                break;
+            case 'searchByOutpost':
+                setConfirmDialogEvtName(onclickParams.evtName);
+				setDisplayMsg(`Select outpost`);
+				setShowEntityModal(true);
+                setEntityOptions(outposts);
                 break;
         }
 	}
