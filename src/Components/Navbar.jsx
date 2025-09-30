@@ -138,6 +138,18 @@ function NavBar() {
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
+											navigate("/items/expiring");
+										}}
+										className={`nav-item ${
+											location.pathname === ("/items/expiring") &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										Expiring Products
+									</NavDropdown.Item>
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
 											navigate("/items/trash");
 										}}
 										className={`nav-item ${
@@ -237,6 +249,18 @@ function NavBar() {
 								>
 									Stock Valuation
 								</NavDropdown.Item>}
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/inventory/stock-age");
+									}}
+									className={`nav-item ${
+										location.pathname === "/inventory/stock-age" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Age of Stocks
+								</NavDropdown.Item>
 							</NavDropdown>}
 
 							{user && <Nav.Link

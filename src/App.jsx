@@ -54,6 +54,7 @@ import UserSalesRecord from "./Routes/Dashboard/Users/UserSalesRecord";
 import Income from "./Routes/Finance/Income";
 import Expenses from "./Routes/Finance/Expenses";
 import OutpostStockValuation from "./Routes/Inventory/OutpostStockValuation";
+import AgeOfStocks from "./Routes/Inventory/AgeOfStocks";
 
 function App() {
 	return (
@@ -85,6 +86,7 @@ function App() {
 				<Route path="/inventory" element={<ProtectedRoute />}>
 					<Route path={"purchases"} element={<PurchasesWindow />} />
 					<Route path={"stock-valuation"} element={<StockValuationWindow />} />
+					<Route path={"stock-age"} element={<AgeOfStocks />} />
 					<Route path={"outpost/stock-valuation/:outpost_id"} element={<OutpostStockValuation />} />
 				</Route>
 				<Route path="/sections" element={<ProtectedRoute />}>
