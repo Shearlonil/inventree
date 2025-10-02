@@ -319,6 +319,19 @@ function NavBar() {
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
+										navigate("/finance/trading-account");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/trading-account" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Trading Account
+								</NavDropdown.Item>
+								
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
 										navigate("/finance/income-statement");
 									}}
 									className={`nav-item ${
@@ -340,19 +353,6 @@ function NavBar() {
 									}`}
 								>
 									Profit & Loss Account
-								</NavDropdown.Item>
-								
-								<NavDropdown.Item 
-									onClick={() => {
-										handleNavSelect();
-										navigate("/finance/trading-account");
-									}}
-									className={`nav-item ${
-										location.pathname === "/finance/trading-account" &&
-										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-									}`}
-								>
-									Trading Account
 								</NavDropdown.Item>
 								<NavDropdown.Divider />
 

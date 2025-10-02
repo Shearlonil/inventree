@@ -5,7 +5,6 @@ import MonoTransaction from "./Routes/SalesTransaction/MonoTransaction";
 import StoreItemReg from "./Routes/Inventory/StoreItemReg";
 import Test from "./Routes/Test";
 import PurchasesWindow from "./Routes/Inventory/PurchasesWindow";
-import Finance from "./Routes/Finance";
 import Login from "./Routes/Login";
 import UnverifiedStockRec from "./Routes/Dashboard/UnverifiedStockRec";
 import Restock from './Routes/Inventory/Restock';
@@ -53,8 +52,11 @@ import AcctVoucherDisplay from "./Routes/Finance/AccVoucherDisplay";
 import UserSalesRecord from "./Routes/Dashboard/Users/UserSalesRecord";
 import Income from "./Routes/Finance/Income";
 import Expenses from "./Routes/Finance/Expenses";
-import OutpostStockValuation from "./Routes/Inventory/OutpostStockValuation";
+import OutpostStockValuation from "./Routes/Outposts/OutpostStockValuation";
 import AgeOfStocks from "./Routes/Inventory/AgeOfStocks";
+import TradingAcc from "./Routes/Finance/TradingAcc";
+import IncomeStatemt from "./Routes/Finance/IncomeStatemt";
+import ProfitLossAcc from "./Routes/Finance/ProfitLossAcc";
 
 function App() {
 	return (
@@ -123,6 +125,9 @@ function App() {
 					<Route path={""} element={<OutpostsWindow />} />
 				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
+					<Route path={"trading-account"} element={<TradingAcc />} />
+					<Route path={"income-statement"} element={<IncomeStatemt />} />
+					<Route path={"profit-loss"} element={<ProfitLossAcc />} />
 					<Route path={"vouchers/income"} element={<Income />} />
 					<Route path={"vouchers/expenses"} element={<Expenses />} />
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />

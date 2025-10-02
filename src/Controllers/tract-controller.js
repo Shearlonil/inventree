@@ -5,7 +5,11 @@ const fetchAllActive = async () => {
 }
 
 const fetchTractItems = async (tractName) => {
-    return await httpService.get(`/api/tracts/${tractName}/items`);
+    return await httpService.get(`/api/tracts/${tractName}/items/active`);
+}
+
+const fetchActiveTractItems = async (tractName) => {
+    return await httpService.get(`/api/tracts/${tractName}/items/active`);
 }
 
 const create = async (name) => {
@@ -37,6 +41,7 @@ const deleteTract = async (id, destination) => {
 export default {
     fetchAllActive,
     fetchTractItems,
+    fetchActiveTractItems,
     create,
     rename,
     deleteTract,

@@ -88,7 +88,7 @@ const Dispensary = () => {
 	const dispensaryOffCanvasMenu = [
 		{ label: "Dispense", onClickParams: {evtName: 'dispense'} },
 		{ label: "Delete Dispensary", onClickParams: {evtName: 'deleteDispensary'} },
-		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
+		// { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
 	];
 
     //	menus for the react-menu in table
@@ -502,9 +502,7 @@ const Dispensary = () => {
         <div style={{minHeight: '75vh'}} className='container'>
 
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-				<div>
-					<OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
-				</div>
+				<OffcanvasMenu menuItems={dispensaryOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
 						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Dispensary</span>

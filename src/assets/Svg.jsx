@@ -43,6 +43,12 @@ const SVG = {
 	pyramid_chart: new URL("./Svg/pyramid_chart.svg", import.meta.url).href,
 	age_of_stocks_white: new URL("./Svg/age_of_stocks_white.svg", import.meta.url).href,
 	age_of_stocks_black: new URL("./Svg/age_of_stocks_black.svg", import.meta.url).href,
+	income_statement: new URL("./Svg/income_statement.svg", import.meta.url).href,
+	stock_market: new URL("./Svg/stock_market.svg", import.meta.url).href,
+	balance_sheet_dark: new URL("./Svg/balance_sheet_dark.svg", import.meta.url).href,
+	balance_sheet_white: new URL("./Svg/balance_sheet_white.svg", import.meta.url).href,
+	trading_account: new URL("./Svg/trading_account.svg", import.meta.url).href,
+	balance_sheet: new URL("./Svg/balance_sheet.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,
