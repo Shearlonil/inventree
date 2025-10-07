@@ -360,13 +360,6 @@ const MonoTransaction = () => {
 		try {
 			setNetworkRequest(true);
 			const response = await transactionsController.monoTransaction(dtoReceipt);
-			
-            // const startDate = new Date();
-            // startDate.setHours(0, 0, 0);
-            // const endDate = new Date();
-            // endDate.setHours(0, 0, 0);
-			// dtoReceipt.transactionDate =  startDate.toISOString();
-			// dtoReceipt.customerName = 'Customer';
 
 			resetPage();
 			if(dtoReceipt.printReceipt){

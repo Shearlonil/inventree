@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
+import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
+import numeral from 'numeral';
 
 import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
@@ -18,19 +20,36 @@ const TradingAcc = () => {
             
     const [networkRequest, setNetworkRequest] = useState(false);
 
+    const [salesAcc, setSalesAcc] = useState([]);
     const [salesAccAmount, setSalesAccAmount] = useState(0);
+
+    const [directIncome, setDirectIncome] = useState([]);
     const [directIncomeAmount, setDirectIncomeAmount] = useState(0);
+
+    const [costOfSales, setCostOfSales] = useState([]);
     const [costOfSalesAmount, setCostOfSalesAmount] = useState(0);
+
+    const [directExp, setDirectExp] = useState([]);
     const [directExpAmount, setDirectExpAmount] = useState(0);
+
     const [grossProfit, setGrossProfit] = useState(0);
 
 	const offCanvasMenuItems = [
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
 		{ label: "Export to Excel", onClickParams: {evtName: 'xlsxExport'} },
 	];
+    
+    useEffect( () => {
+        if(user.hasAuth('FINANCE')){
+            //  do nothing, continue
+        }else {
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
+            navigate('/404');
+        }
+    }, []);
 
 
-    const fnSearch = async () => {
+    const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
@@ -38,13 +57,56 @@ const TradingAcc = () => {
 
                 setNetworkRequest(true);
 
-                const response = await financeController.getIncomeExpVoucherDetails('Revenue', startDate, endDate);
+                const response = await financeController.tradingAcc(startDate, endDate);
                 if(response && response.data){
-                    const arr = [];
+                    // cost of sales
+                    const costOfSalesArr = [...response.data.costOfSales];
+                    // direct expenses
+                    const directExpData = response.data.directExpenses;
+                    // remove purchases from direct expenses and add to cost of sales
+                    const purchasesIndexPos = directExpData.findIndex(i => i.ledgerName.toLowerCase() === 'purchases');
+                    if(purchasesIndexPos > -1){
+                        //	cut out purchases found at index position
+				        const purchases = directExpData.splice(purchasesIndexPos, 1);
+                        purchases[0].id = 2;
+                        purchases[0].ledgerName = "Add: Purchases";
+                        costOfSalesArr.push(purchases[0]);
+                    }
 
-                    let totalCash = numeral(0);
-                    response.data.forEach(datum => {
-                    });
+                    // direct income
+                    const directIncomeData = response.data.directIncome;
+                    const directIncomeAmount = directIncomeData
+                        .map(obj => obj.balance)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+                    setDirectIncome([...directIncomeData]);
+                    setDirectIncomeAmount(directIncomeAmount);
+
+                    // cost of sales
+                    costOfSalesArr.sort((a, b) => a.id - b.id);
+                    setCostOfSales(costOfSalesArr);
+                    const costOfSalesAmount = numeral(costOfSalesArr[0].balance).add(costOfSalesArr[1].balance).subtract(costOfSalesArr[2].balance).value();
+                    setCostOfSalesAmount(costOfSalesAmount);
+
+                    // direct expenses
+                    setDirectExp([...directExpData]);
+                    const directExpAmount = directExpData
+                        .map(obj => obj.balance)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+                    setDirectExpAmount(directExpAmount);
+
+                    // sales account
+                    const salesAccData = response.data.salesAccounts;
+                    setSalesAcc([...salesAccData]);
+                    const salesAccAmount = salesAccData
+                        .map(obj => obj.balance)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+                    setSalesAccAmount(salesAccAmount);
+
+                    let totalCash = numeral(salesAccAmount).add(directIncomeAmount).value();
+                    let totalExp = numeral(costOfSalesAmount).add(directExpAmount).value();
+                    let temp = numeral(totalCash).subtract(totalExp).value();
+                    console.log('total', temp);
+                    setGrossProfit(temp);
                 }
                 setNetworkRequest(false);
             }
@@ -54,7 +116,7 @@ const TradingAcc = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return fnSearch();
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -103,47 +165,107 @@ const TradingAcc = () => {
             <div className="row p-3 mt-2">
                 <div className="d-flex flex-row flex-wrap justify-content-between">
                     <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Sales Account</h3>
-                    <h2>{salesAccAmount}</h2>
+                    <h2 className='fw-bold'>{numeral(salesAccAmount).format('₦0,0.00')}</h2>
                 </div>
                 <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {salesAcc.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.balance).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
             </div>
 
             <div className="row p-3 mt-2">
                 <div className="d-flex flex-row flex-wrap justify-content-between">
                     <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Direct Incomes</h3>
-                    <h2>{directIncomeAmount}</h2>
+                    <h2 className='fw-bold'>{numeral(directIncomeAmount).format('₦0,0.00')}</h2>
                 </div>
                 <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {directIncome.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.balance).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
             </div>
 
             <div className="row p-3 mt-2">
                 <div className="d-flex flex-row flex-wrap justify-content-between">
                     <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Cost Of Sales</h3>
-                    <h2>{costOfSalesAmount}</h2>
+                    <h2 className='fw-bold'>{numeral(costOfSalesAmount).format('₦0,0.00')}</h2>
                 </div>
                 <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {costOfSales.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.balance).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
             </div>
 
             <div className="row p-3 mt-2">
                 <div className="d-flex flex-row flex-wrap justify-content-between">
                     <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Direct Expenses</h3>
-                    <h2>{directExpAmount}</h2>
+                    <h2 className='fw-bold'>{numeral(directExpAmount).format('₦0,0.00')}</h2>
                 </div>
                 <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {directExp.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.balance).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
                 </div>
             </div>
 
             <hr />
             <div className="d-flex flex-row flex-wrap justify-content-between">
                 <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Gross Profit</h3>
-                <h2>{grossProfit}</h2>
+                <h2 className='fw-bold'>{numeral(grossProfit).format('₦0,0.00')}</h2>
             </div>
         </div>
     )

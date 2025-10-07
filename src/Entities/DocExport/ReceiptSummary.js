@@ -35,14 +35,14 @@ export class ReceiptSummary {
     set items(items) { _summaryProps.get(this).items = items; }
     
     get grossAmount() {
-        const grossAmount = this.items.map(item => item.totalAmount).reduce((prevVal, currentVal) => currentVal + prevVal);
-        return numeral(grossAmount).value(); 
+        const grossAmount = this.items.map(item => item.totalAmount).reduce((prevVal, currentVal) => numeral(currentVal).add(prevVal).value(), 0);
+        return numeral(grossAmount).value();
     }
 
     get netAmount() { return numeral(this.grossAmount).subtract(this.invoiceDiscount).value(); }
 
     get netProfit() {
-        const netProfit = this.items.map(item => item.profit).reduce((prevVal, currentVal) => currentVal + prevVal);
+        const netProfit = this.items.map(item => item.profit).reduce((prevVal, currentVal) => numeral(currentVal).add(prevVal).value(), 0);
         return numeral(netProfit).subtract(this.invoiceDiscount).value(); 
     }
 

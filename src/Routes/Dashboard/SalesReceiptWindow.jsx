@@ -576,7 +576,7 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(true);
             // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
             const date = new Date();
-            let dtoDate = format(tempDate, "yyyy-MM-dd") + `T${date.getHours()}:${date.getMinutes()}:00.000Z`;
+            let dtoDate = format(tempDate, "yyyy-MM-dd") + "T12:20:00.000Z";
             const response = await transactionsController.updateReceiptDate(selectedReceipt.id, dtoDate);
             if(response && response.status === 200){
                 selectedReceipt.transactionDate = dtoDate;
@@ -1017,7 +1017,7 @@ const SalesReceiptWindow = () => {
         <div>
             <div className={`container-fluid`}>
                 <div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                    <div>
+                    <div className={`${networkRequest ? 'disabledDiv' : ''}`}>
                         <OffcanvasMenu menuItems={receiptsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
                     </div>
                     <div className="text-center d-flex">

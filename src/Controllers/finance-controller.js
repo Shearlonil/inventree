@@ -8,6 +8,10 @@ const createVoucher = async (dtoTransactions) => {
     return await httpService.post(`/api/finance/voucher/create`, dtoTransactions);
 }
 
+const tradingAcc = async (startDate, endDate) => {
+    return await httpService.post(`/api/finance/trading-acc`, { startDate, endDate });
+}
+
 const getIncomeExpVoucherDetails = async (name, startDate, endDate) => {
     return await httpService.post(`/api/finance/voucher/income-exp/${name}`, { startDate, endDate });
 }
@@ -69,6 +73,7 @@ const findChartLedgersByName = async (name) => {
 export default {
     findLedgerVch,
     createVoucher,
+    tradingAcc,
     getIncomeExpVoucherDetails,
     createIncomeExpVoucher,
     updateIncomeExpVoucher,

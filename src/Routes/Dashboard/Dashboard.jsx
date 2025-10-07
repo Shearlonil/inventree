@@ -160,7 +160,12 @@ const Dashboard = () => {
                     <div className="col-12 col-sm-4 my-2 d-flex flex-column justify-content-center align-items-center">
                         <h5>Total Sales</h5>
                         <h1 className="bungee-regular text-danger fw-bold">
-                            {numeral(yearMonthlySalesData?.map((datum, idx) => datum.amount).reduce((accum, curVal) => accum + curVal)).format('₦0,0.00')}
+                            {
+                                numeral(
+                                    yearMonthlySalesData?.map((datum, idx) => datum.amount)
+                                        .reduce((accum, curVal) => numeral(accum).add(curVal).value(), 0))
+                                        .format('₦0,0.00')
+                            }
                         </h1>
                         <h6>Top performing month:</h6>
                         <h4 className="fw-bold">{topMonth?.month}</h4>

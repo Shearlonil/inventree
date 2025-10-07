@@ -20,6 +20,7 @@ import financeController from "../../Controllers/finance-controller";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
 import { LedgerTransaction } from "../../Entities/LedgerTransaction";
 import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
+import { OribitalLoading, ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 
 const AcctVoucherDisplay = () => {
     const navigate = useNavigate();
@@ -395,7 +396,9 @@ const AcctVoucherDisplay = () => {
     return (
         <div className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                <OffcanvasMenu menuItems={vchOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                <div className={`${networkRequest ? 'disabledDiv' : ''}`}>
+                    <OffcanvasMenu menuItems={vchOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
+                </div>
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Accounting Voucher View</span>
@@ -408,6 +411,9 @@ const AcctVoucherDisplay = () => {
                 <span className='text-center m-1 h2'>
                     Voucher No.: {vchId > 0 ? vchId : "N/A"}
                 </span>
+            </div>
+            <div className="justify-content-center d-flex">
+                {networkRequest && <OribitalLoading color='red' />}
             </div>
             <div className="container p-0">
                 <div className="p-3 rounded-2 border shadow">
@@ -436,11 +442,12 @@ const AcctVoucherDisplay = () => {
                     </div>
                 </div>
                 <div className="d-flex flex-end justify-content-end gap-3">
-                    <button className="btn btn-danger rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleCancel()} >
+                    {/* <button className="btn btn-danger rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleCancel()} >
                         Cancel
-                    </button>
-                    <button className="btn btn-success rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleSave()} >
-                        Ok
+                    </button> */}
+                    <button className="btn btn-success rounded-3 py-1" style={{ width: "14em" }} onClick={() => handleSave()} >
+                        { (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+					    { (!networkRequest) && `OK` }
                     </button>
                 </div>
             </div>

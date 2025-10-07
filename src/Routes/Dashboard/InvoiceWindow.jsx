@@ -378,7 +378,7 @@ const InvoiceWindow = () => {
         <div>
             <div className={`container-fluid`}>
                 <div className="d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                    <div>
+                    <div className={`${networkRequest ? 'disabledDiv' : ''}`}>
                         <OffcanvasMenu menuItems={invoicesOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
                     </div>
                     <div className="text-center d-flex">

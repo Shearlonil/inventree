@@ -427,7 +427,7 @@ const OutpostStockValuation = () => {
                         <thead>
                             <tr className="shadow-sm">
                                 <th className='text-danger'>Description</th>
-                                <th className='text-danger'>Store Qty</th>
+                                {/* <th className='text-danger'>Store Qty</th> */}
                                 <th className='text-danger'>Shelf Qty</th>
                                 <th className='text-danger'>Total Qty</th>
                                 {user && user.hasAuth('PROFIT_VIEW') && <th className='text-danger'>Total Stock Price (AVG)</th>}
@@ -437,7 +437,7 @@ const OutpostStockValuation = () => {
                             {data.map((_datum, index) => (
                                 <tr className='' key={index}>
                                     <td>{_datum.itemName}</td>
-                                    <td>{_datum.storeQty}</td>
+                                    {/* <td>{_datum.storeQty}</td> */}
                                     <td>{_datum.salesQty}</td>
                                     <td>{_datum.totalQty}</td>
                                     {user && user.hasAuth('PROFIT_VIEW') && <td>{numeral(_datum.totalStockPrice).format('₦0,0.00')}</td>}

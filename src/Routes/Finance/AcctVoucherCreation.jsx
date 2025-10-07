@@ -17,6 +17,7 @@ import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
 import financeController from "../../Controllers/finance-controller";
 import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
+import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 
 const AcctVoucherCreation = () => {
 		
@@ -291,10 +292,12 @@ const AcctVoucherCreation = () => {
 				</div>
 				<div className="d-flex flex-end justify-content-end gap-3">
 					<button className="btn btn-danger rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleCancel()} >
-						Cancel
+						{ (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+						{ (!networkRequest) && `Cancel` }
 					</button>
 					<button className="btn btn-success rounded-3 py-1" style={{ width: "7em" }} onClick={() => handleSave()} >
-						Ok
+						{ (networkRequest) && <ThreeDotLoading color="#ffffff" size="small" /> }
+					    { (!networkRequest) && `OK` }
 					</button>
 				</div>
 			</div>
