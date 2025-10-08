@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import numeral from 'numeral';
+import { format, formatDistanceToNow } from 'date-fns';
 
 import { useAuth } from '../../app-context/auth-user-context';
 import SVG from '../../assets/Svg';
@@ -9,8 +11,6 @@ import { OribitalLoading } from '../../Components/react-loading-indicators/Indic
 import handleErrMsg from '../../Utils/error-handler';
 import PaginationLite from '../../Components/PaginationLite';
 import inventoryController from '../../Controllers/inventory-controller';
-import numeral from 'numeral';
-import { format, formatDistanceToNow } from 'date-fns';
 
 const Expiring = () => {
     const navigate = useNavigate();
