@@ -10,7 +10,7 @@ import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
 import handleErrMsg from '../../Utils/error-handler';
 
-const IncomeStatemt = () => {
+const TrialBalance = () => {
     const navigate = useNavigate();
         
     const { handleRefresh, logout, authUser } = useAuth();
@@ -84,7 +84,7 @@ const IncomeStatemt = () => {
 				<OffcanvasMenu menuItems={offCanvasMenuItems} menuItemClick={handleOffCanvasMenuItemClick} variant="danger" />
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Income Statement</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Trial Balance</span>
 						<img src={SVG.income_statement} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
@@ -138,4 +138,4 @@ const IncomeStatemt = () => {
     )
 }
 
-export default IncomeStatemt;
+export default TrialBalance;

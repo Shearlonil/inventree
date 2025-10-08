@@ -1,31 +1,32 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
-import { format, formatDistanceToNow } from 'date-fns';
-import numeral from 'numeral';
+import { toast } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../app-context/auth-user-context';
-import inventoryController from '../../Controllers/inventory-controller';
-import handleErrMsg from '../../Utils/error-handler';
 import SVG from '../../assets/Svg';
-import PaginationLite from '../../Components/PaginationLite';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
+import handleErrMsg from '../../Utils/error-handler';
+import PaginationLite from '../../Components/PaginationLite';
+import inventoryController from '../../Controllers/inventory-controller';
+import numeral from 'numeral';
+import { format, formatDistanceToNow } from 'date-fns';
 
-const AgeOfStocks = () => {
+const Expiring = () => {
     const navigate = useNavigate();
-        
-    const { handleRefresh, logout } = useAuth();
-
-    const [networkRequest, setNetworkRequest] = useState(false);
             
+    const { handleRefresh, logout, authUser } = useAuth();
+    const user = authUser();
+    
+    const [networkRequest, setNetworkRequest] = useState(false);
+                
     //	for pagination
     const [pageSize] = useState(100);
     const [totalItemsCount, setTotalItemsCount] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
 
     const [items, setItems] = useState([]);
-              
+                
     //  data returned from DataPagination
     const [pagedData, setPagedData] = useState([]);
                 
@@ -69,17 +70,18 @@ const AgeOfStocks = () => {
       	setPagedData(items.slice(startIndex, startIndex + pageSize));
     };
 
+
     return (
-        <div style={{minHeight: '75vh'}} className='container'>
+        <div style={{minHeight: '70vh'}} className="container">
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Age of Stocks</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Expiring/Expired Products</span>
 						<img src={SVG.age_of_stocks_white} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
                 <span className='text-center m-1'>
-                    View stock age, Stock In, Stock Out, Expiration Date and more
+                    View expired as well as expiring products withing six months
                 </span>
 			</div>
 
@@ -146,4 +148,4 @@ const AgeOfStocks = () => {
     )
 }
 
-export default AgeOfStocks;
+export default Expiring;

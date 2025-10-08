@@ -55,8 +55,9 @@ import Expenses from "./Routes/Finance/Expenses";
 import OutpostStockValuation from "./Routes/Outposts/OutpostStockValuation";
 import AgeOfStocks from "./Routes/Inventory/AgeOfStocks";
 import TradingAcc from "./Routes/Finance/TradingAcc";
-import IncomeStatemt from "./Routes/Finance/IncomeStatemt";
+import TrialBalance from "./Routes/Finance/TrialBalance";
 import ProfitLossAcc from "./Routes/Finance/ProfitLossAcc";
+import Expiring from "./Routes/Items/Expiring";
 
 function App() {
 	return (
@@ -115,6 +116,7 @@ function App() {
 						<Route path={""} element={<GrossWindow />} />
 					</Route>
 					<Route path={"trash"} element={<Trash />} />
+					<Route path={"expiring"} element={<Expiring />} />
 					<Route path="sales-record" element={<ProtectedRoute />}>
 						<Route path={"receipt/:receipt_id/view"} element={<SalesReceiptWindow />} />
 						<Route path={""} element={<ItemSalesReceiptWindow />} />
@@ -126,7 +128,7 @@ function App() {
 				</Route>
 				<Route path={"/finance"} element={<ProtectedRoute />}>
 					<Route path={"trading-account"} element={<TradingAcc />} />
-					<Route path={"income-statement"} element={<IncomeStatemt />} />
+					<Route path={"trial-balance"} element={<TrialBalance />} />
 					<Route path={"profit-loss"} element={<ProfitLossAcc />} />
 					<Route path={"vouchers/income"} element={<Income />} />
 					<Route path={"vouchers/expenses"} element={<Expenses />} />

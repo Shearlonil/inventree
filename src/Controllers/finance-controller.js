@@ -12,6 +12,10 @@ const tradingAcc = async (startDate, endDate) => {
     return await httpService.post(`/api/finance/trading-acc`, { startDate, endDate });
 }
 
+const profitLossAcc = async (startDate, endDate) => {
+    return await httpService.post(`/api/finance/profit-loss`, { startDate, endDate });
+}
+
 const getIncomeExpVoucherDetails = async (name, startDate, endDate) => {
     return await httpService.post(`/api/finance/voucher/income-exp/${name}`, { startDate, endDate });
 }
@@ -74,6 +78,7 @@ export default {
     findLedgerVch,
     createVoucher,
     tradingAcc,
+    profitLossAcc,
     getIncomeExpVoucherDetails,
     createIncomeExpVoucher,
     updateIncomeExpVoucher,

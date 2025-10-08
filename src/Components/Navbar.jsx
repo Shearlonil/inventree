@@ -316,46 +316,6 @@ function NavBar() {
 							</NavDropdown>}
 
 							{user && user.hasAuth('FINANCE') && <NavDropdown title="Finance" id="basic-nav-dropdown">
-								<NavDropdown.Item 
-									onClick={() => {
-										handleNavSelect();
-										navigate("/finance/trading-account");
-									}}
-									className={`nav-item ${
-										location.pathname === "/finance/trading-account" &&
-										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-									}`}
-								>
-									Trading Account
-								</NavDropdown.Item>
-								
-								<NavDropdown.Item 
-									onClick={() => {
-										handleNavSelect();
-										navigate("/finance/income-statement");
-									}}
-									className={`nav-item ${
-										location.pathname === "/finance/income-statement" &&
-										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-									}`}
-								>
-									Income Statement
-								</NavDropdown.Item>
-								
-								<NavDropdown.Item 
-									onClick={() => {
-										handleNavSelect();
-										navigate("/finance/profit-loss");
-									}}
-									className={`nav-item ${
-										location.pathname === "/finance/profit-loss" &&
-										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
-									}`}
-								>
-									Profit & Loss Account
-								</NavDropdown.Item>
-								<NavDropdown.Divider />
-
 								<NavDropdown title="Account Vouchers" className="ms-2" drop="end">
 									<NavDropdown.Item 
 										onClick={() => {
@@ -407,6 +367,47 @@ function NavBar() {
 									}`}
 								>
 									Account Ledgers
+								</NavDropdown.Item>
+
+								<NavDropdown.Divider />
+
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/finance/trading-account");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/trading-account" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Trading Account
+								</NavDropdown.Item>
+								
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/finance/profit-loss");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/profit-loss" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Profit & Loss Account
+								</NavDropdown.Item>
+								
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
+										navigate("/finance/trial-balance");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/trial-balance" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Trial Balance
 								</NavDropdown.Item>
 							</NavDropdown>}
 

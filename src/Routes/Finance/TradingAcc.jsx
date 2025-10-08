@@ -102,11 +102,9 @@ const TradingAcc = () => {
                         .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
                     setSalesAccAmount(salesAccAmount);
 
-                    let totalCash = numeral(salesAccAmount).add(directIncomeAmount).value();
+                    let totalIn = numeral(salesAccAmount).add(directIncomeAmount).value();
                     let totalExp = numeral(costOfSalesAmount).add(directExpAmount).value();
-                    let temp = numeral(totalCash).subtract(totalExp).value();
-                    console.log('total', temp);
-                    setGrossProfit(temp);
+                    setGrossProfit(numeral(totalIn).subtract(totalExp).value());
                 }
                 setNetworkRequest(false);
             }
