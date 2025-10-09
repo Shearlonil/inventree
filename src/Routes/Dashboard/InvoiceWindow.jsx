@@ -3,7 +3,8 @@ import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
+import { useParams } from 'react-router-dom';
 import numeral from 'numeral';
 
 import ErrorMessage from '../../Components/ErrorMessage';
@@ -21,7 +22,8 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import { Invoice } from '../../Entities/Invoice';
 
 const InvoiceWindow = () => {
-    //  format(selectedInvoice?.transactionDate, 'dd/MM/yyyy HH:mm:ss')
+    const { incomplete } = useParams();
+
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
 
@@ -70,7 +72,14 @@ const InvoiceWindow = () => {
     useEffect( () => {
         if(!user.hasAuth('INVOICE_WINDOW')){
             toast.error("Account doesn't support viewing this page. Please contact your admin");
-            navigate('/404');
+            navigate('/');
+        }else {
+            switch (incomplete) {
+                case 'incomplete':
+                    incompleteTransactions();
+                default:
+                    break;
+            }
         }
     }, []);
 

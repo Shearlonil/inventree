@@ -62,7 +62,10 @@ const Dashboard = () => {
             setNetworkRequest(true);
             const yearMonthlySalesReponse = await transactionsController.yearMonthlySales();
             if(yearMonthlySalesReponse && yearMonthlySalesReponse.data){
-                const temp = yearMonthlySalesReponse.data.map((datum, idx) => ({ month: months[idx], amount: datum}));
+                const temp = [];
+                for (const key in yearMonthlySalesReponse.data) {
+                    temp.push({month: months[key - 1], amount: yearMonthlySalesReponse.data[key]});
+                }
                 setTopMonth([...temp].sort((a, b) => b.amount - a.amount)[0]);
                 setYearMonthlySalesData(temp);
             }

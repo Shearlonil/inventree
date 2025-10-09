@@ -49,6 +49,12 @@ const SVG = {
 	balance_sheet_white: new URL("./Svg/balance_sheet_white.svg", import.meta.url).href,
 	trading_account: new URL("./Svg/trading_account.svg", import.meta.url).href,
 	balance_sheet: new URL("./Svg/balance_sheet.svg", import.meta.url).href,
+	expired_calender: new URL("./Svg/expired_calender.svg", import.meta.url).href,
+	expired_time: new URL("./Svg/expired_time.svg", import.meta.url).href,
+	expiring_time_one: new URL("./Svg/expiring_time_one.svg", import.meta.url).href,
+	expiring_time_two: new URL("./Svg/expiring_time_two.svg", import.meta.url).href,
+	low_one: new URL("./Svg/low_stock.svg", import.meta.url).href,
+	low_two: new URL("./Svg/low-tide-svgrepo-com.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,

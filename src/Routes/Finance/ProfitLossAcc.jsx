@@ -320,7 +320,7 @@ const ProfitLossAcc = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {indirectIncome.map((_datum, index) => (
+                            {indirectExp.map((_datum, index) => (
                                 <tr className='' key={index}>
                                     <td>{_datum.ledgerName}</td>
                                     <td>{numeral(_datum.balance).format('₦0,0.00')}</td>

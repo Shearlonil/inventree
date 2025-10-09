@@ -37,7 +37,7 @@ const Expiring = () => {
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await inventoryController.ageOfStock();
+            const response = await inventoryController.expiring();
 
             if(response && response.data){
                 setItems(response.data);
@@ -77,7 +77,7 @@ const Expiring = () => {
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
 						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Expiring/Expired Products</span>
-						<img src={SVG.age_of_stocks_white} style={{ width: "50px", height: "50px" }} />
+						<img src={SVG.expiring_time_one} style={{ width: "50px", height: "50px" }} />
 					</h2>
 				</div>
                 <span className='text-center m-1'>

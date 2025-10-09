@@ -86,7 +86,7 @@ const CustomersWindow = () => {
             initialize();
         }else {
             toast.error("Account doesn't support viewing this page. Please contact your admin");
-            navigate('/404');
+            navigate('/');
         }
     }, []);
 

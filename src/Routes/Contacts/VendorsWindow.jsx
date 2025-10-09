@@ -82,7 +82,7 @@ const VendorsWindow = () => {
             initialize();
         }else {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
-            navigate('/404');
+            navigate('/');
         }
     }, []);
 

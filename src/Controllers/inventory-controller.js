@@ -150,6 +150,10 @@ const ageOfStock = async () => {
     return await httpService.get(`/api/inventory/stock-age`);
 };
 
+const expiring = async () => {
+    return await httpService.get(`/api/inventory/expiring`);
+};
+
 const stockValuation = async (startDate, tract_id) => {
     return await httpService.post(`/api/inventory/stock/valuation/${tract_id}`, { startDate, endDate: startDate });
 };
@@ -185,6 +189,7 @@ export default {
     paginatePurchasesIdSearch,
     updatePurchasedItem,
     ageOfStock,
+    expiring,
     stockValuation,
     outpostStockValuation,
 }

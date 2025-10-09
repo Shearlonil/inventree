@@ -4,6 +4,8 @@ import { TbUsersGroup } from "react-icons/tb";
 import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdSell } from "react-icons/md";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 
 import SVG from "../assets/Svg";
 import { HomeWrapper } from "../Components/Styles/HomeStyles";
@@ -11,8 +13,10 @@ import Sliced from "../Components/SlicedEffect/Sliced";
 import { clientDetails } from "../../data";
 import { useAuth } from "../app-context/auth-user-context";
 import genericController from "../Controllers/generic-controller";
+import handleErrMsg from '../Utils/error-handler';
 
 const Home = () => {
+	const navigate = useNavigate();
 	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
 	
 	const { authUser, handleRefresh, logout } = useAuth();
@@ -23,6 +27,8 @@ const Home = () => {
 	const [activeCustomerCount, setActiveCustomerCount] = useState(0);
 	const [activeVendorCount, setActiveVendorCount] = useState(0);
 	const [incompleteTrasactionCount, setIncompleteTrasactionCount] = useState(0);
+	const [lowStockCount, setLowStockCount] = useState(0);
+	const [expItemsCount, setExpItemsCount] = useState(0);
 		
 	useEffect( () => {
 		initialize();
@@ -32,10 +38,12 @@ const Home = () => {
         try {
             setNetworkRequest(true);
 			const urls = [ `/api/users/count/active`, `/api/items/count/active`, `/api/customers/count/active`, `/api/vendors/count/active`, 
-				'/api/transactions/invoices/count/incomplete' 
+				'/api/transactions/invoices/count/incomplete', `/api/inventory/expiring/count`, `/api/items/gross/low/count`
 			];
 			const response = await genericController.performGetRequests(urls);
-            const { 0: usersRequest, 1: itemsRequest, 2: customersRequest, 3: vendorsRequest, 4: incompleteTransactionRequest } = response;
+            const { 0: usersRequest, 1: itemsRequest, 2: customersRequest, 3: vendorsRequest, 4: incompleteTransactionRequest,
+				5: expItemsRequest, 6: lowStockRequest
+			 } = response;
 			if (usersRequest && usersRequest.data) {
 				setActiveUserCount(usersRequest.data);
 			}
@@ -50,6 +58,12 @@ const Home = () => {
 			}
 			if (incompleteTransactionRequest && incompleteTransactionRequest.data) {
 				setIncompleteTrasactionCount(incompleteTransactionRequest.data);
+			}
+			if (lowStockRequest && lowStockRequest.data) {
+				setLowStockCount(lowStockRequest.data);
+			}
+			if (expItemsRequest && expItemsRequest.data) {
+				setExpItemsCount(expItemsRequest.data);
 			}
             setNetworkRequest(false);
         } catch (error) {
@@ -116,7 +130,7 @@ const Home = () => {
 						</div>
 					</div>
 
-					<div className="col-12 col-md-4 p-2" id="child-2">
+					<div className="col-12 col-md-4 p-2" id="child-2" onClick={() => navigate("/dashboard/invoices/incomplete")}>
 						<div className="p-3 h-100 py-auto bg-warning rounded d-flex flex-column justify-content-around">
 							<h3 className="fw-bold">Incomplete Transactions</h3>
 							<div>
@@ -127,9 +141,9 @@ const Home = () => {
 									</button>
 								</div>
 							</div>
-							<a className="text-decoration-none" href="">
+							<div className="text-decoration-none text-primary">
 								<p>Invoices without receipts</p>
-							</a>
+							</div>
 						</div>
 					</div>
 				</div>
@@ -137,9 +151,9 @@ const Home = () => {
 
 			<div className="container mb-3" id="section-3">
 				<div className="row">
-					<div className="col-6 col-md-4 col-lg-x3 p-2">
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/dashboard/users")}>
 						<div className="bg-secondary-subtle rounded p-3">
-							<div className="d-flex gap-4">
+							<div className="d-flex gap-3 mb-2">
 								<TbUsersGroup size={"20"} />
 								<h6 className="fw-bold">Active Users</h6>
 							</div>
@@ -148,9 +162,9 @@ const Home = () => {
 							</p>
 						</div>
 					</div>
-					<div className="col-6 col-md-4 col-lg-x3 p-2">
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/items/gross")}>
 						<div className="bg-secondary-subtle rounded p-3">
-							<div className="d-flex gap-4">
+							<div className="d-flex gap-3 mb-2">
 								<AiFillProduct size={"20"} />
 								<h6 className="fw-bold">Active Items</h6>
 							</div>
@@ -160,9 +174,9 @@ const Home = () => {
 						</div>
 					</div>
 
-					<div className="col-6 col-md-4 col-lg-x3 p-2">
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/contacts/customers")}>
 						<div className="bg-secondary-subtle rounded p-3">
-							<div className="d-flex gap-4">
+							<div className="d-flex gap-3 mb-2">
 								<FcCustomerSupport size={"20"} />
 								<h6 className="fw-bold">Active Customers</h6>
 							</div>
@@ -171,14 +185,37 @@ const Home = () => {
 							</p>
 						</div>
 					</div>
-					<div className="col-6 col-md-4 col-lg-x3 p-2">
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/contacts/vendors")}>
 						<div className="bg-secondary-subtle rounded p-3">
-							<div className="d-flex gap-4">
+							<div className="d-flex gap-3 mb-2">
 								<MdSell size={"20"} />
 								<h6 className="fw-bold">Active Vendors</h6>
 							</div>
 							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
 								{activeVendorCount}
+							</p>
+						</div>
+					</div>
+
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/items/gross/low")}>
+						<div className="bg-secondary-subtle rounded p-3">
+							<div className="d-flex gap-3 mb-2">
+								<img src={SVG.low_one} style={{ width: "20px", height: "20px" }} />
+								<h6 className="fw-bold">Low Stock</h6>
+							</div>
+							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
+								{lowStockCount}
+							</p>
+						</div>
+					</div>
+					<div className="col-6 col-md-4 col-lg-x3 p-2" onClick={() => navigate("/items/expiring")}>
+						<div className="bg-secondary-subtle rounded p-3">
+							<div className="d-flex gap-3 mb-2">
+								<img src={SVG.expiring_time_one} style={{ width: "20px", height: "20px" }} />
+								<h6 className="fw-bold">Expiring/Expd. Products</h6>
+							</div>
+							<p className="space-mono-bold bg-light-subtle d-inline-block px-1 rounded-2">
+								{expItemsCount}
 							</p>
 						</div>
 					</div>

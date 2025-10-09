@@ -12,7 +12,7 @@ const Footer = () => {
 
     const { getCurrentYear } = useAuth();
 
-    return (<>
+    return (
         <div className="container-fluid">
             <footer className="row py-3 my-4 border-top d-flex justify-content-center gap-2">
                 <div className="col-12 col-md-4 d-flex flex-column justify-content-center align-items-center gap-2">
@@ -21,7 +21,7 @@ const Footer = () => {
                     </a>
                     <span className="text-body-secondary">&copy; {getCurrentYear()} Inventree, Inc</span>
                 </div>
-                <hr className="container d-md-none" />
+                {/* <hr className="container d-md-none" /> */}
                 <div className="col-12 col-md-4 text-center d-flex flex-column flex-md-row align-items-center justify-content-center gap-2">
                     <p>
                         Powered by <i className="fw-bold text-primary">Genius Computer Technologies</i>
@@ -38,7 +38,7 @@ const Footer = () => {
                 </ul>
             </footer>
         </div>
-    </>)
+    )
 }
 
 export default Footer;

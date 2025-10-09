@@ -150,6 +150,7 @@ function App() {
 					<Route path={"users/sales-record"} element={<UserSalesRecord />} />
 					<Route path={":username/details"} element={<UserDetails />} />
 					<Route path={"receipts"} element={<SalesReceiptWindow />} />
+					<Route path={"invoices/:incomplete"} element={<InvoiceWindow />} />
 					<Route path={"invoices"} element={<InvoiceWindow />} />
 					<Route index path={"sales/report"} element={<SalesReport />} />
 					<Route path={""} element={<Dashboard />} />
