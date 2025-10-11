@@ -366,9 +366,9 @@ const VendorsWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Vendor Name', 'Phone No', 'Address', 'E-Mail', 'Balance', 'Options'],
+        headers: ['Vendor Name', 'Phone No', 'Address', 'E-Mail', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'phoneNo', 'address', 'email', 'ledgerBalance'],
+        objectProps: ['name', 'phoneNo', 'address', 'email'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -392,6 +392,11 @@ const VendorsWindow = () => {
                 <span className='text-center m-1'>
                     Vendors are your liabilities.
                     Add new, edit/update, search for Vendors.
+                </span>
+                <span className='text-center m-1'>
+                    NOTE: Liabilities maintain a Credit balance. They increase with credit. A vendor with a credit balance means 
+                    <span className='fw-bold h5'> company indebted to the vendor</span>, while a vendor with a debit balance means 
+                    <span className="fw-bold h5"> vendor indebted to the company</span>
                 </span>
             </div>
 

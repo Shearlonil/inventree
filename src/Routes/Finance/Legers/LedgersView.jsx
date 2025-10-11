@@ -37,7 +37,7 @@ const LedgersView = () => {
     //	menus for the react-menu in table
     const menuItems = [
         // { name: 'Rename', onClickParams: {evtName: 'rename' } },
-        // { name: 'Delete', onClickParams: {evtName: 'delete'} },
+        { name: 'Delete', onClickParams: {evtName: 'delete'} },
         { name: 'View', onClickParams: {evtName: 'view'} },
     ];
     
@@ -155,7 +155,7 @@ const LedgersView = () => {
         switch (onclickParams.evtName) {
             case 'delete':
                 if(user.hasAuth('FINANCE') && user.hasAuth('DELETE_ITEM')){
-                    if(entity && entity.id === 1){
+                    if(entity && entity.isDefault == 1){
                         toast.error("Operation not allowed on default ledger");
                         return;
                     }
@@ -412,9 +412,9 @@ const LedgersView = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Ledger Name', 'Balance', 'Reg. Date', 'Options'],
+        headers: ['Ledger Name', 'Reg. Date', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'ledgerBalance', 'creationDate'],
+        objectProps: ['name', 'creationDate'],
         //	React Menu
         menus: {
             ReactMenu,

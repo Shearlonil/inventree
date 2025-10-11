@@ -390,9 +390,9 @@ const CustomersWindow = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Customer Name', 'Phone No', 'Address', 'E-Mail', 'Card No.', 'Balance', 'Options'],
+        headers: ['Customer Name', 'Phone No', 'Address', 'E-Mail', 'Card No.', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'phoneNo', 'address', 'email', 'loyaltyCardNo', 'ledgerBalance'],
+        objectProps: ['name', 'phoneNo', 'address', 'email', 'loyaltyCardNo'],
         //	React Menu
         menus: {
             ReactMenu,
@@ -416,6 +416,11 @@ const CustomersWindow = () => {
                 <span className='text-center m-1'>
                     Customers are your assets. The more the merrier.
                     Add new, edit/update, search for customers.
+                </span>
+                <span className='text-center m-1'>
+                    NOTE: Assets maintain a Debit balance. They increase with Debit. A customer with a Debit balance means 
+                    <span className='fw-bold h5'> customer indebted to the company</span>, while a customer with a credit balance means 
+                    <span className="fw-bold h5"> company indebted to the customer</span>
                 </span>
             </div>
 

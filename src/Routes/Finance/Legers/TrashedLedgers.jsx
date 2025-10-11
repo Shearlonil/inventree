@@ -213,9 +213,9 @@ const TrashedLedgers = () => {
     
     const tableProps = {
         //	table header
-        headers: ['Name', 'Balance', 'Reg. Date', 'Options'],
+        headers: ['Name', 'Reg. Date', 'Options'],
         //	properties of objects as table data to be used to dynamically access the data(object) properties to display in the table body
-        objectProps: ['name', 'ledgerBalance', 'creationDate'],
+        objectProps: ['name', 'creationDate'],
         //	React Menu
         menus: {
             ReactMenu,

@@ -55,6 +55,8 @@ const LedgerDisplay = () => {
     
     const [totalDr, setTotalDr] = useState(0);
     const [totalCr, setTotalCr] = useState(0);
+    const [balance, setBalance] = useState(0);
+    const [balMode, setBalMode] = useState('');
 
     const [filename, setFilename] = useState("");
     const [startDate, setStartDate] = useState("");
@@ -76,8 +78,9 @@ const LedgerDisplay = () => {
             const response = await genericController.performGetRequests(urls);
             const { 0: ledgerRequest, 1: ledgerParentRequest } = response;
             
+            let l;
             if (ledgerRequest && ledgerRequest.data) {
-                const l = new Ledger(ledgerRequest.data);
+                l = new Ledger(ledgerRequest.data);
                 l.creator = ledgerRequest.data.creator.username;
                 setLedger(l);
             }
@@ -103,8 +106,22 @@ const LedgerDisplay = () => {
                         return new LedgerTransaction(datum)
                     })
                 );
+
+                /*  Ledger modes
+                    True => positive accounts or Debit accounts: Accounts that normally maintain a positive balance (Expenses, Assets)
+                    false => negative accounts or Credit accounts: Accounts that normally maintain a negative balance (Liability, Income/Revenue)
+                */
                 setTotalCr(cr.value());
                 setTotalDr(dr.value());
+                if(l && l.mode === true){
+                    let bal = numeral(dr.value()).subtract(cr.value()).value();
+                    setBalMode(bal > 0 ? 'Dr' : 'Cr');
+                    setBalance(bal);
+                }else if(l && l.mode === false){
+                    let bal = numeral(cr.value()).subtract(dr.value()).value();
+                    setBalMode(bal > 0 ? 'Cr' : 'Dr');
+                    setBalance(bal);
+                }
             }
 
             setNetworkRequest(false);
@@ -373,8 +390,19 @@ const LedgerDisplay = () => {
                             return new LedgerTransaction(datum)
                         })
                     );
+
                     setTotalCr(cr.value());
                     setTotalDr(dr.value());
+                    
+                    if(ledger.mode === true){
+                        let bal = numeral(dr.value()).subtract(cr.value()).value();
+                        setBalMode(bal > 0 ? 'Dr' : 'Cr');
+                        setBalance(bal);
+                    }else if(l && l.mode === false){
+                        let bal = numeral(cr.value()).subtract(dr.value()).value();
+                        setBalMode(bal > 0 ? 'Cr' : 'Dr');
+                        setBalance(bal);
+                    }
                 }
                 setNetworkRequest(false);
             }
@@ -450,7 +478,9 @@ const LedgerDisplay = () => {
                     <div className="col-12 col-md-6">
                         <div className="p-2 shadow rounded-4 bg-light d-flex justify-content-between">
                             <span className="fw-bold text-md-end h5 me-2">Name:</span>
-                            <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>{ledger?.name}</span>
+                            <span style={{overflow: 'scroll' }} className='pe-2 fw-bold text-primary'>
+                                {ledger?.name}
+                            </span>
                         </div>
                     </div>
                     <div className="col-12 col-md-6">
@@ -536,13 +566,17 @@ const LedgerDisplay = () => {
                 </div>
             </div>
             <div className="row">
-                <div className="col-md-6 col-sm-12 text-center mb-3">
+                <div className="col-md-4 col-sm-12 text-center mb-3">
                     <p className="fw-bold text-primary h5">Total Debit</p>
                     <h3 className='text-danger'> {numeral(totalDr).format('₦0,0.00')} </h3>
                 </div>
-                <div className="col-md-6 col-sm-12 text-center mb-3">
+                <div className="col-md-4 col-sm-12 text-center mb-3">
                     <p className="fw-bold text-primary h5">Total Credit</p>
                     <h3 className='text-danger'> {numeral(totalCr).format('₦0,0.00')} </h3>
+                </div>
+                <div className="col-md-4 col-sm-12 text-center mb-3">
+                    <p className="fw-bold text-primary h5">Balance <span className='ms-2'>[{balMode}]</span> </p>
+                    <h3 className='text-danger'> {numeral(balance).format('₦0,0.00')} </h3>
                 </div>
             </div>
             <InputDialog
