@@ -400,6 +400,19 @@ function NavBar() {
 								<NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
+										navigate("/finance/balance-sheet");
+									}}
+									className={`nav-item ${
+										location.pathname === "/finance/balance-sheet" &&
+										"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+									}`}
+								>
+									Balance Sheet
+								</NavDropdown.Item>
+								
+								<NavDropdown.Item 
+									onClick={() => {
+										handleNavSelect();
 										navigate("/finance/trial-balance");
 									}}
 									className={`nav-item ${

@@ -394,11 +394,11 @@ const LedgerDisplay = () => {
                     setTotalCr(cr.value());
                     setTotalDr(dr.value());
                     
-                    if(ledger.mode === true){
+                    if(ledger && ledger.mode === true){
                         let bal = numeral(dr.value()).subtract(cr.value()).value();
                         setBalMode(bal > 0 ? 'Dr' : 'Cr');
                         setBalance(bal);
-                    }else if(l && l.mode === false){
+                    }else if(ledger && ledger.mode === false){
                         let bal = numeral(cr.value()).subtract(dr.value()).value();
                         setBalMode(bal > 0 ? 'Cr' : 'Dr');
                         setBalance(bal);

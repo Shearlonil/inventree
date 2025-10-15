@@ -16,6 +16,10 @@ const profitLossAcc = async (startDate, endDate) => {
     return await httpService.post(`/api/finance/profit-loss`, { startDate, endDate });
 }
 
+const balSheet = async (startDate, endDate) => {
+    return await httpService.post(`/api/finance/bal-sheet`, { startDate, endDate });
+}
+
 const getIncomeExpVoucherDetails = async (name, startDate, endDate) => {
     return await httpService.post(`/api/finance/voucher/income-exp/${name}`, { startDate, endDate });
 }
@@ -79,6 +83,7 @@ export default {
     createVoucher,
     tradingAcc,
     profitLossAcc,
+    balSheet,
     getIncomeExpVoucherDetails,
     createIncomeExpVoucher,
     updateIncomeExpVoucher,

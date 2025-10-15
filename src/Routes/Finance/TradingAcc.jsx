@@ -52,6 +52,7 @@ const TradingAcc = () => {
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
+                reset();
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
@@ -66,11 +67,24 @@ const TradingAcc = () => {
                     // remove purchases from direct expenses and add to cost of sales
                     const purchasesIndexPos = directExpData.findIndex(i => i.ledgerName.toLowerCase() === 'purchases');
                     if(purchasesIndexPos > -1){
-                        //	cut out purchases found at index position
+                        /*  cut out purchases found at index position. splice returns a new array with cut out element in it
+                            NOTE: assignment of id for items in costOfSales arr
+                            openingStock if present, id = 1
+                            purchases if found, id = 2
+                            closingStock from server, id = 3
+                        */
 				        const purchases = directExpData.splice(purchasesIndexPos, 1);
                         purchases[0].id = 2;
                         purchases[0].ledgerName = "Add: Purchases";
                         costOfSalesArr.push(purchases[0]);
+                    }else {
+                        //  purchases not found, probably due to no purchases. Add purchases obj manually coz it will used in calculations later
+                        const purchases = {
+                            id : 1,
+                            ledgerName: "Add: Purchases",
+                            balance: 0
+                        }
+                        costOfSalesArr.push(purchases);
                     }
 
                     // direct income
@@ -129,6 +143,18 @@ const TradingAcc = () => {
             toast.error(handleErrMsg(error).msg);
         }
     }
+
+	const reset = () => {
+        setSalesAccAmount(0);
+        setSalesAcc([]);
+        setDirectIncome([]);
+        setDirectIncomeAmount(0);
+        setCostOfSales([]);
+        setCostOfSalesAmount(0);
+        setDirectExp([]);
+        setDirectExpAmount(0);
+        setGrossProfit(0);
+	}
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {

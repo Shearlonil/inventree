@@ -99,39 +99,9 @@ const TrialBalance = () => {
                 <StartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} />
             </div>
 
-            <div className="row p-3 mt-2">
-                <div className="d-flex flex-row flex-wrap justify-content-between">
-                    <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Trading Account</h3>
-                    <h2>{tradingAccAmount}</h2>
-                </div>
-                <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
-                </div>
-            </div>
-
-            <div className="row p-3 mt-2">
-                <div className="d-flex flex-row flex-wrap justify-content-between">
-                    <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Indirect Incomes</h3>
-                    <h2>{indirectIncomeAmount}</h2>
-                </div>
-                <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
-                </div>
-            </div>
-
-            <div className="row p-3 mt-2">
-                <div className="d-flex flex-row flex-wrap justify-content-between">
-                    <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Indirect Expenses</h3>
-                    <h2>{indirectExpAmount}</h2>
-                </div>
-                <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
-                    {/* <TableMain tableProps={tableProps} tableData={ledgerTransactions} /> */}
-                </div>
-            </div>
-
             <hr />
             <div className="d-flex flex-row flex-wrap justify-content-between">
-                <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Nett Profit</h3>
+                <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Grand Total</h3>
                 <h2>{nettProfit}</h2>
             </div>
         </div>

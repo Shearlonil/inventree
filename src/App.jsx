@@ -58,6 +58,7 @@ import TradingAcc from "./Routes/Finance/TradingAcc";
 import TrialBalance from "./Routes/Finance/TrialBalance";
 import ProfitLossAcc from "./Routes/Finance/ProfitLossAcc";
 import Expiring from "./Routes/Items/Expiring";
+import BalSheet from "./Routes/Finance/BalSheet";
 
 function App() {
 	return (
@@ -130,6 +131,7 @@ function App() {
 					<Route path={"trading-account"} element={<TradingAcc />} />
 					<Route path={"trial-balance"} element={<TrialBalance />} />
 					<Route path={"profit-loss"} element={<ProfitLossAcc />} />
+					<Route path={"balance-sheet"} element={<BalSheet />} />
 					<Route path={"vouchers/income"} element={<Income />} />
 					<Route path={"vouchers/expenses"} element={<Expenses />} />
 					<Route path={"vouchers/create"} element={<AcctVoucherCreation />} />
