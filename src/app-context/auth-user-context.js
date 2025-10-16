@@ -11,7 +11,9 @@ import AppConstants from "../Utils/AppConstants";
 
 const AuthContext = createContext();
 
-// ref: https://blog.logrocket.com/authentication-react-router-v6/
+/*ref:  https://blog.logrocket.com/authentication-react-router-v6/
+        https://blog.logrocket.com/react-context-tutorial/
+*/
 export const AuthProvider = ({ children }) => {
     //  const [jwtToken, setJwtToken] = useCookieStorage(AppConstants.jwtStorageTitle, null);
     const [jwtToken, setJwtToken] = useLocalStorage(AppConstants.jwtStorageTitle, null);
@@ -101,6 +103,4 @@ export const AuthProvider = ({ children }) => {
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-    return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

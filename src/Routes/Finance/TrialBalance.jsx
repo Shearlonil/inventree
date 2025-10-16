@@ -18,6 +18,12 @@ const TrialBalance = () => {
             
     const [networkRequest, setNetworkRequest] = useState(false);
 
+    const [assets, setAssets] = useState({});
+    const [liabilities, setLiabilities] = useState({});
+
+    const [totalCrAmount, setTotalCrAmount] = useState(0);
+    const [totalDrAmount, setTotalDrAmount] = useState(0);
+
     const [tradingAccAmount, setTradingAccAmount] = useState(0);
     const [indirectIncomeAmount, setIndirectIncomeAmount] = useState(0);
     const [indirectExpAmount, setIndirectExpAmount] = useState(0);

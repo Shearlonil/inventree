@@ -14,14 +14,17 @@ import App from "./App.jsx";
 import NavBar from "./Components/Navbar.jsx";
 import { AuthProvider } from './app-context/auth-user-context.js';
 import Footer from './Components/Footer.jsx';
+import { FinanceProvider } from './app-context/finance-context.js';
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<BrowserRouter>
 			<AuthProvider>
-				<NavBar />
-				<App />
-				<Footer />
+				<FinanceProvider>
+					<NavBar />
+					<App />
+					<Footer />
+				</FinanceProvider>
 			</AuthProvider>
 		</BrowserRouter>
 	</StrictMode>

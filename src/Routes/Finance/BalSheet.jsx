@@ -11,11 +11,13 @@ import handleErrMsg from "../../Utils/error-handler";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import SVG from "../../assets/Svg";
 import StartEndDateSearch from "../../Components/StartEndDateSearch";
+import { useFinance } from "../../app-context/finance-context";
 
 const BalSheet = () => {
     const navigate = useNavigate();
     
     const { handleRefresh, logout, authUser } = useAuth();
+    const { addGroup, getGroup, getChartSummary, clear } = useFinance();
     const user = authUser();
             
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -23,7 +25,8 @@ const BalSheet = () => {
     const [assets, setAssets] = useState({});
     const [liabilities, setLiabilities] = useState({});
 
-    const [nettProfit, setNettProfit] = useState(0);
+    const [assetsAmountsArr, setAssetsAmountsArr] = useState([]);
+    const [liabilitiesAmountsArr, setLiabilitiesAmountsArr] = useState([]);
 
     const offCanvasMenuItems = [
         { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
@@ -34,8 +37,10 @@ const BalSheet = () => {
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
+                clear();
                 setAssets([]);
                 setLiabilities([]);
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
@@ -43,16 +48,23 @@ const BalSheet = () => {
 
                 const response = await financeController.balSheet(startDate, endDate);
                 if(response && response.data){
-                    setAssets(response.data.Assets);
+                    const assetz = response.data.Assets;
+                    setAssets(assetz);
                     const liabs = response.data.Liabilities
                     //  profit & loss opening balance
                     const profitLossOpeningBal = {
                         ledgerName: 'Opening Balance',
+                        //  dummy cr and dr amount because of map function in finance context
+                        crAmount: 0,
+                        drAmount: 0,
                         balance: profitLossCalc(response.data.accumulatedProfitLoss)
                     };
                     //  profit & loss opening balance
                     const profitLossCurrentBal = {
                         ledgerName: 'Current Period',
+                        //  dummy cr and dr amount because of map function in finance context
+                        crAmount: 0,
+                        drAmount: 0,
                         balance: profitLossCalc(response.data.currentProfitLoss)
                     };
                     let profitLoss = "Profit & Loss Acc";
@@ -139,19 +151,19 @@ const BalSheet = () => {
         // direct expenses
         const directExpAmount = directExpData
             .map(obj => obj.balance)
-            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
 
         // indirect expenses
         const indirectExpData = obj.indirectExpenses;
         const indirectExpAmount = indirectExpData
             .map(obj => obj.balance)
-            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
 
         // sales account
         const salesAccData = obj.salesAccounts;
         const salesAccAmount = salesAccData
             .map(obj => obj.balance)
-            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
 
         let totalIn = numeral(salesAccAmount).add(directIncomeAmount).add(indirectIncomeAmount).value();
         let totalExp = numeral(costOfSalesAmount).add(directExpAmount).add(indirectExpAmount).value();
@@ -159,21 +171,11 @@ const BalSheet = () => {
     }
 
 	const buildSection = (key, i, type) => {
-        let amount = 0;
-        if(type === 'assets'){
-            amount = assets[key]
-                .map(obj => obj.balance)
-                .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
-        }else if(type === 'liabilities'){
-            amount = liabilities[key]
-                .map(obj => obj.balance)
-                .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
-        }
-        
+        console.log(getGroup(key));
         return <div className="row p-3 mt-2" key={i + key}>
             <div className="d-flex flex-row flex-wrap justify-content-between">
                 <h5 className="paytone-one fw-bold" style={{color: '#057415ff'}}>{key}</h5>
-                <h2>{numeral(amount).format('₦0,0.00')}</h2>
+                <h2>{numeral(getGroup(key).balance).format('₦0,0.00')}</h2>
             </div>
             <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
                 <Table id="myTable" className="rounded-2" striped hover responsive>
@@ -224,12 +226,33 @@ const BalSheet = () => {
             <div className="d-flex flex-row flex-wrap justify-content-between mt-3">
                 <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Assets</h3>
             </div>
-            {Object.keys(assets).map((key, idx) => buildSection(key, idx, 'assets'))}
+            {Object.keys(assets).map((key, idx) => {
+                addGroup(assets, key, 'assets');
+                return buildSection(key, idx, 'assets');
+            })}
+            <div className="d-flex flex-row flex-wrap justify-content-between">
+                <h5 className="paytone-one fw-bold" style={{color: '#0544f2ff'}}>Total</h5>
+                <h2 style={{color: '#0544f2ff'}}>
+                    {numeral(getChartSummary('assets').balance).format('₦0,0.00')}
+                </h2>
+            </div>
+
+            <hr />
+            <hr />
 
             <div className="d-flex flex-row flex-wrap justify-content-between mt-3">
                 <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Liabilities</h3>
             </div>
-            {Object.keys(liabilities).map((key, idx) => buildSection(key, idx, 'liabilities'))}
+            {Object.keys(liabilities).map((key, idx) => {
+                addGroup(liabilities, key, 'liabilities');
+                return buildSection(key, idx, 'liabilities');
+            })}
+            <div className="d-flex flex-row flex-wrap justify-content-between">
+                <h5 className="paytone-one fw-bold" style={{color: '#0544f2ff'}}>Total</h5>
+                <h2 style={{color: '#0544f2ff'}}>
+                    {numeral(getChartSummary('liabilities').balance).format('₦0,0.00')}
+                </h2>
+            </div>
         </div>
     )
 }

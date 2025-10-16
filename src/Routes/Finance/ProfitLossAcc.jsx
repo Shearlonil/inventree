@@ -50,6 +50,7 @@ const ProfitLossAcc = () => {
         try {
             if (data.startDate && data.endDate) {
                 reset();
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
@@ -110,7 +111,7 @@ const ProfitLossAcc = () => {
                     setDirectExp([...directExpData]);
                     const directExpAmount = directExpData
                         .map(obj => obj.balance)
-                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
                     setDirectExpAmount(directExpAmount);
 
                     // indirect expenses
@@ -118,7 +119,7 @@ const ProfitLossAcc = () => {
                     setIndirectExp([...indirectExpData]);
                     const indirectExpAmount = indirectExpData
                         .map(obj => obj.balance)
-                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
                     setIndirectExpAmount(indirectExpAmount);
 
                     // sales account
@@ -126,7 +127,7 @@ const ProfitLossAcc = () => {
                     setSalesAcc([...salesAccData]);
                     const salesAccAmount = salesAccData
                         .map(obj => obj.balance)
-                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
                     setSalesAccAmount(salesAccAmount);
 
                     let totalIn = numeral(salesAccAmount).add(directIncomeAmount).add(indirectIncomeAmount).value();

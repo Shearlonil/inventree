@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import { format } from "date-fns";
 import { toast } from 'react-toastify';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -19,7 +20,6 @@ import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
-import numeral from 'numeral';
 import StartEndDateSearch from '../../../Components/StartEndDateSearch';
 
 const LedgerDisplay = () => {
@@ -88,7 +88,8 @@ const LedgerDisplay = () => {
             if (ledgerParentRequest && ledgerParentRequest.data) {
                 setLedgerParent(ledgerParentRequest.data);
             }
-            const startDate = format(new Date(), "yyyy-MM-dd") + "T00:00:00.000Z";
+            //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
+            const startDate = format(new Date(), "yyyy-MM-dd") + "T01:00:00.000Z";
             const endDate = format(new Date(), "yyyy-MM-dd") + "T23:59:59.000Z";
 
             setFilename(`${ledger.name} ${startDate} - ${endDate}`);
@@ -371,7 +372,8 @@ const LedgerDisplay = () => {
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
-                const startDate = format(data.startDate, "yyyy-MM-dd") + "T00:00:00.000Z";
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
+                const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setNetworkRequest(true);
 
