@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { Table } from 'react-bootstrap';
+import numeral from 'numeral';
 
 import { useAuth } from '../../app-context/auth-user-context';
 import financeController from '../../Controllers/finance-controller';
@@ -9,47 +11,68 @@ import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
 import handleErrMsg from '../../Utils/error-handler';
+import { useFinance } from '../../app-context/finance-context';
 
 const TrialBalance = () => {
     const navigate = useNavigate();
         
     const { handleRefresh, logout, authUser } = useAuth();
+    const { addGroup, getGroup, grandTotal, clear } = useFinance();
     const user = authUser();
             
     const [networkRequest, setNetworkRequest] = useState(false);
 
     const [assets, setAssets] = useState({});
     const [liabilities, setLiabilities] = useState({});
-
-    const [totalCrAmount, setTotalCrAmount] = useState(0);
-    const [totalDrAmount, setTotalDrAmount] = useState(0);
-
-    const [tradingAccAmount, setTradingAccAmount] = useState(0);
-    const [indirectIncomeAmount, setIndirectIncomeAmount] = useState(0);
-    const [indirectExpAmount, setIndirectExpAmount] = useState(0);
+    const [currentProfitLoss, setCurrentProfitLoss] = useState({});
     const [nettProfit, setNettProfit] = useState(0);
 
 	const offCanvasMenuItems = [
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
 		{ label: "Export to Excel", onClickParams: {evtName: 'xlsxExport'} },
 	];
+    
+    useEffect( () => {
+        if(user.hasAuth('FINANCE')){
+            clear();
+        }else {
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
+            navigate('/');
+        }
+    }, []);
 
-
-    const fnSearch = async () => {
+    const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
+                clear();
+                setAssets({});
+                setLiabilities({});
+                setCurrentProfitLoss({});
+                //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
                 setNetworkRequest(true);
 
-                const response = await financeController.getIncomeExpVoucherDetails('Revenue', startDate, endDate);
+                const response = await financeController.trialBal(startDate, endDate);
                 if(response && response.data){
-                    const arr = [];
-
-                    let totalCash = numeral(0);
-                    response.data.forEach(datum => {
-                    });
+                    setAssets(response.data.Assets);
+                    const pl = response.data.currentProfitLoss;
+                    delete pl.costOfSales;
+                    setCurrentProfitLoss(pl);
+                    const liabs = response.data.Liabilities
+                    //  profit & loss opening balance
+                    let val = profitLossCalc(response.data.accumulatedProfitLoss);
+                    const profitLossOpeningBal = {
+                        ledgerName: 'Opening Balance',
+                        //  dummy cr and dr amount because of map function in finance context
+                        crAmount: val > 0 ? val : 0,
+                        drAmount: val < 0 ? val : 0,
+                        balance: 0
+                    };
+                    let profitLoss = "Profit & Loss Acc";
+                    liabs[profitLoss] = [profitLossOpeningBal];
+                    setLiabilities(liabs);
                 }
                 setNetworkRequest(false);
             }
@@ -59,7 +82,7 @@ const TrialBalance = () => {
             try {
                 if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
                     await handleRefresh();
-                    return fnSearch();
+                    return fnSearch(data);
                 }
                 // Incase of 401 Unauthorized, navigate to 404
                 if(error.response?.status === 401){
@@ -84,6 +107,156 @@ const TrialBalance = () => {
         }
 	}
 
+    const profitLossCalc = (obj) => {
+        // cost of sales
+        const costOfSalesArr = [...obj.costOfSales];
+        // direct expenses
+        const directExpData = obj.directExpenses;
+        // remove purchases from direct expenses and add to cost of sales
+        const purchasesIndexPos = directExpData.findIndex(i => i.ledgerName.toLowerCase() === 'purchases');
+        if(purchasesIndexPos > -1){
+            /*  cut out purchases found at index position. splice returns a new array with cut out element in it
+                NOTE: assignment of id for items in costOfSales arr
+                openingStock if present, id = 1
+                purchases if found, id = 2
+                closingStock from server, id = 3
+            */
+            const purchases = directExpData.splice(purchasesIndexPos, 1);
+            purchases[0].id = 2;
+            purchases[0].ledgerName = "Add: Purchases";
+            costOfSalesArr.push(purchases[0]);
+        }else {
+            //  purchases not found, probably due to no purchases. Add purchases obj manually coz it will used in calculations later
+            const purchases = {
+                id : 1,
+                ledgerName: "Add: Purchases",
+                balance: 0
+            }
+            costOfSalesArr.push(purchases);
+        }
+
+        // direct income
+        const directIncomeData = obj.directIncome;
+        const directIncomeAmount = directIncomeData
+            .map(obj => obj.balance)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+
+        // indirect income
+        const indirectIncomeData = obj.indirectIncome;
+        const indirectIncomeAmount = indirectIncomeData
+            .map(obj => obj.balance)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+
+        // cost of sales
+        costOfSalesArr.sort((a, b) => a.id - b.id);
+        const costOfSalesAmount = numeral(costOfSalesArr[0].balance).add(costOfSalesArr[1].balance).subtract(costOfSalesArr[2].balance).value();
+
+        // direct expenses
+        const directExpAmount = directExpData
+            .map(obj => obj.balance)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+
+        // indirect expenses
+        const indirectExpData = obj.indirectExpenses;
+        const indirectExpAmount = indirectExpData
+            .map(obj => obj.balance)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+
+        // sales account
+        const salesAccData = obj.salesAccounts;
+        const salesAccAmount = salesAccData
+            .map(obj => obj.balance)
+            .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+
+        let totalIn = numeral(salesAccAmount).add(directIncomeAmount).add(indirectIncomeAmount).value();
+        let totalExp = numeral(costOfSalesAmount).add(directExpAmount).add(indirectExpAmount).value();
+        return numeral(totalIn).subtract(totalExp).value();
+    }
+
+	const buildAssetLiabSection = (key, i, type) => {
+        return <div className="row p-3 mt-2" key={i + key}>
+            <div className='mt-2 border py-4 px-5 bg-white-subtle rounded-4' style={{ boxShadow: "black 3px 2px 5px" }}>
+                <div className="d-flex flex-row flex-wrap justify-content-between">
+                    <h5 className="paytone-one fw-bold" style={{color: '#057415ff'}}>{key}</h5>
+                    <div className="d-flex flex-column">
+                        <h5>Debit</h5>
+                        <h3>{numeral(getGroup(key).drAmount).format('₦0,0.00')}</h3>
+                    </div>
+                    <div className="d-flex flex-column">
+                        <h5>Credit</h5>
+                        <h3>{numeral(getGroup(key).crAmount).format('₦0,0.00')}</h3>
+                    </div>
+                </div>
+                <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Debit</th>
+                                <th className='text-danger'>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {type === 'assets' ? assets[key]?.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.drAmount).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.crAmount).format('₦0,0.00')}</td>
+                                </tr>
+                            )) : liabilities[key]?.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.drAmount).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.crAmount).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            </div>
+        </div>
+    }
+
+	const buildProfitLossSection = (key, i) => {
+        return <div className="row p-3" key={i + key}>
+            <div className='mt-2 border py-4 px-5 bg-white-subtle rounded-4' style={{ boxShadow: "black 3px 2px 5px" }}>
+                <div className="d-flex flex-row flex-wrap justify-content-between">
+                    <h5 className="paytone-one fw-bold" style={{color: '#057415ff'}}>{key}</h5>
+                    <div className="d-flex flex-row flex-wrap gap-4">
+                        <div className="d-flex flex-column">
+                            <h5>Debit</h5>
+                            <h3>{numeral(getGroup(key).drAmount).format('₦0,0.00')}</h3>
+                        </div>
+                        <div className="d-flex flex-column">
+                            <h5>Credit</h5>
+                            <h3>{numeral(getGroup(key).crAmount).format('₦0,0.00')}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div style={{ maxHeight: "350px", overflow: 'scroll' }}>
+                    <Table id="myTable" className="rounded-2" striped hover responsive>
+                        <thead>
+                            <tr className="shadow-sm">
+                                <th className='text-danger'>Description</th>
+                                <th className='text-danger'>Debit</th>
+                                <th className='text-danger'>Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {currentProfitLoss[key]?.map((_datum, index) => (
+                                <tr className='' key={index}>
+                                    <td>{_datum.ledgerName}</td>
+                                    <td>{numeral(_datum.drAmount).format('₦0,0.00')}</td>
+                                    <td>{numeral(_datum.crAmount).format('₦0,0.00')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
+            </div>
+        </div>
+    }
+
     return (
         <div style={{minHeight: '75vh'}} className='container'>
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
@@ -104,11 +277,32 @@ const TrialBalance = () => {
             <div className="row p-3">
                 <StartEndDateSearch networkRequest={networkRequest} fnSearch={fnSearch} />
             </div>
+            {Object.keys(assets).map((key, idx) => {
+                addGroup(assets, key, 'assets');
+                return buildAssetLiabSection(key, idx, 'assets');
+            })}
+            {Object.keys(currentProfitLoss).map((key, idx) => {
+                addGroup(currentProfitLoss, key, 'currentProfitLoss');
+                return buildProfitLossSection(key, idx);
+            })}
+            {Object.keys(liabilities).map((key, idx) => {
+                addGroup(liabilities, key, 'liabilities');
+                return buildAssetLiabSection(key, idx, 'liabilities');
+            })}
 
             <hr />
             <div className="d-flex flex-row flex-wrap justify-content-between">
                 <h3 className="paytone-one fw-bold" style={{color: '#8a2be2'}}>Grand Total</h3>
-                <h2>{nettProfit}</h2>
+                <div className="d-flex flex-row flex-wrap gap-4">
+                    <div className="d-flex flex-column">
+                        <h5>Debit</h5>
+                        <h3>{numeral(grandTotal().drAmount).format('₦0,0.00')}</h3>
+                    </div>
+                    <div className="d-flex flex-column">
+                        <h5>Credit</h5>
+                        <h3>{numeral(grandTotal().crAmount).format('₦0,0.00')}</h3>
+                    </div>
+                </div>
             </div>
         </div>
     )

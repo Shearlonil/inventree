@@ -56,9 +56,29 @@ export const FinanceProvider = ({ children }) => {
         };
     }
 
+    const grandTotal = () => {
+        /*
+            for (let [key, value] of map) {
+                console.log(`${key} = ${value}`);
+            }
+        */
+        let cr = numeral(0);
+        let dr = numeral(0);
+        let balance = numeral(0);
+        map.forEach(obj => {
+            dr = numeral(dr).add(obj.drAmount);
+            cr = numeral(cr).add(obj.crAmount);
+            balance = numeral(balance).add(obj.balance);
+        });
+        return {
+            crAmount: cr.value(),
+            drAmount: dr.value(),
+            balance: balance.value()
+        };
+    }
+
     const clear = () => {
-        map.clear();
-        setMap(map);
+        setMap(new Map());
     }
 
     const value = useMemo(
@@ -66,6 +86,7 @@ export const FinanceProvider = ({ children }) => {
             addGroup,
             getGroup,
             getChartSummary,
+            grandTotal,
             clear,
         }),
         [map]

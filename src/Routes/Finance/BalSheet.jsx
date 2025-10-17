@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import numeral from "numeral";
@@ -25,21 +25,26 @@ const BalSheet = () => {
     const [assets, setAssets] = useState({});
     const [liabilities, setLiabilities] = useState({});
 
-    const [assetsAmountsArr, setAssetsAmountsArr] = useState([]);
-    const [liabilitiesAmountsArr, setLiabilitiesAmountsArr] = useState([]);
-
     const offCanvasMenuItems = [
         { label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
         { label: "Export to Excel", onClickParams: {evtName: 'xlsxExport'} },
     ];
 
+    useEffect( () => {
+        if(user.hasAuth('FINANCE')){
+            clear();
+        }else {
+            toast.error("Account doesn't support viewing this page. Please contact your supervisor");
+            navigate('/');
+        }
+    }, []);
 
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
                 clear();
-                setAssets([]);
-                setLiabilities([]);
+                setAssets({});
+                setLiabilities({});
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
@@ -171,7 +176,6 @@ const BalSheet = () => {
     }
 
 	const buildSection = (key, i, type) => {
-        console.log(getGroup(key));
         return <div className="row p-3 mt-2" key={i + key}>
             <div className="d-flex flex-row flex-wrap justify-content-between">
                 <h5 className="paytone-one fw-bold" style={{color: '#057415ff'}}>{key}</h5>

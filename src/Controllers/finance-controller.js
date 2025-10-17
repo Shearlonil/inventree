@@ -20,6 +20,10 @@ const balSheet = async (startDate, endDate) => {
     return await httpService.post(`/api/finance/bal-sheet`, { startDate, endDate });
 }
 
+const trialBal = async (startDate, endDate) => {
+    return await httpService.post(`/api/finance/trial-bal`, { startDate, endDate });
+}
+
 const getIncomeExpVoucherDetails = async (name, startDate, endDate) => {
     return await httpService.post(`/api/finance/voucher/income-exp/${name}`, { startDate, endDate });
 }
@@ -84,6 +88,7 @@ export default {
     tradingAcc,
     profitLossAcc,
     balSheet,
+    trialBal,
     getIncomeExpVoucherDetails,
     createIncomeExpVoucher,
     updateIncomeExpVoucher,
