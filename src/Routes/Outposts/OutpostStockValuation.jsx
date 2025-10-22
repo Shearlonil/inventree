@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
-import { object, date, ref } from "yup";
+import { object, date } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
-import { format } from "date-fns";
+import { format, isPast, subDays } from "date-fns";
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 import numeral from 'numeral';
@@ -42,7 +42,10 @@ const OutpostStockValuation = () => {
         control,
         formState: { errors },
     } = useForm({
-        resolver: yupResolver(schema)
+        resolver: yupResolver(schema),
+        defaultValues: {
+            startDate: new Date(),
+        },
     });
 
     const dispensaryOffCanvasMenu = [
@@ -343,6 +346,14 @@ const OutpostStockValuation = () => {
         }
     }
 
+    /*  ref:    https://stackblitz.com/edit/disable-dates-datetime-react-app?file=src%2FApp.js
+                Also saved in data.js
+    */
+    const disablePastDt = current => {
+        const yesterday = subDays(current, -1);
+        return !isPast(yesterday);
+    };
+
     return (
         <div className='container my-4'>
             <div className="container-md mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 text-white align-items-center" >
@@ -354,8 +365,9 @@ const OutpostStockValuation = () => {
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    Generate Stock summary report with custom dates and export to Excel/PDF. View closing stock at any given date
+                    View selected Outpost Stock valuation for the current date and export to Excel/PDF.
                 </span>
+                <span className='fw-bold'>Please Note: The Average Account Valuation is used</span>
             </div>
             
             <div className="border py-4 px-5 bg-white-subtle rounded-4 my-4" style={{ boxShadow: "black 3px 2px 5px" }} >
@@ -391,11 +403,13 @@ const OutpostStockValuation = () => {
                                     timeFormat={false}
                                     closeOnSelect={true}
                                     dateFormat="DD/MM/YYYY"
+                                    isValidDate={disablePastDt}
                                     inputProps={{
                                         placeholder: "Choose date",
                                         className: "form-control",
                                         readOnly: true, // Optional: makes input read-only
                                     }}
+                                    value={field.value ? new Date(field.value) :  null}
                                     onChange={(date) => field.onChange(date ? date.toDate() : null) }
                                     /*	react-hook-form is unable to reset the value in the Datetime component because of the below bug.
                                         refs:

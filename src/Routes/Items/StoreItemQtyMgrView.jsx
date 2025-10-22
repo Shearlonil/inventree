@@ -104,7 +104,7 @@ const StoreItemQtyMgrView = () => {
             temp.creationDate = null;
             //  set unit unitStoreQty qty
             temp.unitStoreQty = entityToEdit.unitStoreQty;
-            temp.unitStockPrice = entityToEdit.unitStockPrice;
+            temp.unitStockPrice = numeral(entityToEdit.unitStockPrice).value();
             temp.packStockPrice = numeral(entityToEdit.packStockPrice).value();
             //  not needed but added for Spring validation
             temp.totalUnitSalesQty = 0;

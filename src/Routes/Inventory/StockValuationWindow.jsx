@@ -343,6 +343,7 @@ const StockValuationWindow = () => {
                 <span className='text-center m-1'>
                     Generate Stock summary report with custom dates and export to Excel/PDF. View closing stock at any given date
                 </span>
+                <span className='fw-bold'>Please Note: The Average Account Valuation is used</span>
 			</div>
             
             <div className="border py-4 px-5 bg-white-subtle rounded-4 my-4" style={{ boxShadow: "black 3px 2px 5px" }} >

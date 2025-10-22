@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
 import numeral from 'numeral';
+import jsPDF from 'jspdf';
+import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import { useAuth } from '../../app-context/auth-user-context';
 import financeController from '../../Controllers/finance-controller';
@@ -12,8 +14,10 @@ import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
 import handleErrMsg from '../../Utils/error-handler';
 import { useFinance } from '../../app-context/finance-context';
+import { clientDetails } from '../../../data';
 
 const TrialBalance = () => {
+    applyPlugin(jsPDF);
     const navigate = useNavigate();
         
     const { handleRefresh, logout, authUser } = useAuth();
@@ -25,7 +29,8 @@ const TrialBalance = () => {
     const [assets, setAssets] = useState({});
     const [liabilities, setLiabilities] = useState({});
     const [currentProfitLoss, setCurrentProfitLoss] = useState({});
-    const [nettProfit, setNettProfit] = useState(0);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
 
 	const offCanvasMenuItems = [
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
@@ -51,6 +56,8 @@ const TrialBalance = () => {
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
 
                 setNetworkRequest(true);
 
@@ -65,7 +72,7 @@ const TrialBalance = () => {
                     let val = profitLossCalc(response.data.accumulatedProfitLoss);
                     const profitLossOpeningBal = {
                         ledgerName: 'Opening Balance',
-                        //  dummy cr and dr amount because of map function in finance context
+                        //  If profit, Cr. If loss, Dr
                         crAmount: val > 0 ? val : 0,
                         drAmount: val < 0 ? val : 0,
                         balance: 0
@@ -101,11 +108,104 @@ const TrialBalance = () => {
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
             case 'pdfExport':
+                exportPDF();
                 break;
             case 'xlsxExport':
+                exportXLXS();
                 break;
         }
 	}
+
+    const exportPDF = () => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+
+        const client = `${clientDetails.storeName}`;
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Trial Balance ${period}`;
+        const xCoordinate = doc.internal.pageSize.width / 2; // Calculate the center of the page
+
+        doc.text(client, xCoordinate, 40, { align: 'center' }); // 40 is the Y-coordinate
+        doc.setFontSize(14);
+        doc.text("Trial Balance", xCoordinate, 60, { align: 'center' }); // 60 is the Y-coordinate
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(period, xCoordinate, 75, { align: 'center' }); // 70 is the Y-coordinate
+        
+        const arr = [];
+        const boldRows = [0];
+        {Object.keys(assets).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: numeral(getGroup(key).drAmount).format('₦0,0.00'),
+                crAmount: numeral(getGroup(key).crAmount).format('₦0,0.00'),
+            }
+            arr.push(temp);
+            arr.push(...assets[key]);
+
+            boldRows.push(arr.length);
+        })}
+
+        {Object.keys(currentProfitLoss).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: numeral(getGroup(key).drAmount).format('₦0,0.00'),
+                crAmount: numeral(getGroup(key).crAmount).format('₦0,0.00'),
+            }
+            arr.push(temp);
+            arr.push(...currentProfitLoss[key]);
+
+            boldRows.push(arr.length);
+        })}
+
+        {Object.keys(liabilities).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: numeral(getGroup(key).drAmount).format('₦0,0.00'),
+                crAmount: numeral(getGroup(key).crAmount).format('₦0,0.00'),
+            }
+            arr.push(temp);
+            arr.push(...liabilities[key]);
+
+            boldRows.push(arr.length);
+        })}
+
+        const gTotal = {
+            ledgerName: "Grand Total",
+            drAmount: numeral(grandTotal().drAmount).format('₦0,0.00'),
+            crAmount: numeral(grandTotal().crAmount).format('₦0,0.00'),
+        }
+        arr.push(gTotal);
+
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 80 },
+            showHead: 'firstPage',
+            body: arr,
+            head: [['Description', 'Debit', 'Credit']],
+            columns: [
+                { header: 'Description', dataKey: 'ledgerName' },
+                { header: 'Debit', dataKey: 'drAmount' },
+                { header: 'Credit', dataKey: 'crAmount' },
+            ],
+            didParseCell: (data) => {
+                console.log(data.cell.raw);
+                if (boldRows.includes(data.row.index)) {
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        });
+            
+        doc.save(`${title}` + fileExtension);
+    }
 
     const profitLossCalc = (obj) => {
         // cost of sales
@@ -222,15 +322,13 @@ const TrialBalance = () => {
             <div className='mt-2 border py-4 px-5 bg-white-subtle rounded-4' style={{ boxShadow: "black 3px 2px 5px" }}>
                 <div className="d-flex flex-row flex-wrap justify-content-between">
                     <h5 className="paytone-one fw-bold" style={{color: '#057415ff'}}>{key}</h5>
-                    <div className="d-flex flex-row flex-wrap gap-4">
-                        <div className="d-flex flex-column">
-                            <h5>Debit</h5>
-                            <h3>{numeral(getGroup(key).drAmount).format('₦0,0.00')}</h3>
-                        </div>
-                        <div className="d-flex flex-column">
-                            <h5>Credit</h5>
-                            <h3>{numeral(getGroup(key).crAmount).format('₦0,0.00')}</h3>
-                        </div>
+                    <div className="d-flex flex-column">
+                        <h5>Debit</h5>
+                        <h3>{numeral(getGroup(key).drAmount).format('₦0,0.00')}</h3>
+                    </div>
+                    <div className="d-flex flex-column">
+                        <h5>Credit</h5>
+                        <h3>{numeral(getGroup(key).crAmount).format('₦0,0.00')}</h3>
                     </div>
                 </div>
                 <div style={{ maxHeight: "350px", overflow: 'scroll' }}>

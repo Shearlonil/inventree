@@ -111,6 +111,70 @@ const SalesItemQtyMgrView = () => {
         }
     }, []);
 
+	const initialize = async () => {
+        try {
+            setNetworkRequest(true);
+            let response = await itemController.findById(id);
+            if(response && response.data){
+                setItem(response.data);
+            }
+            response = await qtyMgrController.findItemSalesQtyMgr(id);
+            if(response && response.data){
+                const data = [];
+                for (const key in response.data) {
+                    const qtyMgr = new QuantityManager();
+                    qtyMgr.id = key;
+                    qtyMgr.qtyPerPkg = response.data[key][0].qtyPerPkg;
+                    /*  setting a new Date instance here because of the DatePicker in rsuite used in table  */
+                    qtyMgr.expDate = response.data[key][0].expDate ? new Date(response.data[key][0].expDate) : null;
+                    qtyMgr.creationDate = format(response.data[key][0].creationDate, 'dd/MM/yyyy HH:mm:ss');
+                    qtyMgr.unitSalesQty = response.data[key][0].totalUnitQty;
+                    //  using stock prices in qtyMgr to represent sales prices :)
+                    qtyMgr.packStockPrice = response.data[key][0].packStock;
+                    qtyMgr.unitStockPrice = response.data[key][0].unitStock;
+
+                    //  to serve as children prop of qtyMgr to display in rsuite tree table
+                    const arr = [];
+                    let total = 0;
+                    response.data[key].forEach(child => {
+                        const mgr = new QuantityManager();
+                        mgr.id = key + ' -> ' + child.outpostSalesId;
+                        mgr.qtyPerPkg = child.qtyPerPkg;
+                        mgr.outpostName = child.outpostName;
+                        mgr.unitSalesQty = child.outpostSalesQty;
+                        total = numeral(total).add(child.outpostSalesQty).value();
+                        arr.push(mgr.toJSON());
+                    });
+                    qtyMgr.children = arr;
+                    if(numeral(total).difference(qtyMgr.unitSalesQty)){
+                        qtyMgr.faultFlag = true;
+                    }
+                    data.push(qtyMgr.toJSON());
+                }
+                setData(data);
+            }
+            setNetworkRequest(false);
+		} catch (error) {
+            setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return initialize();
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+    };
+
     const resetPage = () => {
 		setEntityToEdit(null);
         setConfirmDialogEvtName(null);
@@ -325,70 +389,6 @@ const SalesItemQtyMgrView = () => {
 				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
 					await handleRefresh();
 					return updateQtyMgr();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-		}
-    };
-
-	const initialize = async () => {
-        try {
-            setNetworkRequest(true);
-            let response = await itemController.findById(id);
-            if(response && response.data){
-                setItem(response.data);
-            }
-            response = await qtyMgrController.findItemSalesQtyMgr(id);
-            if(response && response.data){
-                const data = [];
-                for (const key in response.data) {
-                    const qtyMgr = new QuantityManager();
-                    qtyMgr.id = key;
-                    qtyMgr.qtyPerPkg = response.data[key][0].qtyPerPkg;
-                    /*  setting a new Date instance here because of the DatePicker in rsuite used in table  */
-                    qtyMgr.expDate = response.data[key][0].expDate ? new Date(response.data[key][0].expDate) : null;
-                    qtyMgr.creationDate = format(response.data[key][0].creationDate, 'dd/MM/yyyy HH:mm:ss');
-                    qtyMgr.unitSalesQty = response.data[key][0].totalUnitQty;
-                    //  using stock prices in qtyMgr to represent sales prices :)
-                    qtyMgr.packStockPrice = response.data[key][0].packStock;
-                    qtyMgr.unitStockPrice = response.data[key][0].unitStock;
-
-                    //  to serve as children prop of qtyMgr to display in rsuite tree table
-                    const arr = [];
-                    let total = 0;
-                    response.data[key].forEach(child => {
-                        const mgr = new QuantityManager();
-                        mgr.id = key + ' -> ' + child.outpostSalesId;
-                        mgr.qtyPerPkg = child.qtyPerPkg;
-                        mgr.outpostName = child.outpostName;
-                        mgr.unitSalesQty = child.outpostSalesQty;
-                        total = numeral(total).add(child.outpostSalesQty).value();
-                        arr.push(mgr.toJSON());
-                    });
-                    qtyMgr.children = arr;
-                    if(numeral(total).difference(qtyMgr.unitSalesQty)){
-                        qtyMgr.faultFlag = true;
-                    }
-                    data.push(qtyMgr.toJSON());
-                }
-                setData(data);
-            }
-            setNetworkRequest(false);
-		} catch (error) {
-            setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
 				}
 				// Incase of 401 Unauthorized, navigate to 404
 				if(error.response?.status === 401){
