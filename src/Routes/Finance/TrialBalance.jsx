@@ -5,7 +5,9 @@ import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
 import numeral from 'numeral';
 import jsPDF from 'jspdf';
-import { applyPlugin, autoTable } from 'jspdf-autotable'
+import { applyPlugin } from 'jspdf-autotable'
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
 
 import { useAuth } from '../../app-context/auth-user-context';
 import financeController from '../../Controllers/finance-controller';
@@ -122,7 +124,6 @@ const TrialBalance = () => {
         const orientation = "portrait"; // portrait or landscape
         const fileExtension = ".pdf";
 
-        const marginLeft = 40;
         const doc = new jsPDF(orientation, unit, size);
 
         doc.setFontSize(16);
@@ -197,7 +198,6 @@ const TrialBalance = () => {
                 { header: 'Credit', dataKey: 'crAmount' },
             ],
             didParseCell: (data) => {
-                console.log(data.cell.raw);
                 if (boldRows.includes(data.row.index)) {
                     data.cell.styles.fontStyle = 'bold';
                 }
@@ -205,6 +205,80 @@ const TrialBalance = () => {
         });
             
         doc.save(`${title}` + fileExtension);
+    }
+
+    const exportXLXS = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Trial Balance ${period}`;
+
+        const Heading = [ {ledgerName: "Description", drAmount: "Debit", crAmount: "Credit" } ];
+
+        const arr = [];
+        const temp = [];
+        {Object.keys(assets).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: "",
+                crAmount: "",
+            }
+            arr.push(temp);
+            arr.push(...assets[key]);
+        })}
+
+        {Object.keys(currentProfitLoss).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: "",
+                crAmount: "",
+            }
+            arr.push(temp);
+            arr.push(...currentProfitLoss[key]);
+        })}
+
+        {Object.keys(liabilities).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: "",
+                crAmount: "",
+            }
+            arr.push(temp);
+            arr.push(...liabilities[key]);
+        })}
+        arr.forEach(d => {
+            delete d.id;
+            delete d.ledgerId;
+            delete d.ledgerVchId;
+            delete d.balance;
+            delete d.date;
+            delete d.description;
+            temp.push(d);
+        });
+        const wscols = [
+            { wch: Math.max(...temp.map(datum => datum.ledgerName.length)) },
+            { wch: 15 },
+            { wch: 15 }
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["ledgerName", "drAmount", "crAmount"
+            ],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["ledgerName", "drAmount", "crAmount"
+            ],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${title}` + fileExtension);
     }
 
     const profitLossCalc = (obj) => {

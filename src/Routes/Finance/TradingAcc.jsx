@@ -4,6 +4,10 @@ import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
 import numeral from 'numeral';
+import jsPDF from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable'
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
 
 import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
@@ -11,14 +15,18 @@ import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import financeController from '../../Controllers/finance-controller';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
+import { clientDetails } from '../../../data';
 
 const TradingAcc = () => {
+    applyPlugin(jsPDF);
     const navigate = useNavigate();
         
     const { handleRefresh, logout, authUser } = useAuth();
     const user = authUser();
             
     const [networkRequest, setNetworkRequest] = useState(false);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
 
     const [salesAcc, setSalesAcc] = useState([]);
     const [salesAccAmount, setSalesAccAmount] = useState(0);
@@ -33,6 +41,8 @@ const TradingAcc = () => {
     const [directExpAmount, setDirectExpAmount] = useState(0);
 
     const [grossProfit, setGrossProfit] = useState(0);
+    const [boldRows, setBoldRows] = useState([]);
+    const [pdfContent, setPdfContent] = useState([]);
 
 	const offCanvasMenuItems = [
 		{ label: "Export to PDF", onClickParams: {evtName: 'pdfExport'} },
@@ -56,11 +66,16 @@ const TradingAcc = () => {
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
+
 
                 setNetworkRequest(true);
 
                 const response = await financeController.tradingAcc(startDate, endDate);
                 if(response && response.data){
+                    const arr = [];
+                    const boldRows = [0];
                     // cost of sales
                     const costOfSalesArr = [...response.data.costOfSales];
                     // direct expenses
@@ -88,27 +103,6 @@ const TradingAcc = () => {
                         costOfSalesArr.push(purchases);
                     }
 
-                    // direct income
-                    const directIncomeData = response.data.directIncome;
-                    const directIncomeAmount = directIncomeData
-                        .map(obj => obj.balance)
-                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
-                    setDirectIncome([...directIncomeData]);
-                    setDirectIncomeAmount(directIncomeAmount);
-
-                    // cost of sales
-                    costOfSalesArr.sort((a, b) => a.id - b.id);
-                    setCostOfSales(costOfSalesArr);
-                    const costOfSalesAmount = numeral(costOfSalesArr[0].balance).add(costOfSalesArr[1].balance).subtract(costOfSalesArr[2].balance).value();
-                    setCostOfSalesAmount(costOfSalesAmount);
-
-                    // direct expenses
-                    setDirectExp([...directExpData]);
-                    const directExpAmount = directExpData
-                        .map(obj => obj.balance)
-                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
-                    setDirectExpAmount(directExpAmount);
-
                     // sales account
                     const salesAccData = response.data.salesAccounts;
                     setSalesAcc([...salesAccData]);
@@ -116,10 +110,77 @@ const TradingAcc = () => {
                         .map(obj => obj.balance)
                         .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
                     setSalesAccAmount(salesAccAmount);
+                    const tempSalesAcc = {
+                        ledgerName: "Sales Accounts",
+                        drAmount: "",
+                        crAmount: numeral(salesAccAmount).format('₦0,0.00'),
+                    }
+                    arr.push(tempSalesAcc);
+                    arr.push(...salesAccData);
+
+                    boldRows.push(arr.length);
+
+                    // direct income
+                    const directIncomeData = response.data.directIncome;
+                    const directIncomeAmount = directIncomeData
+                        .map(obj => obj.balance)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+                    setDirectIncome([...directIncomeData]);
+                    setDirectIncomeAmount(directIncomeAmount);
+                    const tempDirectIncome = {
+                        ledgerName: "Direct Income",
+                        drAmount: "",
+                        crAmount: numeral(directIncomeAmount).format('₦0,0.00'),
+                    }
+                    arr.push(tempDirectIncome);
+                    arr.push(...directIncomeData);
+
+                    boldRows.push(arr.length);
+
+                    // cost of sales
+                    costOfSalesArr.sort((a, b) => a.id - b.id);
+                    setCostOfSales(costOfSalesArr);
+                    const costOfSalesAmount = numeral(costOfSalesArr[0].balance).add(costOfSalesArr[1].balance).subtract(costOfSalesArr[2].balance).value();
+                    setCostOfSalesAmount(costOfSalesAmount);
+                    const tempCostOfSales = {
+                        ledgerName: "Cost Of Sales",
+                        drAmount: "",
+                        crAmount: numeral(costOfSalesAmount).format('₦0,0.00'),
+                    }
+                    arr.push(tempCostOfSales);
+                    arr.push(...costOfSalesArr);
+
+                    boldRows.push(arr.length);
+
+                    // direct expenses
+                    setDirectExp([...directExpData]);
+                    const directExpAmount = directExpData
+                        .map(obj => obj.balance)
+                        .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+                    setDirectExpAmount(directExpAmount);
+                    const tempDirectExp = {
+                        ledgerName: "Direct Expenses",
+                        drAmount: "",
+                        crAmount: numeral(directExpAmount).format('₦0,0.00'),
+                    }
+                    arr.push(tempDirectExp);
+                    arr.push(...directExpData);
+
+                    boldRows.push(arr.length);
 
                     let totalIn = numeral(salesAccAmount).add(directIncomeAmount).value();
                     let totalExp = numeral(costOfSalesAmount).add(directExpAmount).value();
-                    setGrossProfit(numeral(totalIn).subtract(totalExp).value());
+                    const gp = numeral(totalIn).subtract(totalExp).value();
+                    setGrossProfit(gp);
+                    
+                    const grossProfit = {
+                        ledgerName: "Gross Profit",
+                        drAmount: "",
+                        crAmount: numeral(gp).format('₦0,0.00'),
+                    }
+                    arr.push(grossProfit);
+                    setBoldRows(boldRows);
+                    setPdfContent(arr);
                 }
                 setNetworkRequest(false);
             }
@@ -160,11 +221,101 @@ const TradingAcc = () => {
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
             case 'pdfExport':
+                exportPDF();
                 break;
             case 'xlsxExport':
+                exportXLXS();
                 break;
         }
 	}
+
+    const exportPDF = () => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+
+        const client = `${clientDetails.storeName}`;
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Trading Account ${period}`;
+        const xCoordinate = doc.internal.pageSize.width / 2; // Calculate the center of the page
+
+        doc.text(client, xCoordinate, 40, { align: 'center' }); // 40 is the Y-coordinate
+        doc.setFontSize(14);
+        doc.text("Trading Account", xCoordinate, 60, { align: 'center' }); // 60 is the Y-coordinate
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(period, xCoordinate, 75, { align: 'center' }); // 70 is the Y-coordinate
+
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 80 },
+            showHead: 'firstPage',
+            body: pdfContent,
+            // head: [['Description', 'Debit', 'Credit']],
+            columns: [
+                { dataKey: 'ledgerName' },
+                { dataKey: 'balance' },
+                { dataKey: 'crAmount' },
+            ],
+            didParseCell: (data) => {
+                if (boldRows.includes(data.row.index)) {
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        });
+            
+        doc.save(`${title}` + fileExtension);
+    }
+
+    const exportXLXS = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Trading Account ${period}`;
+
+        const Heading = [ {ledgerName: "", balance: "", crAmount: "" } ];
+
+        const temp = [];
+        pdfContent.forEach(d => {
+            delete d.id;
+            delete d.ledgerId;
+            delete d.ledgerVchId;
+            delete d.date;
+            delete d.description;
+            delete d.drAmount;
+            temp.push(d);
+        });
+        const wscols = [
+            { wch: Math.max(...temp.map(datum => datum.ledgerName.length)) },
+            { wch: 15 },
+            { wch: 15 }
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["ledgerName", "balance", "crAmount"
+            ],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["ledgerName", "balance", "crAmount"
+            ],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${title}` + fileExtension);
+    }
 
     return (
         <div style={{minHeight: '75vh'}} className='container'>

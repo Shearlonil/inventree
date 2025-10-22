@@ -15,8 +15,8 @@ export const FinanceProvider = ({ children }) => {
         let dr = numeral(0);
         let balance = chart[groupNameKey]
             .map(obj => {
-                dr = numeral(dr).add(obj.drAmount);
-                cr = numeral(cr).add(obj.crAmount);
+                dr = numeral(dr).add(obj?.drAmount);
+                cr = numeral(cr).add(obj?.crAmount);
                 return obj.balance;
             })
             .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
@@ -44,8 +44,8 @@ export const FinanceProvider = ({ children }) => {
         const arr = [];
         map.forEach((val, key) => val.chart.toLowerCase() === chartName.toLowerCase() ? arr.push(val) : '');
         let balance = arr.map(obj => {
-                dr = numeral(dr).add(obj.drAmount);
-                cr = numeral(cr).add(obj.crAmount);
+                dr = numeral(dr).add(obj?.drAmount);
+                cr = numeral(cr).add(obj?.crAmount);
                 return obj.balance;
             })
             .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);

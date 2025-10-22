@@ -4,6 +4,10 @@ import { toast } from "react-toastify";
 import numeral from "numeral";
 import { format } from "date-fns";
 import { Table } from "react-bootstrap";
+import jsPDF from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable'
+import FileSaver from 'file-saver';
+import * as XLSX from 'xlsx';
 
 import { useAuth } from "../../app-context/auth-user-context";
 import financeController from "../../Controllers/finance-controller";
@@ -12,8 +16,10 @@ import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import SVG from "../../assets/Svg";
 import StartEndDateSearch from "../../Components/StartEndDateSearch";
 import { useFinance } from "../../app-context/finance-context";
+import { clientDetails } from "../../../data";
 
 const BalSheet = () => {
+    applyPlugin(jsPDF);
     const navigate = useNavigate();
     
     const { handleRefresh, logout, authUser } = useAuth();
@@ -21,6 +27,8 @@ const BalSheet = () => {
     const user = authUser();
             
     const [networkRequest, setNetworkRequest] = useState(false);
+    const [startDate, setStartDate] = useState(new Date());
+    const [endDate, setEndDate] = useState(new Date());
 
     const [assets, setAssets] = useState({});
     const [liabilities, setLiabilities] = useState({});
@@ -48,6 +56,8 @@ const BalSheet = () => {
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                setStartDate(startDate);
+                setEndDate(endDate);
 
                 setNetworkRequest(true);
 
@@ -103,10 +113,158 @@ const BalSheet = () => {
     const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
         switch (onclickParams.evtName) {
             case 'pdfExport':
+                exportPDF();
                 break;
             case 'xlsxExport':
+                exportXLXS();
                 break;
         }
+    }
+
+    const exportPDF = () => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+
+        const client = `${clientDetails.storeName}`;
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Balance Sheet ${period}`;
+        const xCoordinate = doc.internal.pageSize.width / 2; // Calculate the center of the page
+
+        doc.text(client, xCoordinate, 40, { align: 'center' }); // 40 is the Y-coordinate
+        doc.setFontSize(14);
+        doc.text("Balance Sheet", xCoordinate, 60, { align: 'center' }); // 60 is the Y-coordinate
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(period, xCoordinate, 75, { align: 'center' }); // 70 is the Y-coordinate
+        
+        const arr = [];
+        const boldRows = [0];
+        {Object.keys(assets).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: "",
+                crAmount: numeral(getGroup(key).balance).format('₦0,0.00'),
+            }
+            arr.push(temp);
+            arr.push(...assets[key]);
+
+            boldRows.push(arr.length);
+        })}
+
+        const assetTotal = {
+            ledgerName: "Total",
+            drAmount: "",
+            crAmount: numeral(getChartSummary('assets').balance).format('₦0,0.00'),
+        }
+        arr.push(assetTotal);
+
+        {Object.keys(liabilities).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                drAmount: "",
+                crAmount: numeral(getGroup(key).balance).format('₦0,0.00'),
+            }
+            arr.push(temp);
+            arr.push(...liabilities[key]);
+
+            boldRows.push(arr.length);
+        })}
+
+        const liabilitiesTotal = {
+            ledgerName: "Total",
+            drAmount: "",
+            crAmount: numeral(getChartSummary('liabilities').balance).format('₦0,0.00'),
+        }
+        arr.push(liabilitiesTotal);
+
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 80 },
+            showHead: 'firstPage',
+            body: arr,
+            // head: [['Description', 'Debit', 'Credit']],
+            columns: [
+                { dataKey: 'ledgerName' },
+                { dataKey: 'balance' },
+                { dataKey: 'crAmount' },
+            ],
+            didParseCell: (data) => {
+                if (boldRows.includes(data.row.index)) {
+                    data.cell.styles.fontStyle = 'bold';
+                }
+            }
+        });
+            
+        doc.save(`${title}` + fileExtension);
+    }
+    
+    const exportXLXS = () => {
+        //  ref: https://codesandbox.io/p/sandbox/react-export-excel-wrdew?file=%2Fsrc%2FApp.js
+
+        const fileType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8";
+        const fileExtension = ".xlsx";
+        const period = `${format(new Date(startDate), "dd/MM/yyyy")} - ${format(new Date(endDate), "dd/MM/yyyy")}`;
+        const title = `Balance Sheet ${period}`;
+
+        const Heading = [ {ledgerName: "", balance: "", crAmount: "" } ];
+
+        const arr = [];
+        const temp = [];
+        {Object.keys(assets).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                crAmount: getGroup(key).balance,
+            }
+            arr.push(temp);
+            arr.push(...assets[key]);
+        })}
+
+        {Object.keys(liabilities).forEach(key => {
+            const temp = {
+                ledgerName: key,
+                crAmount: getGroup(key).balance,
+            }
+            arr.push(temp);
+            arr.push(...liabilities[key]);
+        })}
+        arr.forEach(d => {
+            delete d.id;
+            delete d.ledgerId;
+            delete d.ledgerVchId;
+            delete d.date;
+            delete d.description;
+            delete d.drAmount;
+            temp.push(d);
+        });
+        const wscols = [
+            { wch: Math.max(...temp.map(datum => datum.ledgerName.length)) },
+            { wch: 15 },
+            { wch: 15 }
+        ];
+        const ws = XLSX.utils.json_to_sheet(Heading, {
+            header: ["ledgerName", "balance", "crAmount"
+            ],
+            skipHeader: true,
+            origin: 0 //ok
+        });
+        ws["!cols"] = wscols;
+        XLSX.utils.sheet_add_json(ws, temp, {
+            header: ["ledgerName", "balance", "crAmount"
+            ],
+            skipHeader: true,
+            origin: -1 //ok
+        });
+        const wb = { Sheets: { data: ws }, SheetNames: ["data"] };
+        const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        const finalData = new Blob([excelBuffer], { type: fileType });
+        FileSaver.saveAs(finalData, `${title}` + fileExtension);
     }
 
     const profitLossCalc = (obj) => {
