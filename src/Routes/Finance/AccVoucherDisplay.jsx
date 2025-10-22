@@ -6,6 +6,8 @@ import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
 import { toast } from "react-toastify";
 import { format, isAfter } from 'date-fns';
+import jsPDF from 'jspdf';
+import { applyPlugin } from 'jspdf-autotable'
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import ledgerController from "../../Controllers/ledger-controller";
@@ -21,8 +23,10 @@ import InputDialog from "../../Components/DialogBoxes/InputDialog";
 import { LedgerTransaction } from "../../Entities/LedgerTransaction";
 import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
 import { OribitalLoading, ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
+import { clientDetails } from "../../../data";
 
 const AcctVoucherDisplay = () => {
+    applyPlugin(jsPDF);
     const navigate = useNavigate();
     const { vch_id } = useParams();
         
@@ -174,6 +178,7 @@ const AcctVoucherDisplay = () => {
                 setShowSingleDateDialog(true);
                 break;
             case 'pdfExport':
+                exportPDF();
                 break;
         }
 	}
@@ -200,7 +205,7 @@ const AcctVoucherDisplay = () => {
         setShowConfirmModal(false);
         switch (confirmDialogEvtName) {
             case 'deleteVch':
-                console.log('deleting', vchId);
+                delVch();                
                 break;
             case "save":
                 saveTransactions();
@@ -314,6 +319,36 @@ const AcctVoucherDisplay = () => {
         }
     }
 
+    const delVch = async () => {
+        try {
+            setNetworkRequest(true);
+            await financeController.deleteLedgerVoucher(vchId);
+			setLedgerTransactions([]);
+            setTotalDrAmount(0);
+            setTotalCrAmount(0);
+            setVchId(0);
+            setNetworkRequest(false);
+        } catch (error) {
+            setNetworkRequest(false);
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return delVch();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    }
+
 	const idSearch = async (id) => {
 		try {
 			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
@@ -326,6 +361,8 @@ const AcctVoucherDisplay = () => {
 			}
 			setNetworkRequest(true);
 			setLedgerTransactions([]);
+            setTotalDrAmount(0);
+            setTotalCrAmount(0);
 
 			setReportTitle(`Purchases Report with ID: ${id}`);
 			setFilename(`Purchases Report with ID: ${id}`);
@@ -367,6 +404,46 @@ const AcctVoucherDisplay = () => {
 			setNetworkRequest(false);
 		}
 	}
+
+    const exportPDF = () => {
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+
+        const client = `${clientDetails.storeName}`;
+        const title = `Accounting Voucher`;
+        const xCoordinate = doc.internal.pageSize.width / 2; // Calculate the center of the page
+
+        doc.text(client, xCoordinate, 40, { align: 'center' }); // 40 is the Y-coordinate
+        doc.setFontSize(14);
+        doc.text("Accounting Voucher", xCoordinate, 60, { align: 'center' }); // 60 is the Y-coordinate
+        doc.setFont(undefined, 'normal');
+        doc.setFontSize(10);
+        doc.text(`No. ${vchId}`, xCoordinate, 75, { align: 'center' }); // 70 is the Y-coordinate
+
+        doc.autoTable({
+            styles: { theme: 'striped' },
+            margin: { top: 80 },
+            showHead: 'firstPage',
+            body: ledgerTransactions,
+            // head: [['Description', 'Debit', 'Credit']],
+            columns: [
+                { header: 'Ledger', dataKey: 'ledgerName' },
+                { header: 'Description', dataKey: 'description' },
+                { header: 'Debit', dataKey: 'drAmount' },
+                { header: 'Credit', dataKey: 'crAmount' },
+                { header: 'Date', dataKey: 'date' },
+            ],
+        });
+            
+        doc.save(`${title}` + fileExtension);
+    }
         
     //  private helper function to calculate total debit and credit
     const calcTotalAmounts = (ledgerTransactions) => {
