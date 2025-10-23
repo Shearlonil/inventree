@@ -380,9 +380,7 @@ const VendorsWindow = () => {
     return (
         <div className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
-                <div>
-                    <OffcanvasMenu menuItems={vendorsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
-                </div>
+                <OffcanvasMenu menuItems={vendorsOffCanvasMenu} menuItemClick={handleOffCanvasMenuItemClick} variant='danger' />
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
                         <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Vendors</span>

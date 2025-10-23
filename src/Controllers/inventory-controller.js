@@ -166,6 +166,10 @@ const outpostStockValuation = async (startDate, outpost_id, tract_id) => {
     });
 };
 
+const qtyTransfer = async (item) => {
+    return await httpService.put(`/api/inventory/journal/transfer`, item);
+}
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -192,4 +196,5 @@ export default {
     expiring,
     stockValuation,
     outpostStockValuation,
+    qtyTransfer,
 }
