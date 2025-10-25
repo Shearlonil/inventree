@@ -134,10 +134,11 @@ const QtyTransfer = () => {
             */
             const item = {
                 id: transferData.source_product.value.id,
-                itemName: transferData.transfor_to,
-                status: true,
+                itemName: transferData.transfer_to,
                 qty: transferData.quantity_val,
-                tractId: transferData.dest_product.value.id
+                tractId: transferData.dest_product.value.id,
+                status: true,
+                qtyType: 'null'
             }
             await inventoryController.qtyTransfer(item);
             reset();
@@ -192,7 +193,7 @@ const QtyTransfer = () => {
 	}
 
     return (
-        <div style={{minHeight: '75vh'}} className="container">
+        <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
