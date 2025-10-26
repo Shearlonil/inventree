@@ -13,6 +13,12 @@ const findItemsForMonoTransaction = async (id) => {
     return await httpService.get(`/api/items/transactions/mono`);
 }
 
+/*  fetch all active gross items for gross view (this includes items with 0 sales/store quantities. As long as the item is active. It is fetched 
+    irrespective of the quantity)*/
+const fetchActiveGrossItems = async () => {
+    return await httpService.get(`/api/items/gross/all`);
+}
+
 //  fetch in stock items for sales/shelf view
 const fetchInStockSalesItems = async () => {
     return await httpService.get(`/api/items/sales`);
@@ -25,7 +31,7 @@ const fetchInStockStoreItems = async () => {
 
 //  fetch in stock gross items for gross view
 const fetchInStockGrossItems = async () => {
-    return await httpService.get(`/api/items/gross`);
+    return await httpService.get(`/api/items/gross/stock`);
 }
 
 //  fetch out of stock items for sales/shelf view
@@ -105,6 +111,7 @@ const changePkg = async (id, pkgId) => {
 export default {
     findById,
     findItemsForMonoTransaction,
+    fetchActiveGrossItems,
     fetchInStockSalesItems,
     fetchInStockStoreItems,
     fetchInStockGrossItems,

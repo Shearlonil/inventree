@@ -170,6 +170,10 @@ const qtyTransfer = async (item) => {
     return await httpService.put(`/api/inventory/journal/transfer`, item);
 }
 
+const qtyAdjustment = async (item) => {
+    return await httpService.put(`/api/inventory/journal/adjust-qty`, item);
+}
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -197,4 +201,5 @@ export default {
     stockValuation,
     outpostStockValuation,
     qtyTransfer,
+    qtyAdjustment,
 }

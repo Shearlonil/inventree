@@ -60,6 +60,7 @@ import ProfitLossAcc from "./Routes/Finance/ProfitLossAcc";
 import Expiring from "./Routes/Items/Expiring";
 import BalSheet from "./Routes/Finance/BalSheet";
 import QtyTransfer from "./Routes/Inventory/stock-journal/QtyTransfer";
+import QtyAdjustment from "./Routes/Inventory/stock-journal/QtyAdjustment";
 
 function App() {
 	return (
@@ -91,6 +92,7 @@ function App() {
 				<Route path="/inventory" element={<ProtectedRoute />}>
 					<Route path={"purchases"} element={<PurchasesWindow />} />
 					<Route path={"journal/transfer"} element={<QtyTransfer />} />
+					<Route path={"journal/adjust-qty"} element={<QtyAdjustment />} />
 					<Route path={"stock-valuation"} element={<StockValuationWindow />} />
 					<Route path={"stock-age"} element={<AgeOfStocks />} />
 					<Route path={"outpost/stock-valuation/:outpost_id"} element={<OutpostStockValuation />} />

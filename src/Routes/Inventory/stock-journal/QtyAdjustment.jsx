@@ -8,7 +8,7 @@ import numeral from 'numeral';
 
 import { useAuth } from "../../../app-context/auth-user-context";
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
-import { qtyTransfer } from '../../../Utils/yup-schema-validator/stock-journal';
+import { qtyAdjustment } from '../../../Utils/yup-schema-validator/stock-journal';
 import handleErrMsg from '../../../Utils/error-handler';
 import SVG from '../../../assets/Svg';
 import { Form } from 'react-bootstrap';
@@ -17,7 +17,7 @@ import { Item } from '../../../Entities/Item';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import inventoryController from '../../../Controllers/inventory-controller';
 
-const QtyTransfer = () => {
+const QtyAdjustment = () => {
     const navigate = useNavigate();
             
     const { handleRefresh, logout, authUser } = useAuth();
@@ -40,12 +40,12 @@ const QtyTransfer = () => {
         control,
         formState: { errors },
     } = useForm({
-        resolver: yupResolver(qtyTransfer),
+        resolver: yupResolver(qtyAdjustment),
         defaultValues: {
             //  Set default selection
-			source_product: null,
-			dest_product: null,
-			quantity_val: 0,
+            source_product: null,
+            dest_product: null,
+            quantity_val: 0,
             source_store_qty: 0,
             source_sales_qty: 0,
             dest_store_qty: 0,
@@ -63,8 +63,8 @@ const QtyTransfer = () => {
         }
     }, []);
 
-	const initialize = async () => {
-		try {
+    const initialize = async () => {
+        try {
             setNetworkRequest(true);
             const response = await itemController.fetchActiveGrossItems();
             
@@ -79,29 +79,29 @@ const QtyTransfer = () => {
                     item.storeQty = i.storeQty;
                     arr.push(item);
                 } );
-				setItemOptions(arr.map( item => ({label: item.itemName, value: item})));
+                setItemOptions(arr.map( item => ({label: item.itemName, value: item})));
                 setItemsLoading(false);
             }
             setNetworkRequest(false);
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-		}
-	};
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return initialize();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
+    };
 
     //  Handle item selection change
     const handleSourceProductChange = (selectedItem) => {
@@ -109,17 +109,11 @@ const QtyTransfer = () => {
         setValue("source_store_qty", selectedItem.value.storeQty);
         setValue("source_sales_qty", selectedItem.value.qty);
     };
-
-    const handleDestProductChange = (selectedItem) => {
-        // Set default store quantity which is unit
-        setValue("dest_store_qty", selectedItem.value.storeQty);
-        setValue("dest_sales_qty", selectedItem.value.qty);
-    }
-	
-	const handleConfirmOK = async () => {
+    
+    const handleConfirmOK = async () => {
         setShowConfirmModal(false);
         try {
-			setNetworkRequest(true);
+            setNetworkRequest(true);
             /*  ItemDTO is used to receive this object on Java back-end.
                 itemName is used to hold transfor_to field,
                 tractId is used to hold destination product id
@@ -128,103 +122,94 @@ const QtyTransfer = () => {
             */
             const item = {
                 id: transferData.source_product.value.id,
-                itemName: transferData.transfer_to,
+                itemName: transferData.source_product.label,
                 qty: transferData.quantity_val,
-                tractId: transferData.dest_product.value.id,
                 status: true,
                 qtyType: 'null'
             }
-            await inventoryController.qtyTransfer(item);
-            /*  Update quantities for source and destination products
-                Start with source
-            */
+            // await inventoryController.qtyAdjustment(item);
+            /*  Update quantity   */
             let indexPos = itemOptions.findIndex(i => i.value.id === item.id);
             if(indexPos > -1){
-                let transferredQty = item.qty;
-                if(itemOptions[indexPos].value.storeQty > 0){
-                    const storeQty = itemOptions[indexPos].value.storeQty;
-                    const newStoreQty = Math.max(0, numeral(storeQty).subtract(transferredQty).value());
-                    itemOptions[indexPos].value.storeQty = newStoreQty;
-                    transferredQty = Math.max(0, numeral(transferredQty).subtract(storeQty).value());
-                }
-                if(transferredQty > 0){
-                    itemOptions[indexPos].value.qty -= transferredQty;
-                }
-            }
-            //  Update quantity for destination
-            indexPos = itemOptions.findIndex(i => i.value.id === item.tractId);
-            if(indexPos > -1){
-                if(item.itemName === 'store'){
-                    itemOptions[indexPos].value.storeQty += item.qty;
+                let newQty = item.qty;
+                const totalQty = numeral(transferData.source_sales_qty).add(transferData.source_store_qty).value();
+                if(totalQty > newQty){
+                    let diff = numeral(totalQty).subtract(newQty).value();
+                    //  quantity reduction
+                    if(itemOptions[indexPos].value.storeQty > 0){
+                        const storeQty = itemOptions[indexPos].value.storeQty;
+                        const newStoreQty = Math.max(0, numeral(storeQty).subtract(diff).value());
+                        itemOptions[indexPos].value.storeQty = newStoreQty;
+                        newQty = Math.max(0, numeral(diff).subtract(storeQty).value());
+                    }
+                    if(diff > 0){
+                        itemOptions[indexPos].value.qty -= diff;
+                    }
                 }else {
-                    itemOptions[indexPos].value.qty += item.qty;
+                    //  quantity increment
+                    itemOptions[indexPos].value.storeQty = newStoreQty;
                 }
             }
             reset();
-			setNetworkRequest(false);
-		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-		}
+            setNetworkRequest(false);
+        } catch (error) {
+            //	Incase of 500 (Invalid Token received!), perform refresh
+            try {
+                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                    await handleRefresh();
+                    return handleConfirmOK();
+                }
+                // Incase of 401 Unauthorized, navigate to 404
+                if(error.response?.status === 401){
+                    navigate('/404');
+                }
+                // display error message
+                toast.error(handleErrMsg(error).msg);
+                setNetworkRequest(false);
+            } catch (error) {
+                // if error while refreshing, logout and delete all cookies
+                logout();
+            }
+        }
     }
 
     const handleCloseModal = () => setShowConfirmModal(false);
 
     const onSubmit = async (data) => {
-        if(data.source_product.value.id === data.dest_product.value.id){
-            toast.error("Source and Destination cannot be same product");
-            return;
-        }
         const totalQty = numeral(data.source_sales_qty).add(data.source_store_qty).value();
-        if (numeral(data.quantity_val).value() > numeral(totalQty).value()) {
-            toast.error("Transfer quantity more than available quantity");
+        if (numeral(data.quantity_val).value() === numeral(totalQty).value()) {
+            toast.error("New quantity and total quantities are equal.");
             return;
         }
         setTransferData(data);
-        setDisplayMsg(`Transfer ${data.quantity_val} unit from ${data.source_product.label} to ${data.dest_product.label}`);
+        setDisplayMsg(`Set new quantity to ${data.quantity_val} unit for ${data.source_product.label}`);
         setShowConfirmModal(true);
     }
 
-	const reset = () => {
-		resetField('source_product');
-		resetField('dest_product');
-		resetField('quantity_val');
-		resetField('source_store_qty');
-		resetField('source_sales_qty');
-		resetField('dest_store_qty');
-		resetField('dest_sales_qty');
-		resetField('transfer_to');
-	}
+    const reset = () => {
+        resetField('source_product');
+        resetField('quantity_val');
+        resetField('source_store_qty');
+        resetField('source_sales_qty');
+    }
 
     return (
         <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
                 <div className="text-center d-flex">
                     <h2 className="display-6 p-3 mb-0">
-                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Transfer Of Materials</span>
+                        <span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Quantity Adjustment</span>
                         <img src={SVG.trolly_white} style={{ width: "50px", height: "50px" }} />
                     </h2>
                 </div>
                 <span className='text-center m-1'>
-                    Transfer quantities from one item to another
+                    Adjust item quantities as needed
                 </span>
                 <span className='text-center m-1'>
-                    NOTE: Store quantities are deducted first and if not enough, sales quanities are included.
+                    NOTE: In case of increment, store quantities are always used. If desired location is sales, then you can dispense from store.
+                </span>
+                <span className='text-center mb-1'>
+                    In case of decrement, store quantities are deducted first and if not enough, sales quanities are included.
                 </span>
             </div>
 
@@ -255,7 +240,7 @@ const QtyTransfer = () => {
                 </div>
 
                 <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Transfer:</p>
+                    <p className="h5">Quantity:</p>
                     <input
                         type="number"
                         className="form-control mb-2 shadow-sm"
@@ -268,7 +253,7 @@ const QtyTransfer = () => {
                 <div className="col-md-3 col-12 mb-3">
                     <p className="h5">Store Quantity:</p>
                     <input
-                        type="number"
+                        type="text"
                         className="form-control mb-2 shadow-sm"
                         placeholder=""
                         {...register("source_store_qty")}
@@ -286,74 +271,18 @@ const QtyTransfer = () => {
                         disabled
                     />
                 </div>
-            </div>
-
-            <div className="container row mx-auto my-4 p-3 rounded bg-light shadow border">
-                <h4 className="mb-4 text-primary fw-bold">Destination:-</h4>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Item:</p>
-                    <Controller
-                        name="dest_product"
-                        control={control}
-                        render={({ field: { onChange, value } }) => (
-                            <Select
-                                required
-                                placeholder="Select..."
-                                className="text-dark"
-                                options={itemOptions}
-                                isLoading={itemsLoading}
-                                value={value}
-                                onChange={(val) => {
-                                    onChange(val);
-                                    handleDestProductChange(val);
-                                }}
-                            />
-                        )}
-                    />
-                    <small className="text-danger">{errors.dest_product?.message}</small>
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Store Quantity:</p>
-                    <input
-                        type="text"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder=""
-                        {...register("dest_store_qty")}
-                        disabled
-                    />
-                    <Form.Check
-                        type="radio"
-                        label="Transfer to Store"
-                        value="store"
-                        {...register("transfer_to")}
-                        name="transfer_to"
-                    />
-                </div>
-
-                <div className="col-md-3 col-12 mb-3">
-                    <p className="h5">Sales Quantity:</p>
-                    <input
-                        type="text"
-                        className="form-control mb-2 shadow-sm"
-                        placeholder=""
-                        {...register("dest_sales_qty")}
-                        disabled
-                    />
-                    <Form.Check
-                        type="radio"
-                        label="Transfer to Sales"
-                        value="sales"
-                        {...register("transfer_to")}
-                        name="transfer_to"
-                    />
-                </div>
-
-                <div className={`col-md-3 col-12 mb-3 align-self-center ${networkRequest ? 'disabledDiv' : ''}`}>
-                    <button className="btn btn-outline-success w-100" onClick={handleSubmit(onSubmit)}>
-                        { (networkRequest) && <ThreeDotLoading color="green" size="small" /> }
-                        { (!networkRequest) && <span className="fs-5">Transfer</span> }
+            
+                <div className="d-flex">
+                    <button
+                        className={`btn btn-outline-success ms-auto ${networkRequest ? 'disabled' : ''}`}
+                        onClick={handleSubmit(onSubmit)}
+                    >
+                        <span className="d-flex gap-2 align-items-center px-4">
+                            <span className="fs-5">
+                                { (networkRequest) && <ThreeDotLoading color="green" size="small" /> }
+                                { (!networkRequest) && `Save` }
+                            </span>
+                        </span>
                     </button>
                 </div>
             </div>
@@ -367,4 +296,4 @@ const QtyTransfer = () => {
     )
 }
 
-export default QtyTransfer;
+export default QtyAdjustment;

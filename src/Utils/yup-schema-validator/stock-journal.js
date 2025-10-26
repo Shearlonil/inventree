@@ -1,6 +1,6 @@
 import * as yup from "yup";
 
-const schema = yup.object().shape({
+const qtyTransfer = yup.object().shape({
     source_product: yup.object().required("Select source product"),
     dest_product: yup.object().required("Select destination product"),
 
@@ -15,4 +15,14 @@ const schema = yup.object().shape({
         .oneOf(["store", "sales"], "Invalid destination selected"),
 });
 
-export { schema };
+const qtyAdjustment = yup.object().shape({
+    source_product: yup.object().required("Select source product"),
+
+    quantity_val: yup
+        .number()
+        .nullable()
+        .min(0, 'Quantity cannot be less than 0')
+        .required("Quantity is required"),
+});
+
+export { qtyTransfer, qtyAdjustment };

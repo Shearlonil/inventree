@@ -225,6 +225,44 @@ function NavBar() {
 									Dispensary
 								</NavDropdown.Item>}
 								<NavDropdown.Divider />
+								{user.hasAuth('EDIT_ITEM_QUANTITY') && <NavDropdown title="Stock Journal" className="ms-2" drop="end">
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
+											navigate("/inventory/journal/transfer");
+										}}
+										className={`nav-item ${
+											location.pathname === "/inventory/journal/transfer" &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										Transfer
+									</NavDropdown.Item>
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
+											navigate("/inventory/journal/adjust-qty");
+										}}
+										className={`nav-item ${
+											location.pathname === "/inventory/journal/adjust-qty" &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										Adjustment
+									</NavDropdown.Item>
+									<NavDropdown.Item 
+										onClick={() => {
+											handleNavSelect();
+											navigate("/inventory/journal/history");
+										}}
+										className={`nav-item ${
+											location.pathname === "/inventory/journal/history" &&
+											"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+										}`}
+									>
+										History
+									</NavDropdown.Item>
+								</NavDropdown>}
 								{user.hasAuth('REPORT_WINDOW') && <NavDropdown.Item 
 									onClick={() => {
 										handleNavSelect();
