@@ -127,27 +127,28 @@ const QtyAdjustment = () => {
                 status: true,
                 qtyType: 'null'
             }
-            // await inventoryController.qtyAdjustment(item);
+            await inventoryController.qtyAdjustment(item);
             /*  Update quantity   */
             let indexPos = itemOptions.findIndex(i => i.value.id === item.id);
             if(indexPos > -1){
                 let newQty = item.qty;
                 const totalQty = numeral(transferData.source_sales_qty).add(transferData.source_store_qty).value();
                 if(totalQty > newQty){
-                    let diff = numeral(totalQty).subtract(newQty).value();
                     //  quantity reduction
-                    if(itemOptions[indexPos].value.storeQty > 0){
-                        const storeQty = itemOptions[indexPos].value.storeQty;
+                    let diff = numeral(totalQty).subtract(newQty).value();
+                    const storeQty = itemOptions[indexPos].value.storeQty;
+                    if(storeQty > 0){
                         const newStoreQty = Math.max(0, numeral(storeQty).subtract(diff).value());
                         itemOptions[indexPos].value.storeQty = newStoreQty;
-                        newQty = Math.max(0, numeral(diff).subtract(storeQty).value());
+                        diff = Math.max(0, numeral(diff).subtract(storeQty).value());
                     }
                     if(diff > 0){
                         itemOptions[indexPos].value.qty -= diff;
                     }
                 }else {
                     //  quantity increment
-                    itemOptions[indexPos].value.storeQty = newStoreQty;
+                    let diff = numeral(newQty).subtract(totalQty).value();
+                    itemOptions[indexPos].value.storeQty += diff;
                 }
             }
             reset();
@@ -210,6 +211,7 @@ const QtyAdjustment = () => {
                 </span>
                 <span className='text-center mb-1'>
                     In case of decrement, store quantities are deducted first and if not enough, sales quanities are included.
+                    This further affects outpost quantities
                 </span>
             </div>
 

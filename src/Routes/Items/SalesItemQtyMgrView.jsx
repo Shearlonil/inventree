@@ -54,6 +54,8 @@ const SalesItemQtyMgrView = () => {
                 if(rowData.outpostName && index === 2){
                     return <EditableCell dataKey={objProps[index]} dataType="number" onChange={handleChange} onEdit={handleEdit} rowData={rowData} {...rest} />
                 }
+                /*
+                for updating total unit quantity of quantity manager. no longer needed
                 if(!rowData.outpostName && index === 2){
                     return <EditableCell 
                                 dataKey={objProps[index]} 
@@ -64,6 +66,7 @@ const SalesItemQtyMgrView = () => {
                                 {...rest}
                                 style={{ backgroundColor: rowData.faultFlag ? "red" : 'transparent', color: rowData.faultFlag ? 'white' : 'black' }} />
                 }
+                */
                 if(!rowData.outpostName && index === 4){
                     return (
                         <EditableCell 
@@ -331,6 +334,12 @@ const SalesItemQtyMgrView = () => {
             });
 
             child.packSalesQty = numeral(child.unitSalesQty).divide(child.qtyPerPkg).format('₦0,0.00');
+            // sync parent quantity manager's totalUnitSalesQty with total of all outpost sales quantities
+            const totalUnitSalesQty = parent.children
+                .map(child => child.unitSalesQty)
+                .reduce((currentVal, accumulator) => numeral(currentVal).add(accumulator).value(), 0);
+            parent.unitSalesQty = totalUnitSalesQty;
+            parent.packSalesQty = numeral(totalUnitSalesQty).divide(parent.qtyPerPkg).format('₦0,0.00');
             setData(temp);
 
             toast.info('Update successful');
