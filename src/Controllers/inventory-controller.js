@@ -174,6 +174,10 @@ const qtyAdjustment = async (item) => {
     return await httpService.put(`/api/inventory/journal/adjust-qty`, item);
 }
 
+const journalDateSearch = async (startDate, endDate) => {
+    return await httpService.post(`/api/inventory/journal/search/date`, { startDate, endDate });
+};
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -202,4 +206,5 @@ export default {
     outpostStockValuation,
     qtyTransfer,
     qtyAdjustment,
+    journalDateSearch,
 }

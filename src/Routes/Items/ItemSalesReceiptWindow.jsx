@@ -35,7 +35,6 @@ const ItemSalesReceiptWindow = () => {
     });
     
     const {
-        control,
         watch,
         formState: { errors },
     } = useForm({

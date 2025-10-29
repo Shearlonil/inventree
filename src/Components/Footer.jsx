@@ -30,7 +30,9 @@ const Footer = () => {
                 </div>
 
                 <ul className="nav col-12 col-md-2 justify-content-center align-items-center list-unstyled d-flex justify-space-around">
-                    <li className="ms-3"><a className="text-body-secondary" href="#"><BsWhatsapp size={30} /></a></li>
+                    <li className="ms-3">
+                        <a className="text-body-secondary" target="_blank" href="https://wa.me/+2348034262759"><BsWhatsapp size={30} /></a>
+                    </li>
                 </ul>
 
                 <ul className="nav col-12 col-md-1 justify-content-center align-items-center list-unstyled d-flex justify-space-around">
