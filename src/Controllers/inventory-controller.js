@@ -178,6 +178,14 @@ const journalDateSearch = async (startDate, endDate) => {
     return await httpService.post(`/api/inventory/journal/search/date`, { startDate, endDate });
 };
 
+const journalItemSearch = async (item_id) => {
+    return await httpService.get(`/api/inventory/journal/search/item/${item_id}`);
+};
+
+const journalUserSearch = async (username) => {
+    return await httpService.get(`/api/inventory/journal/search/user/${username}`);
+};
+
 export default {
     findUnverifiedStockRecById,
     commitStockRecById,
@@ -207,4 +215,6 @@ export default {
     qtyTransfer,
     qtyAdjustment,
     journalDateSearch,
+    journalItemSearch,
+    journalUserSearch,
 }

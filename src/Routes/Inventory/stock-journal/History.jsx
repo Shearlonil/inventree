@@ -3,6 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
+import FileSaver from 'file-saver';
+import jsPDF from 'jspdf';
+import { autoTable, applyPlugin } from 'jspdf-autotable'
 
 import SVG from '../../../assets/Svg'
 import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator'
@@ -18,15 +21,11 @@ import User from '../../../Entities/User';
 
 const History = () => {
     const navigate = useNavigate();
+    applyPlugin(jsPDF);
         
     const { handleRefresh, logout } = useAuth();
 
     const [networkRequest, setNetworkRequest] = useState(false);
-            
-    //	for pagination
-    const [pageSize] = useState(100);
-    const [totalItemsCount, setTotalItemsCount] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
     
     const [displayMsg, setDisplayMsg] = useState("");
     const [filename, setFilename] = useState("");
@@ -43,13 +42,14 @@ const History = () => {
     const [items, setItems] = useState([]);
     const [users, setUsers] = useState([]);
               
-    //  data returned from DataPagination
+    //  data displayed
     const [data, setData] = useState([]);
 
 	const offCanvasMenu = [
 		{ label: "Search By Date", onClickParams: {evtName: 'dateSearch'} },
 		{ label: "Search By Item", onClickParams: {evtName: 'itemSearch'} },
 		{ label: "Searh By User", onClickParams: {evtName: 'userSearch'} },
+		{ label: "Export To PDF", onClickParams: {evtName: 'pdfExport'} },
 	];
     
     useEffect( () => {
@@ -142,6 +142,10 @@ const History = () => {
                 setEntityOptions(users);
 				setShowDropDownModal(true);
                 break;
+            case 'pdfExport':
+                if(data.length > 0){
+                    pdfExport();
+                }
         }
 	}
 
@@ -160,11 +164,10 @@ const History = () => {
                 setStartDate(startDate);
                 setEndDate(endDate);
 
-                setFilename(`Receipts ${format(new Date(date.startDate), "dd/MM/yyyy")} - ${format(new Date(date.endDate), "dd/MM/yyyy")}`);
+                setFilename(`Stock Journal: ${format(new Date(date.startDate), "dd/MM/yyyy")} - ${format(new Date(date.endDate), "dd/MM/yyyy")}`);
                 
 				const response = await inventoryController.journalDateSearch(startDate, endDate);
 				if(response && response.data){
-                    const tableArr = [];
                     setData(response.data);
 				}
 				setNetworkRequest(false);
@@ -193,12 +196,112 @@ const History = () => {
 	const entitySearch = async (entity) => {
         switch (confirmDialogEvtName) {
             case 'itemSearch':
-                console.log('item search');
+                itemSearch(entity);
                 break;
             case 'userSearch':
-                console.log('user search');
+                userSearch(entity);
                 break;
         }
+    }
+	
+	const itemSearch = async (entity) => {
+        try {
+			if (entity) {
+                setFilename(`Stock Journal: ${entity.itemName}`);
+                
+				const response = await inventoryController.journalItemSearch(entity.id);
+				if(response && response.data){
+                    setData(response.data);
+				}
+				setNetworkRequest(false);
+			}
+		} catch (error) {
+			setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return itemSearch(entity);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+	
+	const userSearch = async (entity) => {
+        try {
+			if (entity) {
+                setFilename(`Stock Journal: ${entity.username}`);
+                
+				const response = await inventoryController.journalUserSearch(entity.username);
+				if(response && response.data){
+                    setData(response.data);
+				}
+				setNetworkRequest(false);
+			}
+		} catch (error) {
+			setNetworkRequest(false);
+			//	Incase of 500 (Invalid Token received!), perform refresh
+			try {
+				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+					await handleRefresh();
+					return userSearch(entity);
+				}
+				// Incase of 401 Unauthorized, navigate to 404
+				if(error.response?.status === 401){
+					navigate('/404');
+				}
+				// display error message
+				toast.error(handleErrMsg(error).msg);
+			} catch (error) {
+				// if error while refreshing, logout and delete all cookies
+				logout();
+			}
+		}
+	}
+    
+    const pdfExport = () => {
+        /*  ref:
+            *   https://stackoverflow.com/questions/56752113/export-to-pdf-in-react-table
+            *   https://www.npmjs.com/package/jspdf-autotable
+            *   https://www.npmjs.com/package/jspdf */
+        const unit = "pt";
+        const size = "A4"; // Use A1, A2, A3 or A4
+        const orientation = "portrait"; // portrait or landscape
+        const fileExtension = ".pdf";
+
+        const marginLeft = 40;
+        const doc = new jsPDF(orientation, unit, size);
+
+        doc.setFontSize(15);
+
+        const title = filename;
+
+        doc.text(title, marginLeft, 40);
+        autoTable(doc, {
+            styles: { theme: 'striped' },
+            margin: { top: 50 },
+            // head: [['Name', 'Email']],
+            body: data,
+            columns: [
+                { header: 'Source Name', dataKey: 'itemName' },
+                { header: 'Quantity', dataKey: 'qty' },
+                { header: 'Destination Item', dataKey: 'tractName' },
+                { header: 'Location', dataKey: 'qtyType' },
+                { header: 'Authorized By', dataKey: 'pkgName' },
+                { header: 'Date', dataKey: 'expDate' },
+            ],
+        });
+        
+        doc.save(`${filename}` + fileExtension);
     }
 
     return (
