@@ -58,7 +58,7 @@ const StoreItemRegForm = (props) => {
 		resolver: yupResolver(storeItemRegSchema),
 		defaultValues: {
 			item_name: null,
-			barcode: null,
+			barcode: "",
 			total_qty: 0,
 			qty_per_pkg: 0,
 			unit_stock: 0,
