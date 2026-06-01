@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import Navbar from "react-bootstrap/Navbar";
@@ -14,6 +14,8 @@ import { ThreeDotLoading } from "./react-loading-indicators/Indicator";
 
 function NavBar() {
 	const navigate = useNavigate();
+    const location = useLocation();
+
 	const [expanded, setExpanded] = useState(false);
 
 	const [isLoggingOut, setIsLoggingOut] = useState(false);

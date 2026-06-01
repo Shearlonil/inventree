@@ -10,6 +10,38 @@ import { toast } from "react-toastify";
 import handleErrMsg from "../../Utils/error-handler";
 import SVG from "../../assets/Svg";
 import transactionsController from "../../Controllers/transactions-controller";
+      
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
+
+const RADIAN = Math.PI / 180;
+const renderCustomizedLabel = ({
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+    index
+}) => {
+    if (cx == null || cy == null || innerRadius == null || outerRadius == null) {
+        return null;
+    }
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    return (
+        <text
+            x={x}
+            y={y}
+            fill="white"
+            textAnchor={x > cx ? "start" : "end"}
+            dominantBaseline="central"
+        >
+            {`${(percent * 100).toFixed(0)}%`}
+        </text>
+    );
+};
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -23,35 +55,6 @@ const Dashboard = () => {
     const [yearMonthlySalesData, setYearMonthlySalesData] = useState(null);
     const [topMonth, setTopMonth] = useState(null);
     const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      
-    const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
-    
-    const RADIAN = Math.PI / 180;
-    const renderCustomizedLabel = ({
-        cx,
-        cy,
-        midAngle,
-        innerRadius,
-        outerRadius,
-        percent,
-        index
-    }) => {
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-        const x = cx + radius * Math.cos(-midAngle * RADIAN);
-        const y = cy + radius * Math.sin(-midAngle * RADIAN);
-        
-        return (
-            <text
-                x={x}
-                y={y}
-                fill="white"
-                textAnchor={x > cx ? "start" : "end"}
-                dominantBaseline="central"
-            >
-                {`${(percent * 100).toFixed(0)}%`}
-            </text>
-        );
-    };
     
     useEffect( () => {
         initialize();
@@ -144,10 +147,10 @@ const Dashboard = () => {
                             <BarChart
                                 data={yearMonthlySalesData}
                                 margin={{
-                                top: 5,
-                                right: 30,
-                                left: 20,
-                                bottom: 5,
+                                    top: 5,
+                                    right: 30,
+                                    left: 20,
+                                    bottom: 5,
                                 }}
                             >
                                 <CartesianGrid strokeDasharray="3 3" />

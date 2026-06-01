@@ -46,7 +46,7 @@ axios.interceptors.request.use((config) => {
     //  const token = Cookies.get("authorization");
     const token = localStorage.getItem(AppConstants.jwtStorageTitle);
     config.headers.authorization = token ? `Bearer ${token}` : "";
-    config.headers['X-TENANT-ID'] = 'inventree';
+    config.headers['X-TENANT-ID'] = 'alab_labak';
     return config;
 });
 

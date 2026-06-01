@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Form } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { MdAdd, MdRemove } from "react-icons/md";
@@ -701,46 +701,46 @@ const SectionTransaction = () => {
 								<div key={id}>
 									<div className="row mt-4">
 										<div className="col-md-6 col-12">
-										<div className="d-flex">
-											<div className="ms-3">
-												<p className="fw-bold mb-2">{name}</p>
-												<p>discount: <span className="text-primary fw-bold">{discount}</span></p>
-												<p>Type: <span className="text-primary fw-bold">{qtyType}</span></p>
-												<button
-													className={`btn btn-sm btn-outline-danger px-3 rounded-pill mt-2`}
-													onClick={() => handleRemoveConfirmation(item)}
-												>
-													remove
-												</button>
+											<div className="d-flex">
+												<div className="ms-3">
+													<p className="fw-bold mb-2">{name}</p>
+													<p>discount: <span className="text-primary fw-bold">{discount}</span></p>
+													<p>Type: <span className="text-primary fw-bold">{qtyType}</span></p>
+													<button
+														className={`btn btn-sm btn-outline-danger px-3 rounded-pill mt-2`}
+														onClick={() => handleRemoveConfirmation(item)}
+													>
+														remove
+													</button>
+												</div>
 											</div>
-										</div>
 										</div>
 
 										{/* ONLY DISPLAY ON MOBILE VIEW. FROM md upward never show */}
 										<div className="row d-md-none mb-2 mt-2">
-										<div className="col-md-2 col-4 ps-4">Qty</div>
-										<div className="col-md-2 col-4">Unit Price (₦)</div>
-										<div className="col-md-2 col-4">Total Price (₦)</div>
+											<div className="col-md-2 col-4 ps-4">Qty</div>
+											<div className="col-md-2 col-4">Unit Price (₦)</div>
+											<div className="col-md-2 col-4">Total Price (₦)</div>
 										</div>
 
 										<div className="col-md-2 col-4">
-										<span
-											onClick={() => increment(item)}
-											className={`btn btn-outline-dark py-1 px-2 rounded-circle ${
-											updating ? "disabled" : ""
-											}`}
-										>
-											<MdAdd />
-										</span>
-										<span className="ms-2 me-2">{qty}</span>
-										<button
-											onClick={() => decrement(item)}
-											className={`btn btn-outline-danger py-1 px-2 rounded-circle ${
-											updating ? "disabled" : ""
-											}`}
-										>
-											<MdRemove />
-										</button>
+											<span
+												onClick={() => increment(item)}
+												className={`btn btn-outline-dark py-1 px-2 rounded-circle ${
+												updating ? "disabled" : ""
+												}`}
+											>
+												<MdAdd />
+											</span>
+											<span className="ms-2 me-2">{qty}</span>
+											<button
+												onClick={() => decrement(item)}
+												className={`btn btn-outline-danger py-1 px-2 rounded-circle ${
+												updating ? "disabled" : ""
+												}`}
+											>
+												<MdRemove />
+											</button>
 										</div>
 										<div className="col-md-2 col-4">{numeral(itemSoldOutPrice).format('0,0.00')}</div>
 										<div className="col-md-2 col-4 fw-bold">

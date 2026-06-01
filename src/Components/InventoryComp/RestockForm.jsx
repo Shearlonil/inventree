@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import Datetime from "react-datetime";
-import "react-datetime/css/react-datetime.css";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";

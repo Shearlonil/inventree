@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Toggle } from 'rsuite'
 
 const ToggleSwitch = (props) => {
@@ -6,6 +6,10 @@ const ToggleSwitch = (props) => {
 
     const [checked, setChecked] = useState(ticked);
     const [loading, setLoading] = useState(false);
+                    
+    useEffect( () => {
+        setChecked(ticked);
+    }, [ticked]);
 
     const toggleChange = async (checked, data) => {
         try {
