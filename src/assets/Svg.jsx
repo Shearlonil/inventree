@@ -61,6 +61,7 @@ const SVG = {
 	history_book_black: new URL("./Svg/history_book_black.svg", import.meta.url).href,
 	history_clock_black: new URL("./Svg/history_clock_black.svg", import.meta.url).href,
 	history_clock_white: new URL("./Svg/history_clock_white.svg", import.meta.url).href,
+	faq: new URL("./Svg/faq.svg", import.meta.url).href,
 
 	// Home page
 	svg_1: new URL("./Svg/svg_1.svg", import.meta.url).href,

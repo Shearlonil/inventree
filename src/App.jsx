@@ -3,7 +3,6 @@ import { ToastContainer } from "react-toastify";
 import Home from "./Routes/Home";
 import MonoTransaction from "./Routes/SalesTransaction/MonoTransaction";
 import StoreItemReg from "./Routes/Inventory/StoreItemReg";
-import Test from "./Routes/Test";
 import PurchasesWindow from "./Routes/Inventory/PurchasesWindow";
 import Login from "./Routes/Login";
 import UnverifiedStockRec from "./Routes/Dashboard/UnverifiedStockRec";
@@ -62,6 +61,7 @@ import BalSheet from "./Routes/Finance/BalSheet";
 import QtyTransfer from "./Routes/Inventory/stock-journal/QtyTransfer";
 import QtyAdjustment from "./Routes/Inventory/stock-journal/QtyAdjustment";
 import History from "./Routes/Inventory/stock-journal/History";
+import Faq from "./Routes/Faq";
 
 function App() {
 	return (
@@ -69,6 +69,7 @@ function App() {
 			<Routes>
 				<Route index path={"/"} element={<Home />} />
 				<Route index path={"/login"} element={<Login />} />
+				<Route index path={"/faq"} element={<Faq />} />
 				<Route index path={"/settings"} element={<Settings />} />
 				<Route path="/transaction" element={<ProtectedRoute />}>
 					<Route path="cashier" element={<CashierWindow />} />
@@ -163,7 +164,6 @@ function App() {
 					<Route index path={"sales/report"} element={<SalesReport />} />
 					<Route path={""} element={<Dashboard />} />
           		</Route>
-				<Route path={"/test"} element={<Test />} />
 				<Route path="*" element={<PageNotFound />} />
 			</Routes>
 			<ToastContainer />

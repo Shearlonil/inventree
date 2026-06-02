@@ -88,7 +88,7 @@ function NavBar() {
 							</Nav.Link>
 
 							{user && <NavDropdown title="View" id="basic-nav-dropdown">
-								<NavDropdown title="Items" className="ms-2" drop="end">
+								<NavDropdown title="Products" className="ms-2" drop="end">
 									<NavDropdown.Item 
 										onClick={() => {
 											handleNavSelect();
@@ -503,6 +503,18 @@ function NavBar() {
 									Vendors
 								</NavDropdown.Item>
 							</NavDropdown>}
+							<Nav.Link
+								onClick={() => {
+									handleNavSelect();
+									navigate("/faq");
+								}}
+								className={`navbar-nav nav-item p-2 ${
+									location.pathname === "/faq" &&
+									"activeLink text-success link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover fw-bold"
+								}`}
+							>
+								FAQ
+							</Nav.Link>
 						</Nav>
 
 						{!user && ( <Nav.Link

@@ -8,6 +8,99 @@ const clientDetails = {
 	gctContact: '08034262759'
 }
 
+const faqs = [
+	{ 
+		q: 'What is Inventree app?', 
+		a: `Inventree is a fully custom network-based POS software, developed to manage and augment the operations of departmental stores. 
+		It consists of basically four modules, namely: The Sales Point, The Stocking Point, The Admin Point and Finance.`,
+		list: [
+			'THE SALES POINT: This is the POS point where customers\' orders are taken, through the use of a barcode reader and transaction invoice printed afterwards.',
+			'THE STOCKING POINT: This is the in-house point where newly bought goods are registered and made available for sale in THE SALES POINT module; hence, selling prices are as well determined at this point',
+			'THE ADMIN POINT: This is the overseer module where every activity is being monitored on a real-time basis, be it sales, stock etc. Also, all comprehensive reports and that of other points could also be generated.',
+			'FINANCE: This module gives financial reports like balance sheet, Trial Balance, Profit & Loss etc'
+		],
+	},
+	{ 
+		q: 'How can i create an account for a staff/sales representative?', 
+		a: `You must have necessary administrative privileges to add staff/sales rep. To add staff/sales representative, follow these steps:`,
+		list: [
+			'Click DASHBOARD on the Nav bar',
+			'Select USERS under QUICK MENU. This takes you to the USERS page',
+			'Fill necessary/required fields',
+			'click SAVE'
+		],
+		note: 'You will be able to see the added user in the table.'
+	},
+	{ 
+		q: 'How can i edit staff/sales representative privileges?', 
+		a: `You must first have administrative priviledges to edit or update staff/sales rep priviledges. To update staff/sales representative privileges, follow these steps:`,
+		list: [
+			'Click DASHBOARD on the Nav bar',
+			'Select USERS under Quick Menu. This takes you to the USERS page',
+			'Locate the account of interest from the table',
+			'click the Menu button in the Options column in the table',
+			'Select View. This takes you to the PERMISSIONS window',
+			'Grant/Revoke permissions as you see fit'
+		],
+	},
+	{ 
+		q: 'What is the purpose of adding customers to your Inventree app?', 
+		a: `The purpose of adding customers is to track customer transactions including which customers you owe money to or customers owing` 
+	},
+	{ 
+		q: 'How can i create a customer\s account?', 
+		a: `You must have necessary admin privileges to create account. Follow these simple steps`,
+		list: [
+			'Click CONTACTS',
+			'Select CUSTOMERS',
+			'Fill necessary/required fields',
+			'click SAVE'
+		],
+		note: 'You will be able to see the added customer in the table.'
+	},
+	{ 
+		q: 'How can i create a vendor\s account?', 
+		a: `You must have necessary admin privileges to create account. Follow these simple steps`,
+		list: [
+			'Click CONTACTS',
+			'Select VENDORS',
+			'Fill necessary/required fields',
+			'click SAVE'
+		],
+		note: 'You will be able to see the added vendor in the table.'
+	},
+    { 
+		q: 'How can i add new product?', 
+		a: 'To add new products into your inventory, ',
+		list: [
+			'Click INVENTORY on the Nav bar',
+			'Select NEW ENTRY. This takes you to the PRODUCT REGISTRATION page',
+			'If using a mobile device, click the stock icon at the bottom right to open a form.',
+			'Fill necessary/required fields',
+			'click SAVE to add the product to the table',
+			'When all products are added, click the round menu button (red button) at the bottom right corner of the screen to open a drawer menu.',
+			'Select SAVE TO SALES/SHELF to add the items as well as there quantities to SALES POINT module and ready for sales',
+			'Select SAVE TO STORE if you do not intend to get them ready to be added to SALES POINT module. This can later be made ready to sales by using the DISPENSARY page'
+		],
+		note: 'You will be able to see the added vendor in the table.'
+	},
+    { 
+		q: 'How can I credit a customer\'s account?',
+		a: `Crediting a customer\'s account/ledger is a simple process. On the Nav bar, Finance -> Account Vouchers -> Create. 
+		Select the customer\s ledger, enter description and amount and select the Credit option. Click Next to add the information to the table. 
+		Next, select the the receiving ledger (Cash, Bank, etc) to complete the two-legged transaction. Enter the description and same amount as before. Click Next to add this also to the table.
+		Click OK to submit the transaction.`
+	},
+    { 
+		q: 'How can i record upfront payment made to a vendor?', 
+		a: 'Yes! We offer free home delivery for orders over ₦25,000. Standard delivery takes 1-2 business days within our service area.' 
+	},
+    { q: 'How can i sell to custmers on credit?', a: 'Absolutely! Our licensed pharmacists are available for free consultations during store hours. You can also book a virtual consultation.' },
+    { q: 'How can i record/monitor my expenses?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
+    { q: 'How can i record/monitor my income?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
+    // { q: 'Where is my data stored and how secure is it?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
+];
+
 /*
 	jsPDF reference
 	https://github.com/simonbengtsson/jsPDF-AutoTable/blob/main/examples/examples.js
@@ -108,4 +201,5 @@ const tableData = [
 
 export {
 	clientDetails,
+	faqs,
 };

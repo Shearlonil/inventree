@@ -426,7 +426,7 @@ const StoreItemReg = () => {
 				</div>
 				<div className="text-center d-flex">
 					<h2 className="display-6 p-3 mb-0">
-						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Item Registration</span>
+						<span className="me-4 fw-bold" style={{textShadow: "3px 3px 3px black"}}>Product Registration</span>
 						<FaStoreAlt className="text-white" size={"30px"} />
 					</h2>
 				</div>
