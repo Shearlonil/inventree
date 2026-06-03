@@ -27,6 +27,7 @@ const Faq = () => {
 								{faq.list && <ul>
 									{faq.list.map(li => <li key={li}> {li} </li>)}
 								</ul>}
+								<br />
 								{faq.note && faq.note}
 							</Accordion.Body>
 						</Accordion.Item>

@@ -39,7 +39,7 @@ const faqs = [
 			'Select USERS under Quick Menu. This takes you to the USERS page',
 			'Locate the account of interest from the table',
 			'click the Menu button in the Options column in the table',
-			'Select View. This takes you to the PERMISSIONS window',
+			'Select View. This takes you to the PERMISSIONS page',
 			'Grant/Revoke permissions as you see fit'
 		],
 	},
@@ -59,7 +59,7 @@ const faqs = [
 		note: 'You will be able to see the added customer in the table.'
 	},
 	{ 
-		q: 'How can i create a vendor\s account?', 
+		q: 'How can i create a vendor\'s account?', 
 		a: `You must have necessary admin privileges to create account. Follow these simple steps`,
 		list: [
 			'Click CONTACTS',
@@ -87,17 +87,58 @@ const faqs = [
     { 
 		q: 'How can I credit a customer\'s account?',
 		a: `Crediting a customer\'s account/ledger is a simple process. On the Nav bar, Finance -> Account Vouchers -> Create. 
-		Select the customer\s ledger, enter description and amount and select the Credit option. Click Next to add the information to the table. 
-		Next, select the the receiving ledger (Cash, Bank, etc) to complete the two-legged transaction. Enter the description and same amount as before. Click Next to add this also to the table.
-		Click OK to submit the transaction.`
+		Select the customer\'s ledger, enter description & amount and select the CREDIT option. Click Next to add the information to the table. 
+		Next, select the receiving ledger (Cash, Bank, etc) to complete the two-legged transaction. Enter the description and same amount as before. Click Next to add this also to the table.
+		Click OK to submit the transaction.`,
+		note: 'CUSTOMERS maintain negative balance.'
 	},
     { 
 		q: 'How can i record upfront payment made to a vendor?', 
-		a: 'Yes! We offer free home delivery for orders over ₦25,000. Standard delivery takes 1-2 business days within our service area.' 
+		a: 'This is similar to creditng customer\'s account',
+		list: [
+			'Click FINANCE on the Nav bar.',
+			'Select ACCOUNT VOUCHERS',
+			'Select CREATE',
+			'Select the vendor\'s ledger, enter description and amount and select the DEBIT option',
+			'Click Next to add the information to the table.',
+			'Select the donor ledger (Cash, Bank, etc) to complete the two-legged transaction. Enter the description and same amount as before',
+			'Click Next to add this also to the table.',
+			'Click OK to submit the transaction.'
+		],
+		note: 'VENDOR maintain positive balance.'
 	},
-    { q: 'How can i sell to custmers on credit?', a: 'Absolutely! Our licensed pharmacists are available for free consultations during store hours. You can also book a virtual consultation.' },
-    { q: 'How can i record/monitor my expenses?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
-    { q: 'How can i record/monitor my income?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
+    { 
+		q: 'How can i sell to customers on credit?', 
+		a: 'You must have necessary admin privileges to update the CREDIT SALES feature.',
+		list: [
+			'Click CONTACTS',
+			'Select CUSTOMERS',
+			'find the customer of interest in the table of customers',
+			'click the Menu button in the Options column in the table',
+			'Select LEDGER. This takes you to the ACCOUNT LEDGER page',
+			'Switch CREDIT SALES button from REVOKED to GRANTED',
+		]
+	},
+    { 
+		q: 'How can i record/monitor my expenses?', 
+		a: 'You must have necessary admin privileges to record expenses.',
+		list: [
+			'On your DASHBOARD, Select EXPENSES under QUICK MENU. This takes you to the EXPENSES VOUCHER CREATION page',
+			'Select the ledger of interest e.g utilities, advertising, transport, etc',
+			'Enter DESCRIPTION, AMOUNT, DATE',
+			'Click SAVE',
+		] 
+	},
+    { 
+		q: 'How can i record/monitor my income?', 
+		a: 'You must have necessary admin privileges to record expenses.' ,
+		list: [
+			'On your DASHBOARD, Select INCOME under QUICK MENU. This takes you to the INCOME VOUCHER CREATION page',
+			'Select the ledger of interest e.g tips, discount, etc',
+			'Enter DESCRIPTION, AMOUNT, DATE',
+			'Click SAVE',
+		]
+	},
     // { q: 'Where is my data stored and how secure is it?', a: 'Yes, we provide a range of vaccination services including flu shots, COVID-19 vaccines, and travel vaccinations. Walk-ins are welcome.' },
 ];
 
