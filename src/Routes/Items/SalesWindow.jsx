@@ -18,10 +18,10 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
-import itemController from '../../Controllers/item-controller';
 import ItemUpdateForm from '../../Components/Item/ItemUpdateForm';
 import { useAuthUser } from '../../app-context/user-context';
 import useGenericController from '../../Controllers/generic-controller-hook';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const SalesWindow = () => {
     const controllerRef = useRef(new AbortController());
@@ -31,6 +31,7 @@ const SalesWindow = () => {
     const location = useLocation();
     const { salesMode } = useParams();
     
+    const { fetchInStockSalesItems, fetchLowStockSalesItems, fetchOutOfStockSalesItems, changeTract, changePkg, deleteItem, updateItem } = useItemController();
     const { performGetRequests } = useGenericController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -100,7 +101,7 @@ const SalesWindow = () => {
                     fetchOutOfStockItems();
                     break;
                 default:
-                    fetchInStockSalesItems();
+                    fnFetchInStockSalesItems();
                     break;
             }
         }else {
@@ -143,10 +144,11 @@ const SalesWindow = () => {
 		}
     };
 
-	const fetchInStockSalesItems = async () => {
+	const fnFetchInStockSalesItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchInStockSalesItems();
+            resetAbortController();
+            const response = await fetchInStockSalesItems(controllerRef.current.signal);
             setMode('Available Stock');
 
 			setReportTitle(`Available Stock (Sales)`);
@@ -177,7 +179,8 @@ const SalesWindow = () => {
 	const fetchLowStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchLowStockSalesItems();
+            resetAbortController();
+            const response = await fetchLowStockSalesItems(controllerRef.current.signal);
             setMode('Low Stock');
 
 			setReportTitle(`Low Stock (Sales)`);
@@ -210,7 +213,8 @@ const SalesWindow = () => {
 	const fetchOutOfStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchOutOfStockSalesItems();
+            resetAbortController();
+            const response = await fetchOutOfStockSalesItems(controllerRef.current.signal);
             setMode('Out Of Stock');
 
 			setReportTitle(`Out Of Stock (Sales)`);
@@ -385,7 +389,7 @@ const SalesWindow = () => {
 		switch (confirmDialogEvtName) {
             case 'delete':
                 setShowDropDownModal(true);
-                deleteItem();
+                fnDeleteItem();
                 break;
         }
 	};
@@ -393,8 +397,9 @@ const SalesWindow = () => {
     const move = async (tractEntity) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await itemController.changeTract(entityToEdit.id, tractEntity.id);
+            const response = await changeTract(entityToEdit.id, tractEntity.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.tractName = tractEntity.name;
                 //	find index position of edited item in filtered items arr
@@ -433,8 +438,9 @@ const SalesWindow = () => {
     const updatePkg = async (pkgEntity) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await itemController.changePkg(entityToEdit.id, pkgEntity.id);
+            const response = await changePkg(entityToEdit.id, pkgEntity.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.pkgName = pkgEntity.name;
                 //	find index position of edited item in filtered items arr
@@ -470,12 +476,13 @@ const SalesWindow = () => {
         }
     };
     
-    const deleteItem = async () => {
+    const fnDeleteItem = async () => {
         setShowDropDownModal(false);
         try {
             setNetworkRequest(true);
+            resetAbortController();
             
-            await itemController.deleteItem(entityToEdit.id);
+            await deleteItem(entityToEdit.id, controllerRef.current.signal);
             //	find index position of deleted item in items arr
             let indexPos = filteredItems.findIndex(i => i.id == entityToEdit.id);
             if(indexPos > -1){
@@ -516,10 +523,11 @@ const SalesWindow = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
             //  add compulsory fields for Java ItemDTO
             item.status = true;
             item.qtyType = 'any';
-			await itemController.updateItem(item);
+			await updateItem(item, controllerRef.current.signal);
             //	find index position of edited item in items arr
             const indexPos = items.findIndex(i => i.id === item.id);
             if(indexPos > -1){

@@ -12,10 +12,10 @@ import { qtyTransferSchema } from '../../../Utils/yup-schema-validator/stock-jou
 import handleErrMsg from '../../../Utils/error-handler';
 import SVG from '../../../assets/Svg';
 import { Form } from 'react-bootstrap';
-import itemController from '../../../Controllers/item-controller';
 import { Item } from '../../../Entities/Item';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import useInventoryController from '../../../Controllers/inventory-controller-hook';
+import useItemController from '../../../Controllers/item-controller-hook';
 
 const QtyTransfer = () => {
     const controllerRef = useRef(new AbortController());
@@ -23,6 +23,7 @@ const QtyTransfer = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
+    const { fetchActiveGrossItems } = useItemController();
 	const { qtyTransfer } = useInventoryController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -75,7 +76,7 @@ const QtyTransfer = () => {
 		try {
             setNetworkRequest(true);
             controllerRef.current = new AbortController();
-            const response = await itemController.fetchActiveGrossItems(controllerRef.current.signal);
+            const response = await fetchActiveGrossItems(controllerRef.current.signal);
             
             if (response && response.data && response.data.length > 0) {
                 const arr = [];

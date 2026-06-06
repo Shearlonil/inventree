@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { format } from "date-fns";
 import { VscEdit, VscSave, VscRemove } from 'react-icons/vsc';
@@ -8,12 +8,12 @@ import { Table, IconButton, Input, DatePicker, InputNumber } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 
 import handleErrMsg from '../../Utils/error-handler';
-import itemController from '../../Controllers/item-controller';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { useAuthUser } from '../../app-context/user-context';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const styles = `
 .table-cell-editing .rs-table-cell-content {
@@ -25,9 +25,13 @@ const styles = `
 `;
 
 const SalesItemQtyMgrView = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
                 
+    const { findById } = useItemController();
     const { authUser } = useAuthUser();
     const user = authUser();
         
@@ -117,7 +121,7 @@ const SalesItemQtyMgrView = () => {
 	const initialize = async () => {
         try {
             setNetworkRequest(true);
-            let response = await itemController.findById(id);
+            let response = await findById(id, controllerRef.current.signal);
             if(response && response.data){
                 setItem(response.data);
             }
@@ -374,6 +378,14 @@ const SalesItemQtyMgrView = () => {
             // display error message
             toast.error(handleErrMsg(error).msg);
 		}
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

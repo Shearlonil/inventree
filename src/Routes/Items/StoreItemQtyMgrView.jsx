@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { format } from "date-fns";
 import numeral from 'numeral';
@@ -8,12 +8,12 @@ import { Table, IconButton, Input, DatePicker, InputNumber } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 
 import handleErrMsg from '../../Utils/error-handler';
-import itemController from '../../Controllers/item-controller';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { useAuthUser } from '../../app-context/user-context';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const styles = `
 .table-cell-editing .rs-table-cell-content {
@@ -25,9 +25,13 @@ const styles = `
 `;
 
 const StoreItemQtyMgrView = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
                 
+    const { findById } = useItemController();
     const { authUser } = useAuthUser();
     const user = authUser();
         
@@ -48,12 +52,17 @@ const StoreItemQtyMgrView = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
         try {
             setNetworkRequest(true);
-            let response = await itemController.findById(id);
+            controllerRef.current = new AbortController();
+            let response = await findById(id, controllerRef.current.signal);
             if(response && response.data){
                 setItem(response.data);
             }
@@ -90,6 +99,7 @@ const StoreItemQtyMgrView = () => {
 	const updateQtyMgr = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             const temp = Object.assign({}, entityToEdit);
             //  remove the creation date to avoid cast error from string to LocalDateTime on the backend... i no get time for wahala abeg :)
             temp.creationDate = null;
@@ -165,6 +175,15 @@ const StoreItemQtyMgrView = () => {
                 break;
         }
 	};
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
 
     return (
         <div className="container">

@@ -154,6 +154,7 @@ const Dispensary = () => {
 	const initializeWithDispensaryRec = async () => {
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			resetPageStates();
 	
 			const unverifiedDispensaryRequest = await findUnverifiedDispensaryById(dispensary_id, controllerRef.current.signal);
@@ -297,6 +298,7 @@ const Dispensary = () => {
 
     const onSubmit = async (data) => {
         try {
+            resetAbortController();
             //  is item already added to table?
             const index = items.findIndex(item => item.itemId === data.product.value.id);
             if(index >= 0){
@@ -347,6 +349,7 @@ const Dispensary = () => {
 	const fnDispense = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
             await dispense(dispensaryId, outpostId, controllerRef.current.signal);
             resetPageStates();
             //	navigate back to this page which will cause reset of page states
@@ -369,6 +372,7 @@ const Dispensary = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController()
 			switch (confirmDialogEvtName) {
 				case 'deleteItem':
 					await deleteDispensedItemDetail(entityToEdit.itemDetailId, controllerRef.current.signal);
@@ -414,6 +418,7 @@ const Dispensary = () => {
     const fnUpdateDispensedItem = async (data) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
             const response = await updateDispensedItem(data, controllerRef.current.signal);
             if(response && response.status === 200){

@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import { useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from 'react-toastify';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -16,15 +16,19 @@ import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import handleErrMsg from '../../Utils/error-handler';
 import transactionsController from '../../Controllers/transactions-controller';
-import itemController from '../../Controllers/item-controller';
 import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 import { useAuthUser } from '../../app-context/user-context';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const ItemSalesReceiptWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     applyPlugin(jsPDF);
     const navigate = useNavigate();
+    const location = useLocation();
         
+    const { findItemsForMonoTransaction } = useItemController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -64,11 +68,16 @@ const ItemSalesReceiptWindow = () => {
         
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
       
     const initialize = async () => {
         try {
-            const response = await itemController.findItemsForMonoTransaction();
+            controllerRef.current = new AbortController();
+            const response = await findItemsForMonoTransaction(controllerRef.current.pathname);
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
@@ -351,6 +360,14 @@ const ItemSalesReceiptWindow = () => {
             toast.error(handleErrMsg(error).msg);
         }
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div className='container my-4'>

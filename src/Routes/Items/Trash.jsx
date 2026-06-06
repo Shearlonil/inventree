@@ -13,9 +13,9 @@ import PaginationLite from '../../Components/PaginationLite';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
-import itemController from '../../Controllers/item-controller';
 import { useAuthUser } from '../../app-context/user-context';
 import useGenericController from '../../Controllers/generic-controller-hook';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const Trash = () => {
     const controllerRef = useRef(new AbortController());
@@ -23,6 +23,7 @@ const Trash = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
+    const { restoreItem } = useItemController();
     const { performGetRequests } = useGenericController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -190,10 +191,11 @@ const Trash = () => {
         setShowConfirmModal(false);
         try {
             setNetworkRequest(true);
+            resetAbortController();
             switch (confirmDialogEvtName) {
                 case 'restore':
                     if(user.hasAuth('DELETE_ITEM')){
-                        await itemController.restoreItem(entityToEdit.id);
+                        await restoreItem(entityToEdit.id, controllerRef.current.signal);
                         //	find index position of restored item in items arr
                         let indexPos = filteredItems.findIndex(i => i.id == entityToEdit.id);
                         if(indexPos > -1){

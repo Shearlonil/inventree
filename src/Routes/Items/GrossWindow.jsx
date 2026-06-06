@@ -13,9 +13,9 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
-import itemController from '../../Controllers/item-controller';
 import { useAuthUser } from '../../app-context/user-context';
 import useGenericController from '../../Controllers/generic-controller-hook';
+import useItemController from '../../Controllers/item-controller-hook';
 
 const GrossWindow = () => {
     const controllerRef = useRef(new AbortController());
@@ -24,6 +24,7 @@ const GrossWindow = () => {
     const location = useLocation();
     const { grossMode } = useParams();
     
+    const { fetchInStockGrossItems, fetchLowStockGrossItems, fetchOutOfStockGrossItems, changeTract, changePkg, deleteItem, updateItem } = useItemController();
     const { performGetRequests } = useGenericController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -85,7 +86,7 @@ const GrossWindow = () => {
                     fetchOutOfStockItems();
                     break;
                 default:
-                    fetchInStockGrossItems();
+                    fnFetchInStockGrossItems();
                     break;
             }
         }else {
@@ -128,10 +129,11 @@ const GrossWindow = () => {
         }
     };
 
-	const fetchInStockGrossItems = async () => {
+	const fnFetchInStockGrossItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchInStockGrossItems();
+            resetAbortController();
+            const response = await fetchInStockGrossItems(controllerRef.current.signal);
             setMode('Available Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -171,7 +173,8 @@ const GrossWindow = () => {
 	const fetchLowStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchLowStockGrossItems();
+            resetAbortController();
+            const response = await fetchLowStockGrossItems(controllerRef.current.signal);
             setMode('Low Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -213,7 +216,8 @@ const GrossWindow = () => {
 	const fetchOutOfStockItems = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await itemController.fetchOutOfStockGrossItems();
+            resetAbortController();
+            const response = await fetchOutOfStockGrossItems(controllerRef.current.signal);
             setMode('Out Of Stock');
 
             if (response && response.data && response.data.length > 0) {
@@ -387,7 +391,7 @@ const GrossWindow = () => {
 		switch (confirmDialogEvtName) {
             case 'delete':
                 setShowDropDownModal(true);
-                deleteItem();
+                fnDeleteItem();
                 break;
         }
 	};
@@ -395,8 +399,9 @@ const GrossWindow = () => {
     const move = async (tractEntity) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await itemController.changeTract(entityToEdit.id, tractEntity.id);
+            const response = await changeTract(entityToEdit.id, tractEntity.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.tractName = tractEntity.name;
                 //	find index position of edited item in filtered items arr
@@ -435,8 +440,9 @@ const GrossWindow = () => {
     const updatePkg = async (pkgEntity) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await itemController.changePkg(entityToEdit.id, pkgEntity.id);
+            const response = await changePkg(entityToEdit.id, pkgEntity.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.pkgName = pkgEntity.name;
                 //	find index position of edited item in filtered items arr
@@ -472,12 +478,13 @@ const GrossWindow = () => {
         }
     };
     
-    const deleteItem = async () => {
+    const fnDeleteItem = async () => {
         setShowDropDownModal(false);
         try {
             setNetworkRequest(true);
+            resetAbortController();
             
-            await itemController.deleteItem(entityToEdit.id);
+            await deleteItem(entityToEdit.id, controllerRef.current.signal);
             //	find index position of deleted item in items arr
             let indexPos = filteredItems.findIndex(i => i.id == entityToEdit.id);
             if(indexPos > -1){
@@ -518,10 +525,11 @@ const GrossWindow = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
             //  add compulsory fields for Java ItemDTO
             item.status = true;
             item.qtyType = 'any';
-			await itemController.updateItem(item);
+			await updateItem(item, controllerRef.current.signal);
             //	find index position of edited item in items arr
             const indexPos = items.findIndex(i => i.id === item.id);
             if(indexPos > -1){
