@@ -158,6 +158,7 @@ const History = () => {
             isn't important here from front end as the time will be set by Java on the backend. Only date is important  */
         try {
 			if (date.startDate && date.endDate) {
+				resetAbortController();
                 const startDate = format(date.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setStartDate(startDate);
@@ -198,6 +199,7 @@ const History = () => {
 			if (entity) {
                 setFilename(`Stock Journal: ${entity.itemName}`);
                 
+				resetAbortController();
 				const response = await journalItemSearch(entity.id, controllerRef.current.signal);
 				if(response && response.data){
                     setData(response.data);
@@ -221,6 +223,7 @@ const History = () => {
 			if (entity) {
                 setFilename(`Stock Journal: ${entity.username}`);
                 
+				resetAbortController();
 				const response = await journalUserSearch(entity.username, controllerRef.current.signal);
 				if(response && response.data){
                     setData(response.data);

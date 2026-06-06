@@ -342,11 +342,11 @@ const GrossWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'availableStock':
-                await fetchInStockGrossItems()
+                await fnFetchInStockGrossItems()
                 setCurrentPage(1);
                 break;
             case 'lowStock':
-                await fetchLowStockItems()
+                await fetchLowStockItems();
                 setCurrentPage(1);
                 break;
             case 'outOfStock':

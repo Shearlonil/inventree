@@ -107,6 +107,7 @@ const StoreItemReg = () => {
 	const initializeWithStockRec = async () => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			resetPageStates();
 	
 			const response = await findUnverifiedStockRecById(stock_rec_id, controllerRef.current.signal);
@@ -211,6 +212,7 @@ const StoreItemReg = () => {
 	const commitStockRecord = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			await commitStockRecById(stockRecId, outpostId, destination, controllerRef.current.signal);
 			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
@@ -292,6 +294,7 @@ const StoreItemReg = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			if(item.id){
 				//	if data has id, then update mode
 				await updateStockRecItem(item, controllerRef.current.signal);
@@ -345,6 +348,7 @@ const StoreItemReg = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'delete':
 					await deleteStockRecItem(entityToEdit.itemDetailId, controllerRef.current.signal);

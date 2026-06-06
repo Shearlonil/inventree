@@ -286,6 +286,7 @@ const StockValuationWindow = () => {
 		try {
 			if (data.startDate) {
 				setNetworkRequest(true);
+				resetAbortController();
                 setData([]);
                 setTotalStock(0);
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag

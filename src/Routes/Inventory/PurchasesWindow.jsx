@@ -261,6 +261,7 @@ const PurchasesWindow = () => {
 				return;
 			}
 			setNetworkRequest(true);
+			resetAbortController();
 			setPagedData([]);
 			setItems([]);
 			setCurrentPage(1);
@@ -301,6 +302,7 @@ const PurchasesWindow = () => {
 				setEndDate(endDate);
 
 				setNetworkRequest(true);
+				resetAbortController();
 				setCurrentPage(1);
 				setTotalItemsCount(0);
 				setItems([]);
@@ -336,6 +338,7 @@ const PurchasesWindow = () => {
 				setEndDate(endDate);
 
 				setNetworkRequest(true);
+				resetAbortController();
 				setItems([]);
 				setPagedData([]);
 				setCurrentPage(1);
@@ -361,6 +364,7 @@ const PurchasesWindow = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
+				resetAbortController();
 			await updatePurchasedItem(item, controllerRef.current.signal);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === item.id);
@@ -385,6 +389,7 @@ const PurchasesWindow = () => {
 	const fnChangePurchasesVendor = async () => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			const vendor = new Vendor();
 			vendor.id = selectedDropDownEntity.id;
 			vendor.name = selectedDropDownEntity.name;
@@ -420,6 +425,7 @@ const PurchasesWindow = () => {
 	const fnDeletePurchasedItem = async () => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			await deletePurchasedItem(entity, controllerRef.current.signal);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === entity.id);

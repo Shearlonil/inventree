@@ -336,11 +336,11 @@ const StoreWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'availableStock':
-                await fetchInStockStoreItems()
+                await fnFetchInStockStoreItems();
                 setCurrentPage(1);
                 break;
             case 'lowStock':
-                await fetchLowStockItems()
+                await fetchLowStockItems();
                 setCurrentPage(1);
                 break;
             case 'outOfStock':
@@ -397,6 +397,7 @@ const StoreWindow = () => {
     const move = async (tractEntity) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
             const response = await changeTract(entityToEdit.id, tractEntity.id, controllerRef.current.signal);
             if(response && response.status === 200){

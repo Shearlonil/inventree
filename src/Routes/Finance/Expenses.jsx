@@ -144,6 +144,7 @@ const Expenses = () => {
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
 
                 setNetworkRequest(true);
+                resetAbortController();
                 setLedgerTransactions([]);
 
                 const response = await getIncomeExpVoucherDetails('Expenses', startDate, endDate, controllerRef.current.signal);
@@ -183,6 +184,7 @@ const Expenses = () => {
     const fnSave = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  if dtoTransaction has id, then update mode
             if(entity.id){
                 // explicitly set dtoDateTime to avoid 1hr lag when sending to backend
@@ -232,6 +234,7 @@ const Expenses = () => {
     const fnDelete = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             await deleteIncomeExpVoucher(entity, controllerRef.current.signal);
             const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
             if(indexPos > -1){

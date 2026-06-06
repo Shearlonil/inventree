@@ -42,6 +42,7 @@ const AgeOfStocks = () => {
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const response = await ageOfStock(controllerRef.current.signal);
 
             if(response && response.data){

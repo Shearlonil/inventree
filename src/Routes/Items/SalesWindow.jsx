@@ -336,11 +336,11 @@ const SalesWindow = () => {
                 setShowInputModal(true);
                 break;
             case 'availableStock':
-                await fetchInStockSalesItems()
+                await fnFetchInStockSalesItems();
                 setCurrentPage(1);
                 break;
             case 'lowStock':
-                await fetchLowStockItems()
+                await fetchLowStockItems();
                 setCurrentPage(1);
                 break;
             case 'outOfStock':

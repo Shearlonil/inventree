@@ -17,7 +17,9 @@ export const useAxiosInterceptor = () => {
 
     // Define request/response and error interceptors
     const reqSuccessInterceptor = (config) => {
-        config.headers.authorization = `Bearer ${token}`;
+        const token = localStorage.getItem(AppConstants.jwtStorageTitle);
+        config.headers.authorization = token ? `Bearer ${token}` : "";
+        config.headers['X-TENANT-ID'] = 'inventree';
         return config;
     }
 

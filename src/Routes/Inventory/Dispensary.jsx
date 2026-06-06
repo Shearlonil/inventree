@@ -33,7 +33,7 @@ const Dispensary = () => {
     const location = useLocation();
     const { dispensary_id } = useParams();
     
-    const { pdfExport, deleteDispensary, deleteDispensedItemDetail, updateDispensedItem, findUnverifiedDispensaryById, dispensary, dispense } = useInventoryController();
+    const { deleteDispensary, deleteDispensedItemDetail, updateDispensedItem, findUnverifiedDispensaryById, dispensary, dispense } = useInventoryController();
     const { performGetRequests } = useGenericController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -399,7 +399,7 @@ const Dispensary = () => {
 					navigate("/inventory/item/dispensary/0");
 					break;
 				case "pdfExport":
-					await pdfExport(dispensaryId, controllerRef.current.signal);
+					// await pdfExport(dispensaryId, controllerRef.current.signal);
 					break;
 			}
 			setNetworkRequest(false);

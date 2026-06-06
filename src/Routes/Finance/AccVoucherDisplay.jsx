@@ -24,10 +24,12 @@ import { OribitalLoading, ThreeDotLoading } from "../../Components/react-loading
 import { clientDetails } from "../../../data";
 import { useAuthUser } from "../../app-context/user-context";
 import useFinanceController from "../../Controllers/finance-controller-hook";
+import { positiveNumberMiscParamSchema } from "../../Utils/yup-schema-validator/input-validator";
 
 const AcctVoucherDisplay = () => {
     applyPlugin(jsPDF);
     const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
     const location = useLocation();
     const { vch_id } = useParams();
@@ -89,6 +91,12 @@ const AcctVoucherDisplay = () => {
 
     const initialize = async () => {
         try {
+            try {
+                positiveNumberMiscParamSchema.validateSync(vch_id);
+            } catch (error) {
+                toast.error(error.message);
+                return;
+            }
             setNetworkRequest(true);
             controllerRef.current = new AbortController();
             let response = await ledgerController.findAll(controllerRef.current.signal);
@@ -255,6 +263,7 @@ const AcctVoucherDisplay = () => {
     const updateTransactionDate = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
             const date = new Date();
             let dtoDate = format(tempDate, "yyyy-MM-dd") + "T12:00:00.000Z";
@@ -282,6 +291,7 @@ const AcctVoucherDisplay = () => {
     const saveTransactions = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             await updateVoucher(vchId, ledgerTransactions, controllerRef.current.signal);
 
             setLedgerTransactions([]);
@@ -303,6 +313,7 @@ const AcctVoucherDisplay = () => {
     const delVch = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             await deleteLedgerVoucher(vchId, controllerRef.current.signal);
 			setLedgerTransactions([]);
             setTotalDrAmount(0);
@@ -323,15 +334,14 @@ const AcctVoucherDisplay = () => {
 
 	const idSearch = async (id) => {
 		try {
-			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-				Technique 1: use the unary plus operator which is what i've adopted below
-				Technique 2: multiply by a number. 
-				etc	*/
-			if(!+id){
-				toast.error('Please enter a valid number');
-				return;
-			}
+            try {
+                positiveNumberMiscParamSchema.validateSync(id);
+            } catch (error) {
+                toast.error(error.message);
+                return;
+            }
 			setNetworkRequest(true);
+            resetAbortController();
 			setLedgerTransactions([]);
             setTotalDrAmount(0);
             setTotalCrAmount(0);
@@ -430,6 +440,14 @@ const AcctVoucherDisplay = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (
