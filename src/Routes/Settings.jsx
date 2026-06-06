@@ -7,13 +7,15 @@ import fileDownload from "js-file-download";
 
 import SVG from '../assets/Svg';
 import { Button, Col, Form, FormControl, Row } from 'react-bootstrap';
-import dbController from '../Controllers/db-controller';
 import handleErrMsg from '../Utils/error-handler';
 import ErrorMessage from '../Components/ErrorMessage';
 import { ThreeDotLoading } from '../Components/react-loading-indicators/Indicator';
 import AppConstants from '../Utils/AppConstants';
+import useDbController from '../Controllers/db-controller-hook';
 
 const Settings = () => {
+
+    const { backup, restore } = useDbController();
 
     const [networkRequest, setNetworkRequest] = useState(false);
 
@@ -71,7 +73,7 @@ const Settings = () => {
     const backupDB = async () => {
         try {
 			setNetworkRequest(true);
-            const response = await dbController.backup();
+            const response = await backup();
             if(response && response.data){
                 fileDownload(response.data, `inventree.bak`);
             }
@@ -85,7 +87,7 @@ const Settings = () => {
     const onSubmit = async (file) => {
         try {
 			setNetworkRequest(true);
-            const response = await dbController.restore(file.db_file[0]);
+            const response = await restore(file.db_file[0]);
             toast.info("Database decryption successful")
 			setNetworkRequest(false);
         } catch (error) {

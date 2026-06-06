@@ -1,25 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import vedorController from '../../Controllers/vendor-controller';
-import customerController from '../../Controllers/customer-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
 import { Contact } from '../../Entities/Contact';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
+import { useAuthUser } from '../../app-context/user-context';
+import useCustomerController from '../../Controllers/customer-controller-hook';
+import useVendorController from '../../Controllers/vendor-controller-hook';
 
 const ContactTrash = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { contact } = useParams();
             
-    const { handleRefresh, logout, authUser } = useAuth();
+    const { authUser } = useAuthUser();
+    const { fetchAllNonActive: fetchAllNonActiveCustomers, restoreCustomer } = useCustomerController();
+    const { fetchAllNonActive: fetchAllNonActiveVendors, restoreVendor }  = useVendorController();
     const user = authUser();
 
     //	menus for the react-menu in table
@@ -61,15 +66,20 @@ const ContactTrash = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, [contact]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [contact, location.pathname]);
 
 	const initialize = async () => {
 		try {
+            resetAbortController();
             let response;
             if(contact === 'vendors'){
-                response = await vedorController.fetchAllNonActive();
+                response = await fetchAllNonActiveVendors(controllerRef.current.signal);
             }else {
-                response = await customerController.fetchAllNonActive();
+                response = await fetchAllNonActiveCustomers(controllerRef.current.signal);
             }
 
             if (response && response.data && response.data.length > 0) {
@@ -80,22 +90,13 @@ const ContactTrash = () => {
 				setTotalItemsCount(response.data.length);
             }
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -169,9 +170,10 @@ const ContactTrash = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    contact === 'vendors' ? await vedorController.restoreVendor(entityToEdit.id) : await customerController.restoreCustomer(entityToEdit.id) ;
+                    contact === 'vendors' ? await restoreVendor(entityToEdit.id) : await restoreCustomer(entityToEdit.id, controllerRef.current.signal) ;
 					//	find index position of restored item in items arr
 					let indexPos = filteredContacts.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -199,23 +201,14 @@ const ContactTrash = () => {
             resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     
@@ -230,6 +223,14 @@ const ContactTrash = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
-import { useAuth } from '../../app-context/auth-user-context';
+import { useAuthUser } from '../../app-context/user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import customerController from '../../Controllers/customer-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
@@ -18,11 +17,17 @@ import { schema } from '../../Utils/yup-schema-validator/contact-schema';
 import ContactForm from '../../Components/Contacts/ContactForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
+import useCustomerController from '../../Controllers/customer-controller-hook';
+import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 const CustomersWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
             
-    const { handleRefresh, logout, authUser } = useAuth();
+    const { fetchAllActive, createCustomer, deleteCustomer, updateCustomer } = useCustomerController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const {
@@ -87,12 +92,17 @@ const CustomersWindow = () => {
             toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await customerController.fetchAllActive();
+            controllerRef.current = new AbortController();
+            const response = await fetchAllActive(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -104,22 +114,13 @@ const CustomersWindow = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -209,10 +210,12 @@ const CustomersWindow = () => {
 
     const onSubmit = async (data) => {
         try {
+            setNetworkRequest(true);
+            resetAbortController();
             let customer = new Contact(data);
             customer.phoneNo = data.phone_no;
             customer.status = true;
-            const response = await customerController.createCustomer(customer);
+            const response = await createCustomer(customer, controllerRef.current.signal);
             if(response && response.data){
                 customer = new Contact(response.data);
                 const arr = [...filteredCustomers, customer];
@@ -225,24 +228,16 @@ const CustomersWindow = () => {
                 toast.success('Account creation successful');
                 reset();
             }
+            setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onSubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -260,27 +255,28 @@ const CustomersWindow = () => {
                 setCurrentPage(1);
                 break;
             case 'searchByCardNo':
-                /*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-                    Technique 1: use the unary plus operator which is what i've adopted below
-                    Technique 2: multiply by a number. 
-                    etc	*/
-                if(!+str){
-                    toast.error('Please enter a valid number');
+                try {
+                    positiveNumberMiscParamSchema.validateSync(str);
+                    arr = customers.filter(customer => customer.loyaltyCardNo == str);
+                    setFilteredCustomers(arr);
+                    setTotalItemsCount(arr.length);
+                    setCurrentPage(1);
+                } catch (error) {
+                    toast.error(error.message);
                     return;
                 }
-                arr = customers.filter(customer => customer.loyaltyCardNo == str);
-                setFilteredCustomers(arr);
-                setTotalItemsCount(arr.length);
-                setCurrentPage(1);
                 break;
             case 'addCard':
-                if(!+str){
-                    toast.error('Please enter a valid number');
+                try {
+                    positiveNumberMiscParamSchema.validateSync(str);
+                    const edited = new Contact(entityToEdit);
+                    edited.loyaltyCardNo = str;
+                    resetAbortController();
+                    await updateCustomer(edited, controllerRef.current.signal);
+                } catch (error) {
+                    toast.error(error.message);
                     return;
                 }
-                const edited = new Contact(entityToEdit);
-                edited.loyaltyCardNo = str;
-                await updateCustomer(edited);
                 break;
         }
 	}
@@ -289,9 +285,10 @@ const CustomersWindow = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'deleteCustomer':
-					await customerController.deleteCustomer(entityToEdit.id);
+					await deleteCustomer(entityToEdit.id, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					let indexPos = filteredCustomers.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -319,31 +316,23 @@ const CustomersWindow = () => {
             resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     
-    const updateCustomer = async (data) => {
+    const fnUpdateCustomer = async (data) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await customerController.updateCustomer(data);
+            const response = await updateCustomer(data, controllerRef.current.signal);
             if(response && response.status === 200){
                 //	find index position of edited item in filtered customers arr
                 let indexPos = filteredCustomers.findIndex(i => i.id === data.id);
@@ -367,23 +356,14 @@ const CustomersWindow = () => {
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return updateCustomer(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -398,6 +378,14 @@ const CustomersWindow = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (
@@ -511,7 +499,7 @@ const CustomersWindow = () => {
                 handleConfirm={handleInputOK}
                 message={displayMsg}
             />
-            <ContactForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={updateCustomer} />
+            <ContactForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={fnUpdateCustomer} />
         </div>
     );
 };

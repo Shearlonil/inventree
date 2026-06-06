@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Form } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { MdAdd, MdRemove } from "react-icons/md";
@@ -8,14 +8,12 @@ import Select from "react-select";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import numeral from "numeral";
 
 import { product_selection_schema, invoice_disc_schema, customer_selection_schema } from "../../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../../Components/ErrorMessage";
 import SVG from "../../assets/Svg";
-import genericController from "../../Controllers/generic-controller";
-import { useAuth } from "../../app-context/auth-user-context";
 import handleErrMsg from "../../Utils/error-handler";
 import { TransactionItem } from "../../Entities/TransactionItem";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
@@ -23,8 +21,12 @@ import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indic
 import transactionsController from "../../Controllers/transactions-controller";
 import printerController from "../../Controllers/printer-controller";
 import { useNumericCodeScanner } from "../../Utils/useNumericCodeScanner";
+import { useAuthUser } from "../../app-context/user-context";
+import useGenericController from "../../Controllers/generic-controller-hook";
 
 const MonoTransaction = () => {
+	const controllerRef = useRef(new AbortController());
+
 	const onCodeScan = (code) => {
 		//	find item from option list in drop down
 		const found = itemOptions.find(i => i.value.code === code);
@@ -75,9 +77,11 @@ const MonoTransaction = () => {
 	}
 
 	const navigate = useNavigate();
+	const location = useLocation();
 	useNumericCodeScanner(onCodeScan);
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	
+    const { performGetRequests } = useGenericController();
+	const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const {
@@ -162,13 +166,18 @@ const MonoTransaction = () => {
 
 	useEffect( () => {
 		initialize();
-	}, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [location.pathname]);
 
 	const initialize = async () => {
 		try {
+            controllerRef.current = new AbortController();
             //  find active customers and items with sales prices
             const urls = [ '/api/items/transactions/mono', '/api/customers/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: itemsRequest, 1: customersRequest } = response;
 
             //	check if the request to fetch items doesn't fail before setting values to display
@@ -183,22 +192,7 @@ const MonoTransaction = () => {
 				setCustomersLoading(false);
             }
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+			toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -367,23 +361,9 @@ const MonoTransaction = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return commitTransaction(dtoReceipt);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			setNetworkRequest(false);
 		}
     };
 
@@ -452,6 +432,15 @@ const MonoTransaction = () => {
 			printReceipt: customerPaymentInfo.print_receipt,
 		}
 	}
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
 
 	return (
 		<div className="container">

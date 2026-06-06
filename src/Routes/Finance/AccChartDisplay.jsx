@@ -1,20 +1,24 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
 
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import SVG from '../../assets/Svg';
-import financeController from '../../Controllers/finance-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useFinanceController from '../../Controllers/finance-controller-hook';
 
 const AccChartDisplay = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
         
-    const { handleRefresh, logout, authUser } = useAuth();
+    const { authUser } = useAuthUser();
+    const { findAccChartById } = useFinanceController();
     const user = authUser();
       
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -29,13 +33,18 @@ const AccChartDisplay = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, [id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [id, location.pathname]);
     
     const initialize = async () => {
         try {
+            controllerRef.current = new AbortController();
             setNetworkRequest(true);
             //  find active charts and charts
-            const response = await financeController.findAccChartById(id);
+            const response = await findAccChartById(id, controllerRef.current.signal);
 
             //	check if the request to fetch charts doesn't fail before setting values to display
             if(response && response.data){
@@ -46,22 +55,13 @@ const AccChartDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 

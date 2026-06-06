@@ -7,7 +7,8 @@ import { toast } from "react-toastify";
 import NavDropdown from "react-bootstrap/NavDropdown";
 
 import IMAGES from "../assets/Images";
-import { useAuth } from "../app-context/auth-user-context";
+import { useAuth } from "../app-context/auth-context";
+import { useAuthUser } from "../app-context/user-context";
 import handleErrMsg from "../Utils/error-handler";
 import ConfirmDialog from "./DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "./react-loading-indicators/Indicator";
@@ -22,7 +23,8 @@ function NavBar() {
 	const [showConfirmModal, setShowConfirmModal] = useState(false);
 	const [displayMsg, setDisplayMsg] = useState("");
 
-	const { authUser, logout } = useAuth();
+	const { logout } = useAuth();
+    const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const handleToggle = () => {

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
@@ -9,21 +9,24 @@ import { autoTable, applyPlugin } from 'jspdf-autotable'
 
 import SVG from '../../../assets/Svg'
 import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator'
-import { useAuth } from '../../../app-context/auth-user-context';
 import PaginationLite from '../../../Components/PaginationLite';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import DateDialog from '../../../Components/DialogBoxes/DateDialog';
 import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
 import handleErrMsg from '../../../Utils/error-handler';
-import inventoryController from '../../../Controllers/inventory-controller';
-import genericController from '../../../Controllers/generic-controller';
 import User from '../../../Entities/User';
+import useGenericController from '../../../Controllers/generic-controller-hook';
+import useInventoryController from '../../../Controllers/inventory-controller-hook';
 
 const History = () => {
-    const navigate = useNavigate();
+    const controllerRef = useRef(new AbortController());
+
     applyPlugin(jsPDF);
-        
-    const { handleRefresh, logout } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const { journalDateSearch, journalItemSearch, journalUserSearch } = useInventoryController();
+    const { performGetRequests } = useGenericController();
 
     const [networkRequest, setNetworkRequest] = useState(false);
     
@@ -54,13 +57,18 @@ const History = () => {
     
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
     
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const urls = [ `/api/users/active`, `/api/items/all` ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: usersRequest, 1: itemsRequest } = response;
             
             if (usersRequest && usersRequest.data && usersRequest.data.length > 0) {
@@ -106,22 +114,13 @@ const History = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -166,7 +165,7 @@ const History = () => {
 
                 setFilename(`Stock Journal: ${format(new Date(date.startDate), "dd/MM/yyyy")} - ${format(new Date(date.endDate), "dd/MM/yyyy")}`);
                 
-				const response = await inventoryController.journalDateSearch(startDate, endDate);
+				const response = await journalDateSearch(startDate, endDate, controllerRef.current.signal);
 				if(response && response.data){
                     setData(response.data);
 				}
@@ -174,22 +173,12 @@ const History = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return dateSearch(date);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -209,7 +198,7 @@ const History = () => {
 			if (entity) {
                 setFilename(`Stock Journal: ${entity.itemName}`);
                 
-				const response = await inventoryController.journalItemSearch(entity.id);
+				const response = await journalItemSearch(entity.id, controllerRef.current.signal);
 				if(response && response.data){
                     setData(response.data);
 				}
@@ -217,22 +206,13 @@ const History = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return itemSearch(entity);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -241,7 +221,7 @@ const History = () => {
 			if (entity) {
                 setFilename(`Stock Journal: ${entity.username}`);
                 
-				const response = await inventoryController.journalUserSearch(entity.username);
+				const response = await journalUserSearch(entity.username, controllerRef.current.signal);
 				if(response && response.data){
                     setData(response.data);
 				}
@@ -249,22 +229,13 @@ const History = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return userSearch(entity);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     
@@ -303,6 +274,14 @@ const History = () => {
         
         doc.save(`${filename}` + fileExtension);
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div style={{minHeight: '70vh'}} className="container">

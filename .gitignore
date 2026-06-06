@@ -11,6 +11,7 @@ lerna-debug.log*
 
 #package-lock.json isn't needed to be monitored
 package-lock.json
+crypto-helper.js
 
 node_modules
 dist

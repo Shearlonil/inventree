@@ -15,7 +15,6 @@ import jsPDF from 'jspdf';
 import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
-import { useAuth } from '../../../app-context/auth-user-context';
 import ErrorMessage from '../../../Components/ErrorMessage';
 import userController from '../../../Controllers/user-controller';
 import { ReceiptSalesItem } from '../../../Entities/DocExport/ReceiptSalesItem';
@@ -28,8 +27,6 @@ import EntityStartEndDateSearch from '../../../Components/EntityStartEndDate';
 const UserSalesRecord = () => {
     applyPlugin(jsPDF);
     const navigate = useNavigate();
-        
-    const { handleRefresh, logout } = useAuth();
 
     const schema = object().shape({
         user: object().required("Select a user"),
@@ -82,22 +79,14 @@ const UserSalesRecord = () => {
             }
     
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                //  Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                //  display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                //  if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -233,22 +222,13 @@ const UserSalesRecord = () => {
             }
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnSearch(data);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 

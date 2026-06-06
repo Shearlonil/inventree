@@ -7,13 +7,13 @@ import { VscEdit, VscSave } from 'react-icons/vsc';
 import { Table, IconButton, Input, DatePicker, InputNumber } from 'rsuite';
 const { Column, HeaderCell, Cell } = Table;
 
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import itemController from '../../Controllers/item-controller';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import { useAuthUser } from '../../app-context/user-context';
 
 const styles = `
 .table-cell-editing .rs-table-cell-content {
@@ -28,7 +28,7 @@ const StoreItemQtyMgrView = () => {
     const navigate = useNavigate();
     const { id } = useParams();
                 
-    const { handleRefresh, logout, authUser } = useAuth();
+    const { authUser } = useAuthUser();
     const user = authUser();
         
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -77,22 +77,13 @@ const StoreItemQtyMgrView = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
     };
 
@@ -121,22 +112,13 @@ const StoreItemQtyMgrView = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return updateQtyMgr();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
     };
 

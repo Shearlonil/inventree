@@ -1,23 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { object, date, ref } from "yup";
 import "react-datetime/css/react-datetime.css";
 import { toast } from 'react-toastify';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import SVG from '../../../assets/Svg';
 import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
-import { useAuth } from '../../../app-context/auth-user-context';
 import userController from '../../../Controllers/user-controller';
 import User from '../../../Entities/User';
-import genericController from '../../../Controllers/generic-controller';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
 import handleErrMsg from '../../../Utils/error-handler';
+import { useAuthUser } from '../../../app-context/user-context';
+import useGenericController from '../../../Controllers/generic-controller-hook';
 
 const UserDetails = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { username } = useParams();
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
 	const user = authUser();
       
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -34,14 +38,18 @@ const UserDetails = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
             //  find user and authorities
             const urls = [ `/api/users/find/${username}`, `/api/authorities/${username}`, `/api/authorities/find/all`];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: user, 1: userAuths, 2: allAuths } = response;
             
             //	check if the request to fetch user doesn't fail before setting values to display
@@ -82,22 +90,13 @@ const UserDetails = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -105,30 +104,31 @@ const UserDetails = () => {
         try {
             const text = auth.name.split(' ').join('_');
             if(user.hasAuth(text) && user.hasAuth('EDIT_AUTH')){
+                resetAbortController();
                 await userController.updateUserAuth(username, checked, auth.code);
             }else {
                 toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
                 throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
             }
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return toggle(checked, auth);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-                // if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
             throw error;
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     const buildAuths = (userAuths) => allAuths.map(auth => {

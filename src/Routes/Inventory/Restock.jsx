@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaStoreAlt } from "react-icons/fa";
 import { MdAddBusiness } from "react-icons/md";
 import { Modal } from 'react-bootstrap';
 
-import inventoryController from '../../Controllers/inventory-controller';
-import genericController from '../../Controllers/generic-controller';
 import handleErrMsg from '../../Utils/error-handler';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import RestockForm from '../../Components/InventoryComp/RestockForm';
@@ -15,17 +13,22 @@ import PaginationLite from '../../Components/PaginationLite';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import ReactMenu from '../../Components/ReactMenu';
-import { useAuth } from '../../app-context/auth-user-context';
 import { ItemRegDTO } from '../../Entities/ItemRegDTO';
 import { Packaging } from '../../Entities/Packaging';
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
+import useGenericController from '../../Controllers/generic-controller-hook';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const Restock = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { stock_rec_id } = useParams();
-        
-    const { handleRefresh, logout } = useAuth();
+    
+    const { findUnverifiedStockRecById, commitStockRecById, updateStockRecItem, restock, deleteStockRecItem, deleteStockRec } = useInventoryController();
+    const { performGetRequests } = useGenericController();
 
     /*	Flag to indicate network fetch for stock record and it's item details to populate table in order to continue data input.
         If true, then disable save button in store form input.	*/
@@ -76,14 +79,19 @@ const Restock = () => {
         }else {
             initialize();
         }
-    }, [stock_rec_id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [stock_rec_id, location.pathname]);
 
 	const initialize = async () => {
 		try {
 			setNetworkRequest(true);
 			resetPageStates();
+            controllerRef.current = new AbortController();
             const urls = [ '/api/items/transactions/mono', '/api/outposts/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await genericController.performGetRequests(urls, controllerRef.current.signal);
             const { 0: dbItemRequest, 1: outpostRequest } = response;
 
             //	check if the request to fetch db items doesn't fail before setting values to display
@@ -98,22 +106,14 @@ const Restock = () => {
 	
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 
@@ -122,7 +122,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const unverifiedStockRequest = await inventoryController.findUnverifiedStockRecById(stock_rec_id);
+			const unverifiedStockRequest = await findUnverifiedStockRecById(stock_rec_id, controllerRef.current.signal);
             
             const urls = [ '/api/items/transactions/mono', '/api/outposts/active' ];
             const response = await genericController.performGetRequests(urls);
@@ -146,23 +146,14 @@ const Restock = () => {
 	
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initializeWithStockRec();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			setNetworkRequest(false);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
+				return;
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -181,30 +172,21 @@ const Restock = () => {
 	const commitStockRecord = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-			await inventoryController.commitStockRecById(stockRecId, outpostId, destination);
+			await commitStockRecById(stockRecId, outpostId, destination, controllerRef.current.signal);
 			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
 			navigate("/inventory/item/restock/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return commitStockRecord(outpostId);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -264,7 +246,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			if(item.itemDetailId){
 				//	if data has itemDetailId, then update mode
-				await inventoryController.updateStockRecItem(item);
+				await updateStockRecItem(item, controllerRef.current.signal);
 				//	find index position of edited item in items arr
 				const indexPos = items.findIndex(i => i.id === item.id);
 				if(indexPos > -1){
@@ -277,7 +259,7 @@ const Restock = () => {
 				}
 			}else {
 				// 	else, create new item
-				let response = await inventoryController.restock(stockRecId, item);
+				let response = await restock(stockRecId, item, controllerRef.current.signal);
 				if(response && response.status === 200){
 					item.id = response.data.items[0].id;
 					item.itemDetailId = response.data.items[0].itemDetailId;
@@ -291,23 +273,14 @@ const Restock = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return fnSave(item);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -317,7 +290,7 @@ const Restock = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'delete':
-					await inventoryController.deleteStockRecItem(entityToEdit.itemDetailId);
+					await deleteStockRecItem(entityToEdit.itemDetailId, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -336,35 +309,26 @@ const Restock = () => {
 					setShowDropDownModal(true);
 					break;
 				case "deleteStockRec":
-					await inventoryController.deleteStockRec(stockRecId);
+					await deleteStockRec(stockRecId, controllerRef.current.signal);
 					resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/inventory/item/reg/0");
 					break;
 				case "exportToPDF":
 					//	TODO
-					//	await inventoryController.exportToPDF(stockRecId);
+					//	await exportToPDF(stockRecId, controllerRef.current.signal);
 					break;
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 
@@ -431,6 +395,14 @@ const Restock = () => {
         setShowFormModal(false);
         setShowConfirmModal(false);
         setShowDropDownModal(false);
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

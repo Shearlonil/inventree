@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import SVG from '../../../assets/Svg';
-import { useAuth } from '../../../app-context/auth-user-context';
 import handleErrMsg from '../../../Utils/error-handler';
 import TableMain from '../../../Components/TableView/TableMain';
 import PaginationLite from '../../../Components/PaginationLite';
@@ -13,11 +12,12 @@ import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import ledgerController from '../../../Controllers/ledger-controller';
 import { Ledger } from '../../../Entities/Ledger';
+import { useAuthUser } from '../../../app-context/user-context';
 
 const TrashedLedgers = () => {
     const navigate = useNavigate();
             
-    const { handleRefresh, logout, authUser } = useAuth();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     //	menus for the react-menu in table
@@ -73,22 +73,13 @@ const TrashedLedgers = () => {
 				setTotalItemsCount(response.data.length);
             }
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -191,23 +182,14 @@ const TrashedLedgers = () => {
             resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     

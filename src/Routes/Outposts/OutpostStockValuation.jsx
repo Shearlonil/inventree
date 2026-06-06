@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date } from "yup";
@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
 import { format, isPast, subDays } from "date-fns";
 import { toast } from 'react-toastify';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -16,20 +16,25 @@ import Select from 'react-select';
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
-import inventoryController from '../../Controllers/inventory-controller';
 import { StockSummary } from '../../Entities/StockSummary';
-import genericController from '../../Controllers/generic-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useGenericController from '../../Controllers/generic-controller-hook';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const OutpostStockValuation = () => {
+    const controllerRef = useRef(new AbortController());
+
     applyPlugin(jsPDF);
     const navigate = useNavigate();
+    const location = useLocation();
     const { outpost_id } = useParams();
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    
+    const { outpostStockValuation } = useInventoryController();
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const schema = object().shape({
@@ -66,13 +71,18 @@ const OutpostStockValuation = () => {
     
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const urls = [ `/api/tracts/active`, `/api/outposts/find/${outpost_id}` ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: tractsRequest, 1: outpostRequest } = response;
 
             //	check if the request to fetch items doesn't fail before setting values to display
@@ -95,22 +105,14 @@ const OutpostStockValuation = () => {
             }
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -308,7 +310,7 @@ const OutpostStockValuation = () => {
 
                 setFilename(`stock_valuation_${tempDate}`);
 
-                const response = await inventoryController.outpostStockValuation(tempDate, outpost_id, data.section.value.id);
+                const response = await outpostStockValuation(tempDate, outpost_id, data.section.value.id, controllerRef.current.signal);
                 if(response && response.data){
                     let totalStock = numeral(0);
                     const arr = [];
@@ -327,22 +329,13 @@ const OutpostStockValuation = () => {
             }
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return onsubmit(data);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 
@@ -353,6 +346,15 @@ const OutpostStockValuation = () => {
         const yesterday = subDays(current, -1);
         return !isPast(yesterday);
     };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
 
     return (
         <div className='container my-4'>

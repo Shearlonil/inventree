@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { FaStoreAlt } from "react-icons/fa";
 import { MdAddBusiness } from "react-icons/md";
@@ -9,23 +9,27 @@ import StoreItemRegForm from "../../Components/InventoryComp/StoreItemRegForm";
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
-import inventoryController from "../../Controllers/inventory-controller";
 import handleErrMsg from "../../Utils/error-handler";
 import PaginationLite from "../../Components/PaginationLite";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
 import outpostController from "../../Controllers/outpost-controller";
-import { useAuth } from "../../app-context/auth-user-context";
+import { useAuth } from "../../app-context/auth-context";
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from "../../Entities/Vendor";
 import { Tract } from "../../Entities/Tract";
+import useInventoryController from "../../Controllers/inventory-controller-hook";
 
 const StoreItemReg = () => {
+	const controllerRef = useRef(new AbortController());
+
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { stock_rec_id } = useParams();
 	
-	const { handleRefresh, logout } = useAuth();
+	const { findUnverifiedStockRecById, commitStockRecById, updateStockRecItem, persistStockRecItem, deleteStockRecItem, deleteStockRec } = useInventoryController();
+	const { logout } = useAuth();
 
 	/*	Flag to indicate network fetch for stock record and it's item details to populate table in order to continue data input.
 		If true, then disable save button in store form input.	*/
@@ -74,12 +78,17 @@ const StoreItemReg = () => {
 		}else {
 			initialize();
 		}
-	}, [stock_rec_id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [stock_rec_id, location.pathname]);
 
 	const initialize = async () => {
 		try {
 			setNetworkRequest(true);
 			resetPageStates();
+            controllerRef.current = new AbortController();
 
 			const response = await outpostController.findAllActive();
 	
@@ -90,22 +99,8 @@ const StoreItemReg = () => {
 	
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+			setNetworkRequest(false);
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 
@@ -114,7 +109,7 @@ const StoreItemReg = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const response = await inventoryController.findUnverifiedStockRecById(stock_rec_id);
+			const response = await findUnverifiedStockRecById(stock_rec_id, controllerRef.current.signal);
 			const outpostResponse = await outpostController.findAllActive();
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
@@ -216,7 +211,7 @@ const StoreItemReg = () => {
 	const commitStockRecord = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-			await inventoryController.commitStockRecById(stockRecId, outpostId, destination);
+			await commitStockRecById(stockRecId, outpostId, destination, controllerRef.current.signal);
 			resetPageStates();
 			//	navigate back to this page which will cause reset of page states
 			navigate("/inventory/item/reg/0");
@@ -299,7 +294,7 @@ const StoreItemReg = () => {
 			setNetworkRequest(true);
 			if(item.id){
 				//	if data has id, then update mode
-				await inventoryController.updateStockRecItem(item);
+				await updateStockRecItem(item, controllerRef.current.signal);
 				//	find index position of edited item in items arr
 				const indexPos = items.findIndex(i => i.id === item.id);
 				if(indexPos > -1){
@@ -312,7 +307,7 @@ const StoreItemReg = () => {
 				}
 			}else {
 				// 	else, create new item
-				let response = await inventoryController.persistStockRecItem(stockRecId, item);
+				let response = await persistStockRecItem(stockRecId, item, controllerRef.current.signal);
 				if(response && response.status === 200){
 					item.id = response.data.items[0].id;
 					item.itemDetailId = response.data.items[0].itemDetailId;
@@ -352,7 +347,7 @@ const StoreItemReg = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'delete':
-					await inventoryController.deleteStockRecItem(entityToEdit.itemDetailId);
+					await deleteStockRecItem(entityToEdit.itemDetailId, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -371,14 +366,14 @@ const StoreItemReg = () => {
 					setShowDropDownModal(true);
 					break;
 				case "deleteStockRec":
-					await inventoryController.deleteStockRec(stockRecId);
+					await deleteStockRec(stockRecId, controllerRef.current.signal);
 					resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/inventory/item/reg/0");
 					break;
 				case "exportToPDF":
 					//	TODO
-					//	await inventoryController.exportToPDF(stockRecId);
+					//	await exportToPDF(stockRecId, controllerRef.current.signal);
 					break;
 			}
 			setNetworkRequest(false);
@@ -416,6 +411,14 @@ const StoreItemReg = () => {
 			menuItems,
 			menuItemClick: handleTableReactMenuItemClick,
 		}
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
 	return (

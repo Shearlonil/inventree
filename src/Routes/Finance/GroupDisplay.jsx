@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
@@ -7,19 +7,24 @@ import { Table } from 'react-bootstrap';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
-import financeController from '../../Controllers/finance-controller';
-import genericController from '../../Controllers/generic-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useFinanceController from '../../Controllers/finance-controller-hook';
+import useGenericController from '../../Controllers/generic-controller-hook';
 
 const GroupDisplay = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	
+    const { performGetRequests } = useGenericController();
+    const { renameGroup, moveAccGroupToGroup, moveAccGroupToChart } = useFinanceController();
+    const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const offCanvasMenu = [
@@ -61,14 +66,19 @@ const GroupDisplay = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, [id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [id, location.pathname]);
     
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             //  find active groups and charts
             const urls = [ '/api/finance/groups', '/api/finance/charts', `/api/finance/groups/${id}` ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: groupsRequest, 1: chartsRequest, 2: groupRequest } = response;
 
             //	check if the request to fetch groups doesn't fail before setting values to display
@@ -96,22 +106,13 @@ const GroupDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -182,116 +183,100 @@ const GroupDisplay = () => {
                     toast.error('Operation not allowed on default groups');
                     return;
                 }
-                renameGroup();
+                fnRenameGroup();
                 break;
             case 'moveToGroup':
 				if(group.isDefault){
                     toast.error('Operation not allowed on default groups');
                     return;
                 }
-                moveToGroup();
+                fnMoveToGroup();
                 break;
             case 'moveToChart':
 				if(group.isDefault){
                     toast.error('Operation not allowed on default groups');
                     return;
                 }
-                moveToChart();
+                fnMoveToChart();
                 break;
         }
 	}
 
-    const renameGroup = async () => {
+    const fnRenameGroup = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             const temp = {...group};
             temp.name = content;
-            await financeController.renameGroup(temp);
+            await renameGroup(temp, controllerRef.current.signal);
             setGroup(temp);
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return renameGroup();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
-    const moveToGroup = async () => {
+    const fnMoveToGroup = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             const temp = {...group};
             temp.parentName = content.name;
             temp.parentGroupId = content.id;
             temp.parentChartId = null;
             console.log(content);
-            await financeController.moveAccGroupToGroup(temp);
+            await moveAccGroupToGroup(temp, controllerRef.current.signal);
             setGroup(temp);
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return moveToGroup();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
-    const moveToChart = async () => {
+    const fnMoveToChart = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             const temp = {...group};
             temp.parentName = content.name;
             temp.parentChartId = content.id;
             temp.parentGroupId = null;
             console.log(content);
-            await financeController.moveAccGroupToChart(temp);
+            await moveAccGroupToChart(temp, controllerRef.current.signal);
             setGroup(temp);
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return moveToChart();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

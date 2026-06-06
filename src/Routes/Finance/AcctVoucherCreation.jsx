@@ -1,27 +1,32 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
 import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
 import { toast } from "react-toastify";
 import { format, isAfter } from "date-fns";
+import { useLocation } from "react-router-dom";
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
-import { useAuth } from "../../app-context/auth-user-context";
 import VchCreationForm from "../../Components/Finance/VchCreationForm";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
-import financeController from "../../Controllers/finance-controller";
 import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
+import { useAuthUser } from "../../app-context/user-context";
+import useFinanceController from "../../Controllers/finance-controller-hook";
 
 const AcctVoucherCreation = () => {
+	const controllerRef = useRef(new AbortController());
 		
-	const { handleRefresh, logout, authUser } = useAuth();
+	const location = useLocation();
+	
+	const { createVoucher } = useFinanceController();
+	const { authUser } = useAuthUser();
 	const user = authUser();
 		
 	const [networkRequest, setNetworkRequest] = useState(false);
@@ -57,12 +62,17 @@ const AcctVoucherCreation = () => {
 			toast.error("Account doesn't support viewing this page. Please contact your supervisor");
 			navigate('/404');
 		}
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await ledgerController.findAllActive();
+            controllerRef.current = new AbortController();
+            const response = await ledgerController.findAllActive(controllerRef.current.signal);
 
             if (response && response.data) {
                 setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
@@ -71,22 +81,13 @@ const AcctVoucherCreation = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -197,7 +198,8 @@ const AcctVoucherCreation = () => {
 	const saveTransactions = async () => {
 		try {
             setNetworkRequest(true);
-            await financeController.createVoucher(ledgerTransactions);
+			resetAbortController();
+            await createVoucher(ledgerTransactions, controllerRef.current.signal);
 
             setLedgerTransactions([]);
 			calcTotalAmounts([]);
@@ -205,22 +207,13 @@ const AcctVoucherCreation = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return saveTransactions();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
 	}
 		
@@ -248,6 +241,14 @@ const AcctVoucherCreation = () => {
 			menuItemClick: handleTableReactMenuItemClick,
 		}
 	};
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
 	return (
 		<div className="container">

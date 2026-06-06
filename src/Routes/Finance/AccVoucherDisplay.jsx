@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Modal } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { LuTicket } from "react-icons/lu";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
@@ -12,25 +12,28 @@ import { applyPlugin } from 'jspdf-autotable'
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
 import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
-import { useAuth } from "../../app-context/auth-user-context";
 import VchCreationForm from "../../Components/Finance/VchCreationForm";
 import TableMain from "../../Components/TableView/TableMain";
 import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
-import financeController from "../../Controllers/finance-controller";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
 import { LedgerTransaction } from "../../Entities/LedgerTransaction";
 import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelectDialog";
 import { OribitalLoading, ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import { clientDetails } from "../../../data";
+import { useAuthUser } from "../../app-context/user-context";
+import useFinanceController from "../../Controllers/finance-controller-hook";
 
 const AcctVoucherDisplay = () => {
     applyPlugin(jsPDF);
+    const controllerRef = useRef(new AbortController());
     const navigate = useNavigate();
+    const location = useLocation();
     const { vch_id } = useParams();
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    
+    const { findLedgerVch, updateVoucherDate, updateVoucher, deleteLedgerVoucher } = useFinanceController();
+    const { authUser } = useAuthUser();
     const user = authUser();
         
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -78,12 +81,17 @@ const AcctVoucherDisplay = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, [vch_id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [vch_id, location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            let response = await ledgerController.findAll();
+            controllerRef.current = new AbortController();
+            let response = await ledgerController.findAll(controllerRef.current.signal);
 
             const ledgerArr = [];
             if (response && response.data) {
@@ -93,7 +101,7 @@ const AcctVoucherDisplay = () => {
             }
 
             if(vch_id > 0){
-                response = await financeController.findLedgerVch(vch_id);
+                response = await findLedgerVch(vch_id, controllerRef.current.signal);
                 const arr = [];
                 if(response.data.length > 0){
                     setTransactionDate(new Date(response.data[0].date));
@@ -111,22 +119,13 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -259,7 +258,7 @@ const AcctVoucherDisplay = () => {
             // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
             const date = new Date();
             let dtoDate = format(tempDate, "yyyy-MM-dd") + "T12:00:00.000Z";
-            await financeController.updateVoucherDate(vchId, dtoDate);
+            await updateVoucherDate(vchId, dtoDate, controllerRef.current.signal);
             setTransactionDate(tempDate);
             ledgerTransactions.forEach(lt => {
                 lt.dtoDateTime = tempDate;
@@ -270,29 +269,20 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return updateTransactionDate();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 
     const saveTransactions = async () => {
         try {
             setNetworkRequest(true);
-            await financeController.updateVoucher(vchId, ledgerTransactions);
+            await updateVoucher(vchId, ledgerTransactions, controllerRef.current.signal);
 
             setLedgerTransactions([]);
             calcTotalAmounts([]);
@@ -300,29 +290,20 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return saveTransactions();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 
     const delVch = async () => {
         try {
             setNetworkRequest(true);
-            await financeController.deleteLedgerVoucher(vchId);
+            await deleteLedgerVoucher(vchId, controllerRef.current.signal);
 			setLedgerTransactions([]);
             setTotalDrAmount(0);
             setTotalCrAmount(0);
@@ -330,22 +311,13 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return delVch();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 
@@ -367,7 +339,7 @@ const AcctVoucherDisplay = () => {
 			setReportTitle(`Purchases Report with ID: ${id}`);
 			setFilename(`Purchases Report with ID: ${id}`);
 	
-			const response = await financeController.findLedgerVch(id);
+			const response = await findLedgerVch(id, controllerRef.current.signal);
             setVchId(id);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
@@ -384,24 +356,14 @@ const AcctVoucherDisplay = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return idSearch(id);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-			setNetworkRequest(false);
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 

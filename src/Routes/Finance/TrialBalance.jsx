@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { format } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
 import numeral from 'numeral';
@@ -9,20 +9,24 @@ import { applyPlugin } from 'jspdf-autotable'
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 
-import { useAuth } from '../../app-context/auth-user-context';
-import financeController from '../../Controllers/finance-controller';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
 import handleErrMsg from '../../Utils/error-handler';
 import { useFinance } from '../../app-context/finance-context';
+import { useAuthUser } from '../../app-context/user-context';
 import { clientDetails } from '../../../data';
+import useFinanceController from '../../Controllers/finance-controller-hook';
 
 const TrialBalance = () => {
     applyPlugin(jsPDF);
-    const navigate = useNavigate();
         
-    const { handleRefresh, logout, authUser } = useAuth();
+    const controllerRef = useRef(new AbortController());
+    const navigate = useNavigate();
+    const location = useLocation();
+        
+    const { trialBal } = useFinanceController();
+    const { authUser } = useAuthUser();
     const { addGroup, getGroup, grandTotal, clear } = useFinance();
     const user = authUser();
             
@@ -46,7 +50,11 @@ const TrialBalance = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const fnSearch = async (data) => {
         try {
@@ -55,6 +63,7 @@ const TrialBalance = () => {
                 setAssets({});
                 setLiabilities({});
                 setCurrentProfitLoss({});
+                resetAbortController();
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
@@ -63,7 +72,7 @@ const TrialBalance = () => {
 
                 setNetworkRequest(true);
 
-                const response = await financeController.trialBal(startDate, endDate);
+                const response = await trialBal(startDate, endDate, controllerRef.current.signal);
                 if(response && response.data){
                     setAssets(response.data.Assets);
                     const pl = response.data.currentProfitLoss;
@@ -87,22 +96,12 @@ const TrialBalance = () => {
             }
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnSearch(data);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
             toast.error(handleErrMsg(error).msg);
         }
     }
@@ -428,6 +427,14 @@ const TrialBalance = () => {
             </div>
         </div>
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div style={{minHeight: '75vh'}} className='container'>

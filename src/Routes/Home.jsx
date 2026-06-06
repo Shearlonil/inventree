@@ -1,26 +1,28 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoIosRefresh } from "react-icons/io";
 import { TbUsersGroup } from "react-icons/tb";
 import { AiFillProduct } from "react-icons/ai";
 import { FcCustomerSupport } from "react-icons/fc";
 import { MdSell } from "react-icons/md";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import SVG from "../assets/Svg";
 import { HomeWrapper } from "../Components/Styles/HomeStyles";
 import Sliced from "../Components/SlicedEffect/Sliced";
 import { clientDetails } from "../../data";
-import { useAuth } from "../app-context/auth-user-context";
-import genericController from "../Controllers/generic-controller";
 import handleErrMsg from '../Utils/error-handler';
+import useGenericController from "../Controllers/generic-controller-hook";
 
 const Home = () => {
+	const controllerRef = useRef(new AbortController());
 	const navigate = useNavigate();
+	const location = useLocation();
+
 	const { svg_1, svg_2, svg_3_red, svg_4 } = SVG;
 	
-	const { authUser, handleRefresh, logout } = useAuth();
-		
+	const { performGetRequests } = useGenericController();
+
 	const [networkRequest, setNetworkRequest] = useState(false);
 	const [activeUserCount, setActiveUserCount] = useState(0);
 	const [activeItemCount, setActiveItemCount] = useState(0);
@@ -32,15 +34,20 @@ const Home = () => {
 		
 	useEffect( () => {
 		initialize();
-	}, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [location.pathname]);
     
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
 			const urls = [ `/api/users/count/active`, `/api/items/count/active`, `/api/customers/count/active`, `/api/vendors/count/active`, 
 				'/api/transactions/invoices/count/incomplete', `/api/inventory/expiring/count`, `/api/items/gross/low/count`
 			];
-			const response = await genericController.performGetRequests(urls);
+			const response = await performGetRequests(urls,  controllerRef.current.signal);
             const { 0: usersRequest, 1: itemsRequest, 2: customersRequest, 3: vendorsRequest, 4: incompleteTransactionRequest,
 				5: expItemsRequest, 6: lowStockRequest
 			 } = response;
@@ -68,18 +75,7 @@ const Home = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                // logout();
-            }
+			toast.error(handleErrMsg(error).msg);
         }
     };
 

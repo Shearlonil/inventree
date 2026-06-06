@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { object, date, ref } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button, Col, Form, Modal, Row } from "react-bootstrap";
@@ -7,6 +7,7 @@ import Datetime from 'react-datetime';
 import { toast } from "react-toastify";
 import { format } from 'date-fns';
 import { toDate } from "date-fns-tz"
+import { useLocation, useNavigate } from "react-router-dom";
 import numeral from "numeral";
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -20,25 +21,30 @@ import TableMain from "../../Components/TableView/TableMain";
 import PaginationLite from "../../Components/PaginationLite";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import ErrorMessage from '../../Components/ErrorMessage';
-import inventoryController from "../../Controllers/inventory-controller";
-import { useAuth } from "../../app-context/auth-user-context";
+import { useAuthUser } from "../../app-context/user-context";
 import handleErrMsg from "../../Utils/error-handler";
-import { useNavigate } from "react-router-dom";
 import { Vendor } from "../../Entities/Vendor";
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import InputDialog from "../../Components/DialogBoxes/InputDialog";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
 import PurchasesUpdateForm from "../../Components/InventoryComp/PurchasesUpdateForm";
-import genericController from "../../Controllers/generic-controller";
 import DateDialog from '../../Components/DialogBoxes/DateDialog';
 import StartEndDateSearch from "../../Components/StartEndDateSearch";
+import useGenericController from "../../Controllers/generic-controller-hook";
+import useInventoryController from "../../Controllers/inventory-controller-hook";
+import { positiveNumberMiscParamSchema } from "../../Utils/yup-schema-validator/input-validator";
 
 const PurchasesWindow = () => {
 	applyPlugin(jsPDF);
+	const controllerRef = useRef(new AbortController());
+
 	const navigate = useNavigate();
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	const location = useLocation();
+	
+    const { paginatePurchasesIdSearch, paginatePurchasesDateSearch, findItemPurchases, updatePurchasedItem, changePurchasesVendor, deletePurchasedItem } = useInventoryController();
+    const { performGetRequests } = useGenericController();
+	const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const schema = object().shape(
@@ -114,13 +120,18 @@ const PurchasesWindow = () => {
 			toast.error("Account doesn't support viewing this page. Please contact your supervisor");
 			navigate('/404');
 		}
-	}, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [location.pathname]);
 
 	const initialize = async () => {
 		try {
+            controllerRef.current = new AbortController();
 			//  find active vendors and items
 			const urls = [ '/api/items/transactions/mono', '/api/vendors/active' ];
-			const response = await genericController.performGetRequests(urls);
+			const response = await genericController.performGetRequests(urls, controllerRef.current.signal);
 			const { 0: itemsRequest, 1: vendorsRequest } = response;
 
             //	check if the request to fetch items doesn't fail before setting values to display
@@ -133,22 +144,14 @@ const PurchasesWindow = () => {
 			}
 
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			setNetworkRequest(false);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
+				return;
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -241,22 +244,20 @@ const PurchasesWindow = () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'deleteItem':
-				deletePurchasedItem();
+				fnDeletePurchasedItem();
                 break;
             case 'updateVendor':
-				changePurchasesVendor();
+				fnChangePurchasesVendor();
                 break;
         }
 	}
 
 	const idSearch = async (id) => {
 		try {
-			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-				Technique 1: use the unary plus operator which is what i've adopted below
-				Technique 2: multiply by a number. 
-				etc	*/
-			if(!+id){
-				toast.error('Please enter a valid number');
+			try {
+				positiveNumberMiscParamSchema.validateSync(id);
+			} catch (error) {
+				toast.error(error.message);
 				return;
 			}
 			setNetworkRequest(true);
@@ -271,7 +272,7 @@ const PurchasesWindow = () => {
 			setValue('startDate', null);
 			setValue('endDate', null);
 	
-			const response = await inventoryController.paginatePurchasesIdSearch(id);
+			const response = await paginatePurchasesIdSearch(id, controllerRef.current.signal);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data) {
@@ -281,24 +282,13 @@ const PurchasesWindow = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return idSearch(id);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
 			setNetworkRequest(false);
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
+			}
 		}
 	}
 
@@ -319,7 +309,7 @@ const PurchasesWindow = () => {
 				setReportTitle(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 				setFilename(`Purchases Report from ${format(new Date(data.startDate), "dd/MM/yyyy")} to ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.paginatePurchasesDateSearch(startDate, endDate);
+				const response = await paginatePurchasesDateSearch(startDate, endDate, controllerRef.current.signal);
 				if(response && response.data){
 					setItems(buildTableData(response.data.content));
 					setTotalItemsCount(response.data.page.totalElements);
@@ -328,21 +318,11 @@ const PurchasesWindow = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return fnSearch(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
 			}
 		}
 	}
@@ -364,7 +344,7 @@ const PurchasesWindow = () => {
 				setReportTitle(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 				setFilename(`Purchases Report for ${selectedDropDownEntity.itemName} from ${format(date.startDate, "dd/MM/yyyy")} to ${format(date.endDate, "dd/MM/yyyy")}`);
 
-				const response = await inventoryController.findItemPurchases(selectedDropDownEntity.id, startDate, endDate);
+				const response = await findItemPurchases(selectedDropDownEntity.id, startDate, endDate, controllerRef.current.signal);
 				if(response && response.data && response.data.length > 0){
 					setItems(buildTableData(response.data));
 					setTotalItemsCount(response.data.length);
@@ -373,29 +353,15 @@ const PurchasesWindow = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return itemDateSearch(date);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
-			await inventoryController.updatePurchasedItem(item);
+			await updatePurchasedItem(item, controllerRef.current.signal);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === item.id);
 			if(indexPos > -1){
@@ -406,27 +372,17 @@ const PurchasesWindow = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return fnSave(item);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			setNetworkRequest(false);
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
 			}
 		}
 	}
 	
-	const changePurchasesVendor = async () => {
+	const fnChangePurchasesVendor = async () => {
 		try {
 			setNetworkRequest(true);
 			const vendor = new Vendor();
@@ -436,7 +392,7 @@ const PurchasesWindow = () => {
 			const temp = {...entity};
 			temp.vendor = vendor;
 
-			await inventoryController.changePurchasesVendor(entity);
+			await changePurchasesVendor(entity, controllerRef.current.signal);
 			entity.vendor = vendor;
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === temp.id);
@@ -451,30 +407,20 @@ const PurchasesWindow = () => {
 			setEntity(null);
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return changePurchasesVendor();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			setNetworkRequest(false);
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
 			}
 		}
 	}
 	
-	const deletePurchasedItem = async () => {
+	const fnDeletePurchasedItem = async () => {
 		try {
 			setNetworkRequest(true);
-			await inventoryController.deletePurchasedItem(entity);
+			await deletePurchasedItem(entity, controllerRef.current.signal);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === entity.id);
 			if(indexPos > -1){
@@ -491,22 +437,12 @@ const PurchasesWindow = () => {
 			setEntity(null);
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return deletePurchasedItem();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
+			setNetworkRequest(false);
+			// display error message
+			toast.error(handleErrMsg(error).msg);
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
 			}
 		}
 	}
@@ -653,6 +589,14 @@ const PurchasesWindow = () => {
 			menuItemClick: handleTableReactMenuItemClick,
 		}
 	};
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
 	return (
 		<>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import Datetime from "react-datetime";
@@ -11,23 +11,22 @@ import { useNavigate } from "react-router-dom";
 
 import { restockSchema } from "../../Utils/yup-schema-validator/store-form-schema";
 import ErrorMessage from "../ErrorMessage";
-import { useAuth } from "../../app-context/auth-user-context";
-import genericController from "../../Controllers/generic-controller";
 import handleErrMsg from '../../Utils/error-handler';
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
+import useGenericController from '../../Controllers/generic-controller-hook';
 
 //	ref:	https://help.nextar.com/tutorial/stock-control
 const RestockForm = (props) => {
+	const controllerRef = useRef(new AbortController());
 	const { data, fnSave, dbItemOptions, networkRequest }  = props;
 
 	const navigate = useNavigate();
 
-	const { handleRefresh, logout } = useAuth();
-
+	const { performGetRequests } = useGenericController();
 	// for pkg
 	const [pkgOptions, setPkgOptions] = useState([]);
 	const [pkgLoading, setPkgLoading] = useState(true);
@@ -70,12 +69,17 @@ const RestockForm = (props) => {
 
     useEffect( () => {
 		initialize();
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
     }, []);
 
 	const initialize = async () => {
 		try {
+            controllerRef.current = new AbortController();
             const urls = [ '/api/pkg/active', '/api/vendors/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: pkgRequest, 1: vendorRequest } = response;
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
@@ -111,22 +115,14 @@ const RestockForm = (props) => {
 				setUnitStockPrice(data.unitStockPrice);
 			}
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 

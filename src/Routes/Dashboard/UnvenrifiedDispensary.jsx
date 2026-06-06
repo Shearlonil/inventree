@@ -1,19 +1,23 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import { format } from 'date-fns';
 import { Table } from 'react-bootstrap';
 
-import { useAuth } from '../../app-context/auth-user-context';
+import { useAuthUser } from '../../app-context/user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import inventoryController from '../../Controllers/inventory-controller';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const UnvenrifiedDispensary = () => {
-    const navigate = useNavigate();
+    const controllerRef = useRef(new AbortController());
 
-    const { authUser, handleRefresh, logout } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const { unverifiedDispensary } = useInventoryController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const [networkRequest, setNetworkRequest] = useState(true);
@@ -28,13 +32,18 @@ const UnvenrifiedDispensary = () => {
     
     useEffect(() => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
   
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
     
-            const response = await inventoryController.unverifiedDispensary();
+            const response = await unverifiedDispensary(controllerRef.current.signal);
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
@@ -44,22 +53,13 @@ const UnvenrifiedDispensary = () => {
     
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                //  Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                //  display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                //  if error while refreshing, logout and delete all cookies
-                logout();
+            //  Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            //  display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 

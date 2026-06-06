@@ -1,21 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
 import { format, formatDistanceToNow } from 'date-fns';
 
-import { useAuth } from '../../app-context/auth-user-context';
+import { useAuthUser } from '../../app-context/user-context';
 import SVG from '../../assets/Svg';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import handleErrMsg from '../../Utils/error-handler';
 import PaginationLite from '../../Components/PaginationLite';
-import inventoryController from '../../Controllers/inventory-controller';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const Expiring = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { expiring } = useInventoryController();
+    const { authUser } = useAuthUser();
     const user = authUser();
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -32,12 +36,17 @@ const Expiring = () => {
                 
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await inventoryController.expiring();
+            controllerRef.current = new AbortController();
+            const response = await expiring(controllerRef.current.signal);
 
             if(response && response.data){
                 setItems(response.data);
@@ -45,22 +54,14 @@ const Expiring = () => {
             }
             setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 

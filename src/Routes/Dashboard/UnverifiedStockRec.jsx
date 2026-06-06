@@ -1,41 +1,51 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
 import { format } from 'date-fns';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Table } from 'react-bootstrap';
 
-import { useAuth } from '../../app-context/auth-user-context';
+import { useAuthUser } from '../../app-context/user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import inventoryController from '../../Controllers/inventory-controller';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const UnverifiedStockRec = () => {
+    const controllerRef = useRef(new AbortController());
+
     const { mode } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
+    
     const [networkRequest, setNetworkRequest] = useState(true);
     const [selectedEntry, setSelectedEntry] = useState(null);
-
+    
     //  for Confirmation Dialog
     const [displayMsg, setDisplayMsg] = useState("");
     const [showConfirmModal, setShowConfirmModal] = useState(false);
-  
+    
     //  data returned from network fetch
     const [data, setData] = useState([]);
-
-    const { authUser, handleRefresh, logout } = useAuth();
+    
+    const { unverifiedStockRec } = useInventoryController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     useEffect(() => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
   
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
     
-            const response = await inventoryController.unverifiedStockRec(mode);
+            const response = await unverifiedStockRec(mode, controllerRef.current.signal);
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
@@ -45,22 +55,8 @@ const UnverifiedStockRec = () => {
     
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                //  Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                //  display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                //  if error while refreshing, logout and delete all cookies
-                logout();
-            }
+            setNetworkRequest(false);
+            toast.error(handleErrMsg(error).msg);
         }
     };
 

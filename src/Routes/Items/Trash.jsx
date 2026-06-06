@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import genericController from '../../Controllers/generic-controller';
 import { Item } from '../../Entities/Item';
 import ReactMenu from '../../Components/ReactMenu';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -16,11 +14,17 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import itemController from '../../Controllers/item-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useGenericController from '../../Controllers/generic-controller-hook';
 
 const Trash = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     //	menus for the react-menu in table
@@ -62,13 +66,18 @@ const Trash = () => {
             
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const urls = [ '/api/trash/items', '/api/tracts/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: trashRequest, 1: tractRequest } = response;
 
             //	check if the request to fetch tracts doesn't fail before setting values to display
@@ -95,22 +104,13 @@ const Trash = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -225,23 +225,14 @@ const Trash = () => {
             resetPage();
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return handleConfirmOK();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-                setNetworkRequest(false);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 
@@ -269,6 +260,15 @@ const Trash = () => {
             menuItemClick: handleTableReactMenuItemClick,
         }
     };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
 
     return (
         <div style={{minHeight: '75vh'}} className="container">

@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import vedorController from '../../Controllers/vendor-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
@@ -18,11 +16,17 @@ import { schema } from '../../Utils/yup-schema-validator/contact-schema';
 import ContactForm from '../../Components/Contacts/ContactForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
+import { useAuthUser } from '../../app-context/user-context';
+import useVendorController from '../../Controllers/vendor-controller-hook';
 
 const VendorsWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { fetchAllActive, createVendor, deleteVendor, updateVendor } = useVendorController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const {
@@ -84,12 +88,17 @@ const VendorsWindow = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await vedorController.fetchAllActive();
+            resetAbortController();
+            const response = await fetchAllActive(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -101,22 +110,13 @@ const VendorsWindow = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -207,10 +207,11 @@ const VendorsWindow = () => {
     const onSubmit = async (data) => {
         try {
             setNetworkRequest(true);
+            resetAbortController()
             let vendor = new Contact(data);
             vendor.phoneNo = data.phone_no;
             vendor.status = true;
-            const response = await vedorController.createVendor(vendor);
+            const response = await createVendor(vendor, controllerRef.current.signal);
             if(response && response.data){
                 vendor = new Contact(response.data);
                 const arr = [...filteredVendors, vendor];
@@ -226,23 +227,13 @@ const VendorsWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onSubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -266,9 +257,10 @@ const VendorsWindow = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'deleteVendor':
-					await vedorController.deleteVendor(entityToEdit.id);
+					await deleteVendor(entityToEdit.id, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					let indexPos = filteredVendors.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -296,31 +288,23 @@ const VendorsWindow = () => {
             resetPage();
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     
-    const updateVendor = async (data) => {
+    const fnUpdateVendor = async (data) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await vedorController.updateVendor(data);
+            const response = await updateVendor(data, controllerRef.current.signal);
             if(response && response.status === 200){
                 //	find index position of edited item in filtered vendors arr
                 let indexPos = filteredVendors.findIndex(i => i.id === data.id);
@@ -344,23 +328,14 @@ const VendorsWindow = () => {
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return updateVendor(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -375,6 +350,14 @@ const VendorsWindow = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (
@@ -489,7 +472,7 @@ const VendorsWindow = () => {
                 handleConfirm={handleInputOK}
                 message={displayMsg}
             />
-            <ContactForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={updateVendor} />
+            <ContactForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={fnUpdateVendor} />
         </div>
     );
 };

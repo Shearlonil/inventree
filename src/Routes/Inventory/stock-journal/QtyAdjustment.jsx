@@ -1,26 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Select from "react-select";
 import numeral from 'numeral';
 
-import { useAuth } from "../../../app-context/auth-user-context";
+import { useAuthUser } from '../../../app-context/user-context';
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
-import { qtyAdjustment } from '../../../Utils/yup-schema-validator/stock-journal';
+import { qtyAdjustmentSchema } from '../../../Utils/yup-schema-validator/stock-journal';
 import handleErrMsg from '../../../Utils/error-handler';
 import SVG from '../../../assets/Svg';
 import { Form } from 'react-bootstrap';
 import itemController from '../../../Controllers/item-controller';
 import { Item } from '../../../Entities/Item';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
-import inventoryController from '../../../Controllers/inventory-controller';
+import useInventoryController from '../../../Controllers/inventory-controller-hook';
 
 const QtyAdjustment = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+	const { qtyAdjustment } = useInventoryController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -40,7 +44,7 @@ const QtyAdjustment = () => {
         control,
         formState: { errors },
     } = useForm({
-        resolver: yupResolver(qtyAdjustment),
+        resolver: yupResolver(qtyAdjustmentSchema),
         defaultValues: {
             //  Set default selection
             source_product: null,
@@ -61,12 +65,17 @@ const QtyAdjustment = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await itemController.fetchActiveGrossItems();
+            controllerRef.current = new AbortController();
+            const response = await itemController.fetchActiveGrossItems(controllerRef.current.signal);
             
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -84,22 +93,14 @@ const QtyAdjustment = () => {
             }
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -127,7 +128,7 @@ const QtyAdjustment = () => {
                 status: true,
                 qtyType: 'null'
             }
-            await inventoryController.qtyAdjustment(item);
+            await qtyAdjustment(item, controllerRef.current.signal);
             /*  Update quantity   */
             let indexPos = itemOptions.findIndex(i => i.value.id === item.id);
             if(indexPos > -1){
@@ -154,23 +155,14 @@ const QtyAdjustment = () => {
             reset();
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return handleConfirmOK();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-                setNetworkRequest(false);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
 

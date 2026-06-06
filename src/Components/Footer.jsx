@@ -2,15 +2,13 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { BsInstagram, BsTwitter, BsTwitterX, BsWhatsapp } from "react-icons/bs";
 import { FaFacebook } from "react-icons/fa";
+import { getYear } from "date-fns";
 
 import IMAGES from "../assets/Images";
 import SVG from "../assets/Svg";
-import { useAuth } from "../app-context/auth-user-context";
 
 const Footer = () => {
     const navigate = useNavigate();
-
-    const { getCurrentYear } = useAuth();
 
     return (
         <div className="container-fluid">
@@ -19,7 +17,7 @@ const Footer = () => {
                     <a href="/" className="me-2 mb-md-0 text-body-secondary text-decoration-none lh-1">
                         <img src={IMAGES.logo} width={"100"} alt="" />
                     </a>
-                    <span className="text-body-secondary">&copy; {getCurrentYear()} Inventree, Inc</span>
+                    <span className="text-body-secondary">&copy; {getYear(new Date())} Inventree, Inc</span>
                 </div>
                 {/* <hr className="container d-md-none" /> */}
                 <div className="col-12 col-md-4 text-center d-flex flex-column flex-md-row align-items-center justify-content-center gap-2">

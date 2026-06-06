@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import { format } from "date-fns";
 import { toast } from 'react-toastify';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -10,10 +10,8 @@ import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable'
 
 import SVG from '../../../assets/Svg';
-import { useAuth } from '../../../app-context/auth-user-context';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import handleErrMsg from '../../../Utils/error-handler';
-import genericController from '../../../Controllers/generic-controller';
 import ledgerController from '../../../Controllers/ledger-controller';
 import { Ledger } from '../../../Entities/Ledger';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
@@ -21,12 +19,18 @@ import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
 import StartEndDateSearch from '../../../Components/StartEndDateSearch';
+import { useAuthUser } from '../../../app-context/user-context';
+import useGenericController from '../../../Controllers/generic-controller-hook';
 
 const LedgerDisplay = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const ledgerOffCanvasMenu = [
@@ -69,13 +73,18 @@ const LedgerDisplay = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
     
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const urls = [ `/api/ledgers/find/${id}`, `/api/ledgers/find/${id}/parent` ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: ledgerRequest, 1: ledgerParentRequest } = response;
             
             let l;
@@ -128,22 +137,13 @@ const LedgerDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -243,22 +243,13 @@ const LedgerDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return renameLedger();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -273,22 +264,13 @@ const LedgerDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return updateDiscount();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -410,52 +392,43 @@ const LedgerDisplay = () => {
             }
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnSearch(data);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
     
     const toggle = async (checked, ledger) => {
         try {
             if(user.hasAuth('EDIT_lEDGER_CREDIT_SALES')){
-                await ledgerController.setAllowCreditSales(id, checked);
+                resetAbortController();
+                await ledgerController.setAllowCreditSales(id, checked, controllerRef.current.signal);
             }else {
                 toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
                 throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
             }
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return toggle(checked, auth);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
             throw error;
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

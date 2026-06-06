@@ -12,20 +12,26 @@ import "react-datetime/css/react-datetime.css";
 import "bootstrap/dist/js/bootstrap.bundle.js";
 import App from "./App.jsx";
 import NavBar from "./Components/Navbar.jsx";
-import { AuthProvider } from './app-context/auth-user-context.js';
+import { AuthProvider } from './app-context/auth-context.js';
+import { TokenProvider } from "./app-context/token-context.js";
 import Footer from './Components/Footer.jsx';
 import { FinanceProvider } from './app-context/finance-context.js';
+import { UserProvider } from './app-context/user-context';
 
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<BrowserRouter>
+		<TokenProvider>
 			<AuthProvider>
-				<FinanceProvider>
-					<NavBar />
-					<App />
-					<Footer />
-				</FinanceProvider>
+				<UserProvider>
+					<FinanceProvider>
+						<NavBar />
+						<App />
+						<Footer />
+					</FinanceProvider>
+				</UserProvider>
 			</AuthProvider>
+		</TokenProvider>
 		</BrowserRouter>
 	</StrictMode>
 );

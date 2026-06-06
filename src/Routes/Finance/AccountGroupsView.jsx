@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import Select from "react-select";
 import { format } from 'date-fns';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Controller, useForm } from 'react-hook-form';
 
 import SVG from '../../assets/Svg';
@@ -13,14 +13,19 @@ import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading
 import PaginationLite from '../../Components/PaginationLite';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import ErrorMessage from '../../Components/ErrorMessage';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
-import genericController from '../../Controllers/generic-controller';
-import financeController from '../../Controllers/finance-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useFinanceController from '../../Controllers/finance-controller-hook';
+import useGenericController from '../../Controllers/generic-controller-hook';
 
 const AccountGroupsView = () => {
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    const controllerRef = useRef(new AbortController());
+    
+    const location = useLocation();
+    
+    const { performGetRequests } = useGenericController();
+    const { createGroup } = useFinanceController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const schema = yup.object().shape({
@@ -77,14 +82,19 @@ const AccountGroupsView = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             //  find active groups and charts
             const urls = [ '/api/finance/groups', '/api/finance/charts' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: groupsRequest, 1: chartsRequest } = response;
 
             //	check if the request to fetch groups doesn't fail before setting values to display
@@ -106,22 +116,13 @@ const AccountGroupsView = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -140,7 +141,7 @@ const AccountGroupsView = () => {
         setShowConfirmModal(false);
         switch (confirmDialogEvtName) {
             case 'create':
-                await createGroup();
+                await fnCreateGroup();
                 break;
         }
     }
@@ -167,11 +168,11 @@ const AccountGroupsView = () => {
         setShowConfirmModal(true);
     }
 
-    const createGroup = async () => {
+    const fnCreateGroup = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await financeController.createGroup(newGroup);
+            resetAbortController();
+            const response = await createGroup(newGroup, controllerRef.current.signal);
             const arr = [...groups, response.data];
             arr.sort(
                 (a, b) => (a.name.toLowerCase() > b.name.toLowerCase()) ? 1 : ((b.name.toLowerCase() > a.name.toLowerCase()) ? -1 : 0)
@@ -181,24 +182,23 @@ const AccountGroupsView = () => {
             toast.info("Group created");
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return createGroup();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div style={{minHeight: '70vh'}} className="container">

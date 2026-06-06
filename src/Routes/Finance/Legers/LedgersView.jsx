@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Button } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
@@ -7,12 +7,10 @@ import * as yup from "yup";
 import { yupResolver } from '@hookform/resolvers/yup';
 import Select from "react-select";
 
-import { useAuth } from '../../../app-context/auth-user-context';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import SVG from '../../../assets/Svg';
 import handleErrMsg from '../../../Utils/error-handler';
 import ledgerController from '../../../Controllers/ledger-controller';
-import genericController from '../../../Controllers/generic-controller';
 import TableMain from '../../../Components/TableView/TableMain';
 import PaginationLite from '../../../Components/PaginationLite';
 import ReactMenu from '../../../Components/ReactMenu';
@@ -22,11 +20,17 @@ import { OribitalLoading, ThreeDotLoading } from '../../../Components/react-load
 import DropDownDialog from '../../../Components/DialogBoxes/DropDownDialog';
 import { Ledger } from '../../../Entities/Ledger';
 import ErrorMessage from '../../../Components/ErrorMessage';
+import { useAuthUser } from '../../../app-context/user-context';
+import useGenericController from '../../../Controllers/generic-controller-hook';
 
 const LedgersView = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
     const user = authUser();
     
     const schema = yup.object().shape({
@@ -90,13 +94,18 @@ const LedgersView = () => {
 
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             const urls = [ '/api/finance/groups', `/api/ledgers/active` ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: groupsRequest, 1: ledgersRequest } = response;
 
             if (ledgersRequest && ledgersRequest.data && ledgersRequest.data.length > 0) {
@@ -118,22 +127,13 @@ const LedgersView = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -290,23 +290,14 @@ const LedgersView = () => {
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return createLedger(name);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-                setNetworkRequest(false);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -339,23 +330,14 @@ const LedgersView = () => {
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return renameLedger(name);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-                setNetworkRequest(false);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -390,23 +372,14 @@ const LedgersView = () => {
             resetPage();
             setNetworkRequest(false);
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return deleteLedger();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-                setNetworkRequest(false);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
     
@@ -421,6 +394,14 @@ const LedgersView = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

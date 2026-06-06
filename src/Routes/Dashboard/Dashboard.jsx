@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../app-context/auth-user-context";
 import { Button } from "react-bootstrap";
 import { PieChart, Pie, Cell, BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { subDays } from "date-fns";
+import { getYear, subDays } from "date-fns";
 import numeral from "numeral";
 import { toast } from "react-toastify";
 
 import handleErrMsg from "../../Utils/error-handler";
 import SVG from "../../assets/Svg";
 import transactionsController from "../../Controllers/transactions-controller";
+import { useAuthUser } from "../../app-context/user-context";
       
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
 
@@ -46,7 +46,7 @@ const renderCustomizedLabel = ({
 const Dashboard = () => {
     const navigate = useNavigate();
 
-    const { authUser, handleRefresh, logout, getCurrentYear } = useAuth();
+    const { authUser } = useAuthUser();
     const user = authUser();
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -105,22 +105,13 @@ const Dashboard = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -136,7 +127,7 @@ const Dashboard = () => {
                 {user.hasAuth('PROFIT_VIEW') && <div className="row">
                     <div className="col-12 col-sm-8 my-2 d-flex flex-column justify-content-center">
                         <h5 className="bungee-regular mt-4 text-danger">
-                            Monthly Sales - {getCurrentYear()}
+                            Monthly Sales - {getYear(new Date())}
                         </h5>
                         {/* NOTE: aspect={1.2} prop makes the ResponsiveContainer visible (don't know why).
                             But it means making both dimension scale without explicitly setting the width and/or height.

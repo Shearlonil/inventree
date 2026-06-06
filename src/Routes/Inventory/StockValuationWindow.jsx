@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Col, Form, Row, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
@@ -6,7 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import Datetime from 'react-datetime';
 import { format } from "date-fns";
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -16,19 +16,23 @@ import Select from 'react-select';
 
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
-import { useAuth } from '../../app-context/auth-user-context';
 import handleErrMsg from '../../Utils/error-handler';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
-import inventoryController from '../../Controllers/inventory-controller';
 import { StockSummary } from '../../Entities/StockSummary';
 import tractController from '../../Controllers/tract-controller';
+import { useAuthUser } from '../../app-context/user-context';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 const StockValuationWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     applyPlugin(jsPDF);
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    
+    const { stockValuation } = useInventoryController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const schema = object().shape({
@@ -61,11 +65,16 @@ const StockValuationWindow = () => {
     
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
-            const tractsRequest = await tractController.fetchAllActive();
+            controllerRef.current = new AbortController();
+            const tractsRequest = await tractController.fetchAllActive(controllerRef.current.signal);
 
             //	check if the request to fetch items doesn't fail before setting values to display
             if(tractsRequest && tractsRequest.data){
@@ -82,22 +91,14 @@ const StockValuationWindow = () => {
                 setTractsLoading(false);
             }
         } catch (error) {
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -292,7 +293,7 @@ const StockValuationWindow = () => {
 
                 setFilename(`stock_valuation_${tempDate}`);
 
-				const response = await inventoryController.stockValuation(tempDate, data.section.value.id);
+				const response = await stockValuation(tempDate, data.section.value.id, controllerRef.current.signal);
 				if(response && response.data){
                     let totalStock = numeral(0);
                     const arr = [];
@@ -310,25 +311,24 @@ const StockValuationWindow = () => {
 				setNetworkRequest(false);
 			}
 		} catch (error) {
-			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onsubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div className='container my-4'>

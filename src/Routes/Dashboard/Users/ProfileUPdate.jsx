@@ -8,17 +8,19 @@ import { useNavigate, useParams } from "react-router-dom";
 import logo from "../../../assets/Img/logo.png";
 import handleErrMsg from "../../../Utils/error-handler";
 import ErrorMessage from "../../../Components/ErrorMessage";
-import { useAuth } from "../../../app-context/auth-user-context";
+import { useAuth } from "../../../app-context/auth-context";
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../../Components/react-loading-indicators/Indicator";
 import userController from "../../../Controllers/user-controller";
 import { profile_update_schema } from '../../../Utils/yup-schema-validator/user-form-schema';
+import { useAuthUser } from "../../../app-context/user-context";
 
 const ProfileUpdate = () => {
     const navigate = useNavigate();
     const { username } = useParams();
             
-    const { handleRefresh, logout, authUser, updateJWT } = useAuth();
+    const { updateProfile } = useAuth();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const {
@@ -62,22 +64,13 @@ const ProfileUpdate = () => {
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -92,30 +85,19 @@ const ProfileUpdate = () => {
         setShowModal(false);
         setNetworkRequest(true);
         try {
-            const response = await userController.updateProfile(formData);
-            updateJWT(response);
+            const response = await updateProfile(formData);
             setNetworkRequest(false);
             toast.info("Profile update successful");
             navigate("/dashboard");
         } catch (error) {
-            // Incase of 408 Timeout error (Token Expiration), perform refresh
-            try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmAction();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
             setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 

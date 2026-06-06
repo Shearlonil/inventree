@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {  Form } from "react-bootstrap";
 import { BiSearch } from "react-icons/bi";
 import {  HiUser } from "react-icons/hi2";
@@ -6,25 +6,29 @@ import Select from "react-select";
 import { useForm, Controller } from "react-hook-form";
 import numeral from "numeral";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import SVG from "../../assets/Svg";
 import { customer_selection_schema, cashier_invoice_search_schema } from "../../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../../Components/ErrorMessage";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
-import genericController from "../../Controllers/generic-controller";
 import handleErrMsg from "../../Utils/error-handler";
-import { useAuth } from "../../app-context/auth-user-context";
 import { TransactionItem } from "../../Entities/TransactionItem";
 import transactionsController from "../../Controllers/transactions-controller";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import printerController from "../../Controllers/printer-controller";
+import { useAuthUser } from "../../app-context/user-context";
+import useGenericController from "../../Controllers/generic-controller-hook";
 
 const CashierWindow = () => {
+	const controllerRef = useRef(new AbortController());
+
 	const navigate = useNavigate();
-		
-	const { handleRefresh, logout, authUser } = useAuth();
+	const location = useLocation();
+	
+    const { performGetRequests } = useGenericController();
+	const { authUser } = useAuthUser();
 	const user = authUser();
 
 	const {
@@ -82,13 +86,18 @@ const CashierWindow = () => {
 
 	useEffect( () => {
 		initialize();
-	}, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [location.pathname]);
 
 	const initialize = async () => {
 		try {
+            controllerRef.current = new AbortController();
             //  find active customers and items with sales prices
             const urls = [ '/api/customers/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: customersRequest } = response;
 
             //	check if the request to fetch customers doesn't fail before setting values to display
@@ -97,22 +106,14 @@ const CashierWindow = () => {
 				setCustomersLoading(false);
             }
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 	
@@ -162,24 +163,14 @@ const CashierWindow = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return idSearch(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
-			setNetworkRequest(false);
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
 
@@ -236,23 +227,14 @@ const CashierWindow = () => {
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return commitTransaction(dtoReceipt);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
     };
 
@@ -315,6 +297,14 @@ const CashierWindow = () => {
 			printReceipt: customerPaymentInfo.print_receipt,
 		}
 	}
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
 	return (
 		<div className="container">

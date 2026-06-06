@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import numeral from 'numeral';
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Table } from 'react-bootstrap';
 import jsPDF from 'jspdf';
@@ -9,19 +9,23 @@ import { applyPlugin } from 'jspdf-autotable'
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 
-import financeController from '../../Controllers/finance-controller';
 import handleErrMsg from '../../Utils/error-handler';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import StartEndDateSearch from '../../Components/StartEndDateSearch';
-import { useAuth } from '../../app-context/auth-user-context';
+import { useAuthUser } from '../../app-context/user-context';
 import { clientDetails } from '../../../data';
+import useFinanceController from '../../Controllers/finance-controller-hook';
 
 const ProfitLossAcc = () => {
     applyPlugin(jsPDF);
+    
+    const controllerRef = useRef(new AbortController());
     const navigate = useNavigate();
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { profitLossAcc } = useFinanceController();
+    const { authUser } = useAuthUser();
     const user = authUser();
             
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -62,13 +66,18 @@ const ProfitLossAcc = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 
     const fnSearch = async (data) => {
         try {
             if (data.startDate && data.endDate) {
                 reset();
+                resetAbortController();
                 //  Time isn't important here (Java will set the time to 23:59:59). Just setting to 12hr to avoid 1hr lag
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
@@ -77,7 +86,7 @@ const ProfitLossAcc = () => {
 
                 setNetworkRequest(true);
 
-                const response = await financeController.profitLossAcc(startDate, endDate);
+                const response = await profitLossAcc(startDate, endDate, controllerRef.current.signal);
                 if(response && response.data){
                     const arr = [];
                     const boldRows = [0];
@@ -225,22 +234,12 @@ const ProfitLossAcc = () => {
             }
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnSearch(data);
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
             toast.error(handleErrMsg(error).msg);
         }
     }
@@ -359,6 +358,14 @@ const ProfitLossAcc = () => {
         const finalData = new Blob([excelBuffer], { type: fileType });
         FileSaver.saveAs(finalData, `${title}` + fileExtension);
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div style={{minHeight: '75vh'}} className='container'>

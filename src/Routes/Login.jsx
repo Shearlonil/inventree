@@ -5,10 +5,12 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { getYear } from "date-fns";
 
 import logo from "../assets/Img/logo.png";
 import ErrorMessage from "../Components/ErrorMessage";
-import { useAuth } from "../app-context/auth-user-context";
+import { useAuth } from "../app-context/auth-context";
+import { useAuthUser } from "../app-context/user-context";
 import { ThreeDotLoading } from "../Components/react-loading-indicators/Indicator";
 import handleErrMsg from "../Utils/error-handler";
 import SVG from "../assets/Svg";
@@ -20,7 +22,8 @@ const Login = () => {
 
     const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-    const { login, authUser, getCurrentYear } = useAuth();
+    const { login } = useAuth();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const schema = yup.object().shape({
@@ -107,7 +110,7 @@ const Login = () => {
                                         )}
                                         {!isLoggingIn && `Sign In`}
                                     </button>
-                                    <p className="mb-3">&copy; {getCurrentYear()}</p>
+                                    <p className="mb-3">&copy; {getYear(new Date())}</p>
                                 </Form>
                             </main>
                         </div>

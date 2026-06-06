@@ -9,15 +9,12 @@ import { useNavigate } from "react-router-dom";
 import logo from "../../../assets/Img/logo.png";
 import handleErrMsg from "../../../Utils/error-handler";
 import ErrorMessage from "../../../Components/ErrorMessage";
-import { useAuth } from "../../../app-context/auth-user-context";
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../../Components/react-loading-indicators/Indicator";
 import userController from "../../../Controllers/user-controller";
 
 const ChangePassword = () => {
     const navigate = useNavigate();
-
-    const { handleRefresh, logout } = useAuth();
 
     const schema = yup.object().shape({
         current_pw: yup
@@ -64,24 +61,14 @@ const ChangePassword = () => {
             toast.info("Password update successful");
             navigate("/dashboard");
         } catch (error) {
-            // Incase of 408 Timeout error (Token Expiration), perform refresh
-            try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmAction();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
             setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 

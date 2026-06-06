@@ -1,27 +1,31 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaReceipt } from "react-icons/fa";
 import numeral from "numeral";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
 
 import { Ledger } from "../../Entities/Ledger";
-import { useAuth } from "../../app-context/auth-user-context";
 import IncomeExpVchForm from "../../Components/Finance/IncomeExpVchForm";
 import ReactMenu from "../../Components/ReactMenu";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import handleErrMsg from '../../Utils/error-handler';
-import financeController from "../../Controllers/finance-controller";
 import IMAGES from '../../assets/Images';
 import StartEndDateSearch from "../../Components/StartEndDateSearch";
 import TableMain from "../../Components/TableView/TableMain";
 import { LedgerTransaction } from "../../Entities/LedgerTransaction";
+import { useAuthUser } from "../../app-context/user-context";
+import useFinanceController from "../../Controllers/finance-controller-hook";
 
 const Income = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    const location = useLocation();
+    
+    const { findChartLedgersByName, getIncomeExpVoucherDetails, updateIncomeExpVoucher, createIncomeExpVoucher, deleteIncomeExpVoucher } = useFinanceController();
+    const { authUser } = useAuthUser();
     const user = authUser();
         
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -50,12 +54,13 @@ const Income = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await financeController.findChartLedgersByName("Revenue");
+            controllerRef.current = new AbortController();
+            const response = await findChartLedgersByName("Revenue", controllerRef.current.signal);
 
             if (response && response.data) {
                 setLedgerOptions(
@@ -68,22 +73,13 @@ const Income = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return initialize();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
@@ -146,7 +142,7 @@ const Income = () => {
 				setNetworkRequest(true);
                 setLedgerTransactions([]);
 
-				const response = await financeController.getIncomeExpVoucherDetails('Revenue', startDate, endDate);
+				const response = await getIncomeExpVoucherDetails('Revenue', startDate, endDate, controllerRef.current.signal);
 				if(response && response.data){
                     const arr = [];
 
@@ -169,23 +165,14 @@ const Income = () => {
 				setNetworkRequest(false);
 			}
 		} catch (error) {
-			setNetworkRequest(false);
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return fnSearch(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
     };
 
@@ -196,7 +183,7 @@ const Income = () => {
             if(entity.id){
                 // explicitly set dtoDateTime to avoid 1hr lag when sending to backend
                 entity.dtoDateTime = format(entity.dtoDateTime, "yyyy-MM-dd") + "T12:00:00.000Z";
-                await financeController.updateIncomeExpVoucher(entity);
+                await updateIncomeExpVoucher(entity, controllerRef.current.signal);
                 //	find index position of edited item in items arr
                 const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
                 if(indexPos > -1){
@@ -208,7 +195,7 @@ const Income = () => {
                 doRefresh(prev => !prev);
             }else {
                 //  new income transaction
-                const response = await financeController.createIncomeExpVoucher(entity);
+                const response = await createIncomeExpVoucher(entity, controllerRef.current.signal);
                 if(response && response.data){
                     const transaction = new LedgerTransaction();
                     transaction.id = response.data.id;
@@ -228,22 +215,12 @@ const Income = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnSave();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
             toast.error(handleErrMsg(error).msg);
         }
     }
@@ -251,7 +228,7 @@ const Income = () => {
     const fnDelete = async () => {
         try {
             setNetworkRequest(true);
-            await financeController.deleteIncomeExpVoucher(entity);
+            await deleteIncomeExpVoucher(entity, controllerRef.current.signal);
             const indexPos = ledgerTransactions.findIndex(i => i.id === entity.id);
             if(indexPos > -1){
                 //	replace old item found at index position in ledgerTransactions array with edited one
@@ -262,22 +239,12 @@ const Income = () => {
             calcTotalAmounts(ledgerTransactions);
         } catch (error) {
             setNetworkRequest(false);
-            //	Incase of 500 (Invalid Token received!), perform refresh
-            try {
-                if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-                    await handleRefresh();
-                    return fnDelete();
-                }
-                // Incase of 401 Unauthorized, navigate to 404
-                if(error.response?.status === 401){
-                    navigate('/404');
-                }
-                // display error message
-                toast.error(handleErrMsg(error).msg);
-            } catch (error) {
-                // if error while refreshing, logout and delete all cookies
-                logout();
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
             }
+            // display error message
             toast.error(handleErrMsg(error).msg);
         }
     }
@@ -305,6 +272,14 @@ const Income = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

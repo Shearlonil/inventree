@@ -62,10 +62,6 @@ const updateUserAuth = async (username, status, authCode) => {
     });
 }
 
-const updateProfile = async (profile) => {
-    return await httpService.put(`/api/users/profile/update`, profile);
-}
-
 const updatePassword = async (password, confirmPassword, currentPassword) => {
     return await httpService.put(`/api/users/password/update`, {
         password,
@@ -84,6 +80,5 @@ export default {
     deleteUser,
     restoreUser,
     updateUserAuth,
-    updateProfile,
     updatePassword,
 }

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Form } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import ErrorMessage from '../../Components/ErrorMessage';
 import { dispensaryPageSchema } from '../../Utils/yup-schema-validator/dispensary-schema';
@@ -13,24 +13,29 @@ import SVG from '../../assets/Svg';
 import TableMain from '../../Components/TableView/TableMain';
 import ReactMenu from '../../Components/ReactMenu';
 import handleErrMsg from '../../Utils/error-handler';
-import { useAuth } from '../../app-context/auth-user-context';
-import genericController from '../../Controllers/generic-controller';
 import { DispensaryItem } from '../../Entities/DispensaryItem';
 import PaginationLite from '../../Components/PaginationLite';
-import inventoryController from '../../Controllers/inventory-controller';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import DispensaryForm from '../../Components/InventoryComp/DispensaryForm';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
+import { useAuthUser } from '../../app-context/user-context';
+import useGenericController from '../../Controllers/generic-controller-hook';
+import useInventoryController from '../../Controllers/inventory-controller-hook';
 
 
 const defaultQtyType = 'Unit';
 
 const Dispensary = () => {
+    const controllerRef = useRef(new AbortController());
+    
     const navigate = useNavigate();
+    const location = useLocation();
     const { dispensary_id } = useParams();
-        
-    const { handleRefresh, logout, authUser } = useAuth();
+    
+    const { pdfExport, deleteDispensary, deleteDispensedItemDetail, updateDispensedItem, findUnverifiedDispensaryById, dispensary, dispense } = useInventoryController();
+    const { performGetRequests } = useGenericController();
+    const { authUser } = useAuthUser();
     const user = authUser();
 
     const {
@@ -108,14 +113,19 @@ const Dispensary = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, [dispensary_id]);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [dispensary_id, location.pathname]);
 
 	const initialize = async () => {
 		try {
 			resetPageStates();
+            controllerRef.current = new AbortController();
             //  find active outposts and items with available store qty
             const urls = [ '/api/items/dispensary/active', '/api/outposts/active' ];
-            const response = await genericController.performGetRequests(urls);
+            const response = await performGetRequests(urls, controllerRef.current.signal);
             const { 0: storeItemsRequest, 1: outpostsRequest } = response;
 
             //	check if the request to fetch store items doesn't fail before setting values to display
@@ -130,22 +140,14 @@ const Dispensary = () => {
                 setOutpostOptions(outpostsRequest.data.map( outpost => ({label: outpost.name, value: outpost.id})));
             }
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initialize();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 
@@ -154,7 +156,7 @@ const Dispensary = () => {
 			setNetworkRequest(true);
 			resetPageStates();
 	
-			const unverifiedDispensaryRequest = await inventoryController.findUnverifiedDispensaryById(dispensary_id);
+			const unverifiedDispensaryRequest = await findUnverifiedDispensaryById(dispensary_id, controllerRef.current.signal);
 
             //  find active outposts, tracts and items with available store qty
             const urls = [ '/api/items/dispensary/active', '/api/outposts/active' ];
@@ -181,23 +183,14 @@ const Dispensary = () => {
 	
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return initializeWithDispensaryRec();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
         
@@ -324,7 +317,7 @@ const Dispensary = () => {
                 qtyType: data.dispense_qty_type,
             };
             //  network request to save data
-            const response = await inventoryController.dispensary(dispensaryId, dispensedItem);
+            const response = await dispensary(dispensaryId, dispensedItem, controllerRef.current.signal);
             if(response && response.status === 200){
                 dispensedItem.id = response.data[0].id;
                 dispensedItem.itemDetailId = response.data[0].itemDetailId;
@@ -340,53 +333,35 @@ const Dispensary = () => {
             setSelectedStoreQtyType('Unit');
             reset();
         } catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return onSubmit(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
 
-	const dispense = async (outpostId) => {
+	const fnDispense = async (outpostId) => {
 		try {
 			setNetworkRequest(true);
-            await inventoryController.dispense(dispensaryId, outpostId);
+            await dispense(dispensaryId, outpostId, controllerRef.current.signal);
             resetPageStates();
             //	navigate back to this page which will cause reset of page states
             navigate("/inventory/item/dispensary/0");
 
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return dispense(outpostId);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	};
 	
@@ -396,7 +371,7 @@ const Dispensary = () => {
 			setNetworkRequest(true);
 			switch (confirmDialogEvtName) {
 				case 'deleteItem':
-					await inventoryController.deleteDispensedItemDetail(entityToEdit.itemDetailId);
+					await deleteDispensedItemDetail(entityToEdit.itemDetailId, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					const indexPos = items.findIndex(i => i.itemId == entityToEdit.itemId);
 					if(indexPos > -1){
@@ -414,42 +389,33 @@ const Dispensary = () => {
 					setShowDropDownModal(true);
 					break;
 				case "deleteDispensary":
-					await inventoryController.deleteDispensary(dispensaryId);
+					await deleteDispensary(dispensaryId, controllerRef.current.signal);
                     resetPageStates();
 					//	navigate back to this page which will cause reset of page states
 					navigate("/inventory/item/dispensary/0");
 					break;
 				case "pdfExport":
-					await inventoryController.pdfExport(dispensaryId);
+					await pdfExport(dispensaryId, controllerRef.current.signal);
 					break;
 			}
 			setNetworkRequest(false);
 		} catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return handleConfirmOK();
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
 		}
 	}
     
-    const updateDispensedItem = async (data) => {
+    const fnUpdateDispensedItem = async (data) => {
         try {
             setNetworkRequest(true);
             //  network request to update data
-            const response = await inventoryController.updateDispensedItem(data);
+            const response = await updateDispensedItem(data, controllerRef.current.signal);
             if(response && response.status === 200){
                 //	find index position of edited item in items arr
                 const indexPos = items.findIndex(i => i.itemId === data.itemId);
@@ -465,23 +431,14 @@ const Dispensary = () => {
             handleCloseModal();
             setNetworkRequest(false);
         } catch (error) {
-			//	Incase of 500 (Invalid Token received!), perform refresh
-			try {
-				if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
-					await handleRefresh();
-					return updateDispensedItem(data);
-				}
-				// Incase of 401 Unauthorized, navigate to 404
-				if(error.response?.status === 401){
-					navigate('/404');
-				}
-				// display error message
-				toast.error(handleErrMsg(error).msg);
-				setNetworkRequest(false);
-			} catch (error) {
-				// if error while refreshing, logout and delete all cookies
-				logout();
-			}
+            setNetworkRequest(false);
+            // Incase of 401 Unauthorized, navigate to 404
+            if(error.response?.status === 401){
+                navigate('/404');
+                return;
+            }
+            // display error message
+            toast.error(handleErrMsg(error).msg);
         }
     };
         
@@ -496,6 +453,14 @@ const Dispensary = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (
@@ -647,12 +612,12 @@ const Dispensary = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={dispense}
+                handleConfirm={fnDispense}
                 message={dropDownMsg}
                 options={outpostOptions}
             />
 
-            <DispensaryForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={updateDispensedItem} />
+            <DispensaryForm data={entityToEdit} show={showFormModal} handleClose={handleCloseModal} networkRequest={networkRequest} fnUpdate={fnUpdateDispensedItem} />
         </div>
     )
 }
