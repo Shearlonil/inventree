@@ -31,8 +31,9 @@ export const useAxiosInterceptor = () => {
     }
 
     const resErrInterceptor = async (error) => {
+        console.log(error);
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 500 && !originalRequest._retry) {
             /*
                 refs:
                 https://medium.com/@nandagopal05/using-axios-interceptors-to-automate-refreshing-access-tokens-c3c344737bcc
@@ -41,14 +42,14 @@ export const useAxiosInterceptor = () => {
             originalRequest._retry = true; // Mark the request as retried to avoid infinite loops.
             let newToken;
             try {
-                const response = await axiosInstance.get("/auth/refresh");
+                const response = await axiosInstance.get("/refresh");
                 //  remove the token prefix from the token for jwtDecode to decode the token
                 const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
                 setToken(jwt);
                 newToken = jwt;
                 setJwtTokenValue(jwt);
             } catch (ex) {
-5                // if error on refresh, then log out, delete auth token in local storage and clear cookie
+                // if error on refresh, then log out, delete auth token in local storage and clear cookie
                 await axiosInstance.get("/signout");
                 setJwtTokenValue(null);
                 window.location.href = '/login';

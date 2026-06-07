@@ -21,17 +21,17 @@ import { UserProvider } from './app-context/user-context';
 createRoot(document.getElementById("root")).render(
 	<StrictMode>
 		<BrowserRouter>
-		<TokenProvider>
-			<AuthProvider>
-				<UserProvider>
-					<FinanceProvider>
-						<NavBar />
-						<App />
-						<Footer />
-					</FinanceProvider>
-				</UserProvider>
-			</AuthProvider>
-		</TokenProvider>
+			<TokenProvider>
+				<AuthProvider>
+					<UserProvider>
+						<FinanceProvider>
+							<NavBar />
+							<App />
+							<Footer />
+						</FinanceProvider>
+					</UserProvider>
+				</AuthProvider>
+			</TokenProvider>
 		</BrowserRouter>
 	</StrictMode>
 );
