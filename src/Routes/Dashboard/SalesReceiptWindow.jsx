@@ -14,7 +14,7 @@ import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import DateDialog from '../../Components/DialogBoxes/DateDialog';
 import handleErrMsg from '../../Utils/error-handler';
-import transactionsController from '../../Controllers/transactions-controller';
+import useTransactionsController from '../../Controllers/transactions-controller-hook';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import { Receipt } from '../../Entities/Receipt';
 import TableMain from '../../Components/TableView/TableMain';
@@ -23,7 +23,7 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import PaymentModeDialog from '../../Components/DialogBoxes/PaymentModeDialog';
 import { ReceiptSummary } from '../../Entities/DocExport/ReceiptSummary';
-import printerController from '../../Controllers/printer-controller';
+import usePrinterController from '../../Controllers/printer-controller-hook';
 import { clientDetails } from '../../../data';
 import EntityDateDialog from '../../Components/DialogBoxes/EntityDateDialog';
 import User from '../../Entities/User';
@@ -41,7 +41,12 @@ const SalesReceiptWindow = () => {
     const location = useLocation();
     const { receipt_id } = useParams();
 
+    const { print } = usePrinterController();
     const { authUser } = useAuthUser();
+    const { findPurchaseReceiptByNo, searchPurchaseReceiptsByDate, customerSalesReceiptsByDate, userGeneratedSalesReceiptsByDate, outpostSalesReceiptsByDate, updateReceiptDate, 
+        activateReceipt, reverseReceipt, pdfPurchaseReceiptsByDateForExport, pdfPurchaseReceiptsByNoForExport, pdfCustomerSalesReceiptsByDateForExport, 
+        userGeneratedSalesReceiptsByDateForExport, outpostSalesReceiptsByDateForExport 
+    } = useTransactionsController();
     const user = authUser();
 
     const { control, setValue, formState: { errors } } = useForm();
@@ -302,14 +307,14 @@ const SalesReceiptWindow = () => {
                     toast.error("Account doesn't support this feature. Please contact your admin");
                     return;
                 }
-				activateReceipt();
+				fnActivateReceipt();
                 break;
             case 'reverseReceipt':
                 if(!user.hasAuth('REVERSAL')){
                     toast.error("Account doesn't support this feature. Please contact your admin");
                     return;
                 }
-				reverseReceipt();
+				fnReverseReceipt();
                 break;
             case 'reprint':
 				reprint();
@@ -393,6 +398,7 @@ const SalesReceiptWindow = () => {
         }
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			setReceipts([]);
             setSalesRecords([]);
 			setSearchMode(1);
@@ -411,7 +417,7 @@ const SalesReceiptWindow = () => {
 
             setFilename(`Receipt ID - ${id}`);
 	
-			const response = await transactionsController.findPurchaseReceiptByNo(id);
+			const response = await findPurchaseReceiptByNo(id, controllerRef.current.signal);
             if(response && response.data){
                 const tableArr = [];
                 response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -448,6 +454,7 @@ const SalesReceiptWindow = () => {
                 setEndDate(endDate);
 
 				setNetworkRequest(true);
+                resetAbortController();
                 setTotalTransactionAmount(0);
                 setReceipts([]);
                 setSalesRecords([]);
@@ -461,7 +468,7 @@ const SalesReceiptWindow = () => {
 
                 setFilename(`Receipts ${format(new Date(date.startDate), "dd/MM/yyyy")} - ${format(new Date(date.endDate), "dd/MM/yyyy")}`);
                 
-				const response = await transactionsController.searchPurchaseReceiptsByDate(startDate, endDate, date.reversal_status);
+				const response = await searchPurchaseReceiptsByDate(startDate, endDate, date.reversal_status, controllerRef.current.signal);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Receipt(res)));
@@ -499,6 +506,7 @@ const SalesReceiptWindow = () => {
                 setEndDate(endDate);
 
 				setNetworkRequest(true);
+                resetAbortController();
                 setTotalTransactionAmount(0);
                 setReceipts([]);
                 setSalesRecords([]);
@@ -515,19 +523,19 @@ const SalesReceiptWindow = () => {
                         `Receipts_for_${data.select.label}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                     );
                     setSearchedEntity('customer');
-                    response = await transactionsController.customerSalesReceiptsByDate(startDate, endDate, data.select.value.id);
+                    response = await customerSalesReceiptsByDate(startDate, endDate, data.select.value.id, controllerRef.current.signal);
                 }else if(confirmDialogEvtName === "searchByUser"){
                     setFilename(
                         `Receipts_generated_by_${data.select.label}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                     );
                     setSearchedEntity('user');
-                    response = await transactionsController.userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label);
+                    response = await userGeneratedSalesReceiptsByDate(data.startDate, data.endDate, data.select.label, controllerRef.current.signal);
                 }else {
                     setFilename(
                         `${data.select.label}_Receipts_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                     );
                     setSearchedEntity('outpost');
-                    response = await transactionsController.outpostSalesReceiptsByDate(data.startDate, data.endDate, data.select.value.id);
+                    response = await outpostSalesReceiptsByDate(data.startDate, data.endDate, data.select.value.id, controllerRef.current.signal);
                 }
                 
 				if(response && response.data){
@@ -559,10 +567,11 @@ const SalesReceiptWindow = () => {
     const updateTransactionDate = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             // explicitly set dtoDateTime to avoid 1hr lag when sending to backend. Time will be set by Java on the backend, only date is important here.
             const date = new Date();
             let dtoDate = format(tempDate, "yyyy-MM-dd") + "T12:20:00.000Z";
-            const response = await transactionsController.updateReceiptDate(selectedReceipt.id, dtoDate);
+            const response = await updateReceiptDate(selectedReceipt.id, dtoDate, controllerRef.current.signal);
             if(response && response.status === 200){
                 selectedReceipt.transactionDate = dtoDate;
                 setSelectedReceipt(selectedReceipt);
@@ -586,11 +595,11 @@ const SalesReceiptWindow = () => {
         }
     }
 	
-	const activateReceipt = async () => {
+	const fnActivateReceipt = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await transactionsController.activateReceipt(selectedReceipt);
+            resetAbortController();
+            const response = await activateReceipt(selectedReceipt, controllerRef.current.signal);
             if(response && response.status === 200){
                 selectedReceipt.reversalStatus = false;
                 setSelectedReceipt(selectedReceipt);
@@ -613,11 +622,11 @@ const SalesReceiptWindow = () => {
         }
     }
 	
-	const reverseReceipt = async () => {
+	const fnReverseReceipt = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await transactionsController.reverseReceipt(selectedReceipt);
+            resetAbortController();
+            const response = await reverseReceipt(selectedReceipt, controllerRef.current.signal);
             if(response && response.status === 200){
                 selectedReceipt.reversalStatus = true;
                 setSelectedReceipt(selectedReceipt);
@@ -643,8 +652,8 @@ const SalesReceiptWindow = () => {
 	const reprint = async () => {
         try {
             setNetworkRequest(true);
-            
-            await printerController.print(selectedReceipt);
+            resetAbortController();
+            await print(selectedReceipt, controllerRef.current.signal);
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
@@ -753,6 +762,7 @@ const SalesReceiptWindow = () => {
         let endDate;
         try {
             setNetworkRequest(true);
+            resetAbortController();
             let response;
             switch (searchMode){
                 case 0:
@@ -760,7 +770,7 @@ const SalesReceiptWindow = () => {
                     endDate = format(searchedDate.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                     setStartDate(startDate);
                     setEndDate(endDate);
-                    response = await transactionsController.pdfPurchaseReceiptsByDateForExport(startDate, endDate, searchedDate.reversal_status);
+                    response = await pdfPurchaseReceiptsByDateForExport(startDate, endDate, searchedDate.reversal_status, controllerRef.current.signal);
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
                             dayBookProfitPDF(response.data);
@@ -770,7 +780,7 @@ const SalesReceiptWindow = () => {
                     }
                     break;
                 case 1:
-                    response = await transactionsController.pdfPurchaseReceiptsByNoForExport(searchedId);
+                    response = await pdfPurchaseReceiptsByNoForExport(searchedId, controllerRef.current.signal);
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){
                             dayBookProfitPDF(response.data);
@@ -784,11 +794,11 @@ const SalesReceiptWindow = () => {
                     setStartDate(startDate);
                     setEndDate(endDate);
                     if(searchedEntity === "customer"){
-                        response = await transactionsController.pdfCustomerSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
+                        response = await pdfCustomerSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id, controllerRef.current.signal);
                     }else if(searchedEntity === "user"){
-                        response = await transactionsController.userGeneratedSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.label);
+                        response = await userGeneratedSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.label, controllerRef.current.signal);
                     }else if(searchedEntity === "outpost"){
-                        response = await transactionsController.outpostSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id);
+                        response = await outpostSalesReceiptsByDateForExport(startDate, endDate, searchedEntityData.select.value.id, controllerRef.current.signal);
                     }
                     if(response && response.data){
                         if(user.hasAuth('PROFIT_VIEW')){

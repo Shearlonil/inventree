@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import handleErrMsg from '../../Utils/error-handler';
-import outpostController from '../../Controllers/outpost-controller';
 import TableMain from '../../Components/TableView/TableMain';
 import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
@@ -15,10 +14,15 @@ import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import { useAuthUser } from '../../app-context/user-context';
+import useOutpostController from '../../Controllers/outpost-controller-hook';
 
 const OutpostsWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
+    const location = useLocation();
+    
+    const { findAllActive, create, rename, deleteOutpost } = useOutpostController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -63,12 +67,17 @@ const OutpostsWindow = () => {
 
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await outpostController.findAllActive();
+            controllerRef.current = new AbortController();
+            const response = await findAllActive(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -218,8 +227,9 @@ const OutpostsWindow = () => {
     const createOutpost = async (name) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await outpostController.create(name);
+            const response = await create(name, controllerRef.current.signal);
             if(response && response.data){
                 const outpost = new Outpost(response.data);
                 const arr = [...filteredOutposts, outpost];
@@ -253,8 +263,9 @@ const OutpostsWindow = () => {
     const renameOutpost = async (name) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await outpostController.rename(entityToEdit.id, name);
+            const response = await rename(entityToEdit.id, name, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.name = name;
                 //	find index position of edited item in filtered outposts arr
@@ -294,7 +305,7 @@ const OutpostsWindow = () => {
         }
     };
     
-    const deleteOutpost = async (destinationOutpost) => {
+    const fnDeleteOutpost = async (destinationOutpost) => {
         setShowDropDownModal(false);
         if(entityToEdit.id === destinationOutpost.id){
             toast.error('Deleted Outpost and Destination Outpost cannot be same');
@@ -302,8 +313,9 @@ const OutpostsWindow = () => {
         }
         try {
             setNetworkRequest(true);
+            resetAbortController();
             
-            await outpostController.deleteOutpost(entityToEdit.id, destinationOutpost.id);
+            await deleteOutpost(entityToEdit.id, destinationOutpost.id, controllerRef.current.signal);
             //	find index position of deleted item in items arr
             let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
             if(indexPos > -1){
@@ -366,6 +378,14 @@ const OutpostsWindow = () => {
         }
     };
 
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
     return (
         <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
@@ -414,7 +434,7 @@ const OutpostsWindow = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={deleteOutpost}
+                handleConfirm={fnDeleteOutpost}
                 message={'Select destination Outpost where items will be moved to'}
                 options={outpostOptions}
             />

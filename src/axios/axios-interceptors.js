@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useToken } from '../app-context/token-context';
-import { axiosInstance, axiosRefreshInstance } from './axios-instances';
+import { axiosInstance, axiosRefreshInstance, printerAxios } from './axios-instances';
 import AppConstants from '../Utils/AppConstants';
 
 /*  refs:
@@ -103,5 +103,5 @@ export const useAxiosInterceptor = () => {
         }
     }, [token]);
 
-    return { xhrAios: axiosInstance, setAxiosToken, getBaseURL };
+    return { xhrAxios: axiosInstance, printerAxios, setAxiosToken, getBaseURL };
 }

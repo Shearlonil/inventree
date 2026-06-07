@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Form, Row } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import logo from "../../../assets/Img/logo.png";
 import handleErrMsg from "../../../Utils/error-handler";
@@ -11,14 +11,18 @@ import ErrorMessage from "../../../Components/ErrorMessage";
 import { useAuth } from "../../../app-context/auth-context";
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../../Components/react-loading-indicators/Indicator";
-import userController from "../../../Controllers/user-controller";
+import useUserController from "../../../Controllers/user-controller-hook";
 import { profile_update_schema } from '../../../Utils/yup-schema-validator/user-form-schema';
 import { useAuthUser } from "../../../app-context/user-context";
 
 const ProfileUpdate = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { username } = useParams();
             
+    const { findByUsername } = useUserController();
     const { updateProfile } = useAuth();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -49,12 +53,17 @@ const ProfileUpdate = () => {
     
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await userController.findByUsername(username);
+            controllerRef.current = new AbortController();
+            const response = await findByUsername(username, controllerRef.current.signal);
 
             if (response && response.data) {
                 setValue('phone_no', response.data.phoneNo);
@@ -88,8 +97,9 @@ const ProfileUpdate = () => {
     const handleConfirmAction = async () => {
         setShowModal(false);
         setNetworkRequest(true);
+        resetAbortController();
         try {
-            const response = await updateProfile(formData);
+            const response = await updateProfile(controllerRef.current.signal, formData);
             setNetworkRequest(false);
             toast.info("Profile update successful");
             navigate("/dashboard");
@@ -132,6 +142,14 @@ const ProfileUpdate = () => {
         setValue('email', profile.email);
         setValue('gender', profile.sex);
         setValue('username', profile.username);
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

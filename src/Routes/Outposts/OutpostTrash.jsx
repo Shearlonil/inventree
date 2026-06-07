@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -10,15 +10,19 @@ import PaginationLite from '../../Components/PaginationLite';
 import ReactMenu from '../../Components/ReactMenu';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import outpostController from '../../Controllers/outpost-controller';
+import useOutpostController from '../../Controllers/outpost-controller-hook';
 import { Outpost } from '../../Entities/Outpost';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import { useAuthUser } from '../../app-context/user-context';
 
 const OutpostTrash = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
             
     const { authUser } = useAuthUser();
+    const { trashedOutpost, restoreOutpost } = useOutpostController();
     const user = authUser();
 
     //	menus for the react-menu in table
@@ -55,12 +59,17 @@ const OutpostTrash = () => {
 
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            let response = await outpostController.trashedOutpost();
+            controllerRef.current = new AbortController();
+            let response = await trashedOutpost(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -156,10 +165,11 @@ const OutpostTrash = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'restore':
                     if(user.hasAuth('UPDATE_OUTPOST')){
-                        await outpostController.restoreOutpost(entityToEdit.id);
+                        await restoreOutpost(entityToEdit.id, controllerRef.current.signal);
                         //	find index position of restored item in items arr
                         let indexPos = filteredOutposts.findIndex(o => o.id == entityToEdit.id);
                         if(indexPos > -1){
@@ -217,6 +227,14 @@ const OutpostTrash = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

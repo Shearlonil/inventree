@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import SVG from '../../../assets/Svg';
@@ -10,13 +10,17 @@ import ReactMenu from '../../../Components/ReactMenu';
 import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
-import ledgerController from '../../../Controllers/ledger-controller';
+import useLedgerController from '../../../Controllers/ledger-controller-hook';
 import { Ledger } from '../../../Entities/Ledger';
 import { useAuthUser } from '../../../app-context/user-context';
 
 const TrashedLedgers = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
             
+    const { trashedLedgers, restoreLedger } = useLedgerController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -59,11 +63,16 @@ const TrashedLedgers = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
-            let response = await ledgerController.trashedLedgers();
+            controllerRef.current = new AbortController();
+            let response = await trashedLedgers(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -156,9 +165,10 @@ const TrashedLedgers = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    await ledgerController.restoreLedger(entityToEdit.id) ;
+                    await restoreLedger(entityToEdit.id, controllerRef.current.signal) ;
 					//	find index position of restored item in items arr
 					let indexPos = filteredLedgers.findIndex(i => i.id == entityToEdit.id);
 					if(indexPos > -1){
@@ -212,6 +222,14 @@ const TrashedLedgers = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

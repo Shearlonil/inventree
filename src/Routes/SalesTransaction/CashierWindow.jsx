@@ -15,9 +15,9 @@ import ErrorMessage from "../../Components/ErrorMessage";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import handleErrMsg from "../../Utils/error-handler";
 import { TransactionItem } from "../../Entities/TransactionItem";
-import transactionsController from "../../Controllers/transactions-controller";
+import useTransactionsController from "../../Controllers/transactions-controller-hook";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
-import printerController from "../../Controllers/printer-controller";
+import usePrinterController from "../../Controllers/printer-controller-hook";
 import { useAuthUser } from "../../app-context/user-context";
 import useGenericController from "../../Controllers/generic-controller-hook";
 import { positiveNumberMiscParamSchema } from "../../Utils/yup-schema-validator/input-validator";
@@ -29,6 +29,8 @@ const CashierWindow = () => {
 	const location = useLocation();
 	
     const { performGetRequests } = useGenericController();
+    const { print } = usePrinterController();
+    const { findInvoiceForReceipt, generateReceipt } = useTransactionsController();
 	const { authUser } = useAuthUser();
 	const user = authUser();
 
@@ -132,8 +134,8 @@ const CashierWindow = () => {
 		}
 		try {
 			setNetworkRequest(true);
-	
-			const response = await transactionsController.findInvoiceForReceipt(id);
+			resetAbortController();
+			const response = await findInvoiceForReceipt(id, controllerRef.current.signal);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data && response.data.length > 0) {
@@ -227,10 +229,11 @@ const CashierWindow = () => {
     const commitTransaction = async (dtoReceipt) => {
 		try {
 			setNetworkRequest(true);
-			const response = await transactionsController.generateReceipt(dtoReceipt);
+			resetAbortController();
+			const response = await generateReceipt(dtoReceipt, controllerRef.current.signal);
 			resetPage();
 			if(dtoReceipt.printReceipt){
-				await printerController.print(response.data);
+				await print(response.data, controllerRef.current.signal);
 			}
 			setNetworkRequest(false);
 		} catch (error) {

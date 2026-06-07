@@ -15,7 +15,7 @@ import { format } from 'date-fns';
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import handleErrMsg from '../../Utils/error-handler';
-import transactionsController from '../../Controllers/transactions-controller';
+import useTransactionsController from '../../Controllers/transactions-controller-hook';
 import { ReceiptSalesItem } from '../../Entities/DocExport/ReceiptSalesItem';
 import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 import { useAuthUser } from '../../app-context/user-context';
@@ -29,6 +29,7 @@ const ItemSalesReceiptWindow = () => {
     const location = useLocation();
         
     const { findItemsForMonoTransaction } = useItemController();
+    const { itemSalesReceiptsByDate } = useTransactionsController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -77,7 +78,7 @@ const ItemSalesReceiptWindow = () => {
     const initialize = async () => {
         try {
             controllerRef.current = new AbortController();
-            const response = await findItemsForMonoTransaction(controllerRef.current.pathname);
+            const response = await findItemsForMonoTransaction(controllerRef.current.signal);
     
             //  check if the request to fetch item doesn't fail before setting values to display
             if (response && response.data) {
@@ -293,6 +294,7 @@ const ItemSalesReceiptWindow = () => {
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
+                resetAbortController();
                 setData([]);
                 setTotalProfit(0);
                 setTotalAmount(0);
@@ -308,7 +310,7 @@ const ItemSalesReceiptWindow = () => {
                     `sales_summary_${data.entity.value.itemName}_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`
                 );
 
-                const response = await transactionsController.itemSalesReceiptsByDate(startDate, endDate, data.entity.value.id);
+                const response = await itemSalesReceiptsByDate(startDate, endDate, data.entity.value.id, controllerRef.current.signal);
                 if(response && response.data){
                     const arr = [];
                     

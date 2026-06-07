@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button, Form, Row } from "react-bootstrap";
 import { toast } from "react-toastify";
 import * as yup from "yup";
@@ -11,10 +11,14 @@ import handleErrMsg from "../../../Utils/error-handler";
 import ErrorMessage from "../../../Components/ErrorMessage";
 import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../../Components/react-loading-indicators/Indicator";
-import userController from "../../../Controllers/user-controller";
+import useUserController from "../../../Controllers/user-controller-hook";
 
 const ChangePassword = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+
+    const { updatePassword } = useUserController();
 
     const schema = yup.object().shape({
         current_pw: yup
@@ -55,8 +59,9 @@ const ChangePassword = () => {
     const handleConfirmAction = async () => {
         setShowModal(false);
         setNetworkRequest(true);
+        resetAbortController();
         try {
-            await userController.updatePassword(formData.new_pw, formData.confirm_new_pw, formData.current_pw);
+            await updatePassword(formData.new_pw, formData.confirm_new_pw, formData.current_pw, controllerRef.current.signal);
             setNetworkRequest(false);
             toast.info("Password update successful");
             navigate("/dashboard");
@@ -79,6 +84,14 @@ const ChangePassword = () => {
     const onSubmit = (data) => {
         setFormData(data);
         handleOpenModal();
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

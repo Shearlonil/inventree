@@ -19,6 +19,7 @@ import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import useGenericController from '../../Controllers/generic-controller-hook';
 import useInventoryController from '../../Controllers/inventory-controller-hook';
+import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 const Restock = () => {
     const controllerRef = useRef(new AbortController());
@@ -122,6 +123,12 @@ const Restock = () => {
 	}
 
 	const initializeWithStockRec = async () => {
+        try {
+            positiveNumberMiscParamSchema.validateSync(stock_rec_id);
+        } catch (error) {
+            toast.error(error.message);
+            return;
+        }
 		try {
 			setNetworkRequest(true);
 			resetAbortController();

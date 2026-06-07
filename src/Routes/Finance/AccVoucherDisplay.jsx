@@ -10,7 +10,7 @@ import jsPDF from 'jspdf';
 import { applyPlugin } from 'jspdf-autotable'
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
-import ledgerController from "../../Controllers/ledger-controller";
+import useLedgerController from "../../Controllers/ledger-controller-hook";
 import { Ledger } from "../../Entities/Ledger";
 import VchCreationForm from "../../Components/Finance/VchCreationForm";
 import TableMain from "../../Components/TableView/TableMain";
@@ -35,6 +35,7 @@ const AcctVoucherDisplay = () => {
     const { vch_id } = useParams();
     
     const { findLedgerVch, updateVoucherDate, updateVoucher, deleteLedgerVoucher } = useFinanceController();
+    const { findAll } = useLedgerController();
     const { authUser } = useAuthUser();
     const user = authUser();
         
@@ -91,15 +92,15 @@ const AcctVoucherDisplay = () => {
 
     const initialize = async () => {
         try {
-            try {
-                positiveNumberMiscParamSchema.validateSync(vch_id);
-            } catch (error) {
-                toast.error(error.message);
-                return;
-            }
+            positiveNumberMiscParamSchema.validateSync(vch_id);
+        } catch (error) {
+            toast.error(error.message);
+            return;
+        }
+        try {
             setNetworkRequest(true);
             controllerRef.current = new AbortController();
-            let response = await ledgerController.findAll(controllerRef.current.signal);
+            let response = await findAll(controllerRef.current.signal);
 
             const ledgerArr = [];
             if (response && response.data) {

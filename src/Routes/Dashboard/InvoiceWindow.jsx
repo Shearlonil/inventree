@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form';
 import Select from "react-select";
 import { Table } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { format } from 'date-fns';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import numeral from 'numeral';
 
 import ErrorMessage from '../../Components/ErrorMessage';
@@ -12,7 +12,7 @@ import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import SVG from '../../assets/Svg';
 import DateDialog from '../../Components/DialogBoxes/DateDialog';
 import handleErrMsg from '../../Utils/error-handler';
-import transactionsController from '../../Controllers/transactions-controller';
+import useTransactionsController from '../../Controllers/transactions-controller-hook';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import TableMain from '../../Components/TableView/TableMain';
 import { TransactionItem } from '../../Entities/TransactionItem';
@@ -23,8 +23,12 @@ import { useAuthUser } from '../../app-context/user-context';
 import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 const InvoiceWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
+    const location = useLocation();
     const { incomplete } = useParams();
 
+    const { findInvoiceByNo, searchInvoicesByDate, activateInvoice, reverseInvoice, incompleteTrasactions } = useTransactionsController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -82,7 +86,11 @@ const InvoiceWindow = () => {
                     break;
             }
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const handleOffCanvasMenuItemClick = async (onclickParams, e) => {
 		switch (onclickParams.evtName) {
@@ -137,10 +145,10 @@ const InvoiceWindow = () => {
 		setShowConfirmModal(false);
 		switch (confirmDialogEvtName) {
             case 'activateInvoice':
-				activateInvoice();
+				fnActivateInvoice();
                 break;
             case 'reverseInvoice':
-				reverseInvoice();
+				fnReverseInvoice();
                 break;
             case 'incompleteTransactions':
                 incompleteTransactions();
@@ -170,6 +178,7 @@ const InvoiceWindow = () => {
         }
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			setInvoices([]);
             setSalesRecords([]);
 			setSearchMode(1);
@@ -183,7 +192,7 @@ const InvoiceWindow = () => {
 			setValue('startDate', null);
 			setValue('endDate', null);
 	
-			const response = await transactionsController.findInvoiceByNo(id);
+			const response = await findInvoiceByNo(id, controllerRef.current.signal);
             if(response && response.data){
                 const tableArr = [];
                 response.data.forEach(res => tableArr.push(new Invoice(res)));
@@ -216,6 +225,7 @@ const InvoiceWindow = () => {
 			if (date.startDate && date.endDate) {
                 const startDate = format(date.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(date.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
+                resetAbortController();
                 setStartDate(startDate);
                 setEndDate(endDate);
 				setNetworkRequest(true);
@@ -227,7 +237,7 @@ const InvoiceWindow = () => {
                 setSearchMode(0);
 				setSearchedDate(date);
                 
-				const response = await transactionsController.searchInvoicesByDate(startDate, endDate);
+				const response = await searchInvoicesByDate(startDate, endDate, controllerRef.current.signal);
 				if(response && response.data){
                     const tableArr = [];
                     response.data.forEach(res => tableArr.push(new Invoice(res)));
@@ -254,11 +264,11 @@ const InvoiceWindow = () => {
 		}
 	}
 	
-	const activateInvoice = async () => {
+	const fnActivateInvoice = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await transactionsController.activateInvoice(selectedInvoice.id);
+            resetAbortController();
+            const response = await activateInvoice(selectedInvoice.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 selectedInvoice.reversalStatus = false;
                 setSelectedInvoice(selectedInvoice);
@@ -281,11 +291,11 @@ const InvoiceWindow = () => {
         }
     }
 	
-	const reverseInvoice = async () => {
+	const fnReverseInvoice = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await transactionsController.reverseInvoice(selectedInvoice.id);
+            resetAbortController();
+            const response = await reverseInvoice(selectedInvoice.id, controllerRef.current.signal);
             if(response && response.status === 200){
                 selectedInvoice.reversalStatus = true;
                 setSelectedInvoice(selectedInvoice);
@@ -311,8 +321,8 @@ const InvoiceWindow = () => {
 	const incompleteTransactions = async () => {
         try {
             setNetworkRequest(true);
-            
-            const response = await transactionsController.incompleteTrasactions();
+            resetAbortController();
+            const response = await incompleteTrasactions(controllerRef.current.signal);
             if(response && response.data){
                 const tableArr = [];
                 response.data.forEach(res => tableArr.push(new Invoice(res)));
@@ -354,6 +364,14 @@ const InvoiceWindow = () => {
         });
         setTotalTransactionAmount(tableArr.reduce( (accumulator, currentVal) => numeral(currentVal.totalAmount).add(accumulator).value(), 0));
         return tableArr;
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

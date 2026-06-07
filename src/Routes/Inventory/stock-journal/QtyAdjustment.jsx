@@ -120,6 +120,7 @@ const QtyAdjustment = () => {
         setShowConfirmModal(false);
         try {
             setNetworkRequest(true);
+            resetAbortController();
             /*  ItemDTO is used to receive this object on Java back-end.
                 itemName is used to hold transfor_to field,
                 tractId is used to hold destination product id
@@ -194,6 +195,14 @@ const QtyAdjustment = () => {
         resetField('source_store_qty');
         resetField('source_sales_qty');
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div style={{minHeight: '70vh'}} className="container">

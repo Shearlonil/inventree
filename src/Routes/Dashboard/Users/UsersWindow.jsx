@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {  Modal, Table } from "react-bootstrap";
 import { BsPersonFillAdd } from "react-icons/bs";
 import { toast } from "react-toastify";
@@ -9,7 +9,7 @@ import ConfirmDialog from "../../../Components/DialogBoxes/ConfirmDialog";
 import OffcanvasMenu from "../../../Components/OffcanvasMenu";
 import UserForm from "../../../Components/Contacts/UserForm";
 import handleErrMsg from "../../../Utils/error-handler";
-import userController from "../../../Controllers/user-controller";
+import useUserController from "../../../Controllers/user-controller-hook";
 import User from "../../../Entities/User";
 import ReactMenu from "../../../Components/ReactMenu";
 import TableMain from "../../../Components/TableView/TableMain";
@@ -19,8 +19,12 @@ import { OribitalLoading } from "../../../Components/react-loading-indicators/In
 import { useAuthUser } from "../../../app-context/user-context";
 
 const UsersWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
+    const location = useLocation();
+    
+    const { findAllActive, deleteUser, create } = useUserController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -68,12 +72,17 @@ const UsersWindow = () => {
             toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await userController.findAllActive();
+            controllerRef.current = new AbortController();
+            const response = await findAllActive(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -218,9 +227,10 @@ const UsersWindow = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'deleteUser':
-					await userController.deleteUser(entityToEdit.username);
+					await deleteUser(entityToEdit.username, controllerRef.current.signal);
 					//	find index position of deleted item in items arr
 					let indexPos = filteredUsers.findIndex(i => i.username == entityToEdit.username);
 					if(indexPos > -1){
@@ -273,7 +283,8 @@ const UsersWindow = () => {
         data.password = encrypted.toString();
 		try {
 			setNetworkRequest(true);
-			await userController.create(data);
+            resetAbortController();
+			await create(data, controllerRef.current.signal);
             switch (data.level) {
                 case 1:
                     data.level = 'Admin';
@@ -320,6 +331,14 @@ const UsersWindow = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Button, Table } from 'react-bootstrap';
 import { Controller, useForm } from 'react-hook-form';
 import { object, date, ref } from "yup";
@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import Datetime from 'react-datetime';
 import Select from 'react-select';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import numeral from 'numeral';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
@@ -16,17 +16,23 @@ import { applyPlugin, autoTable } from 'jspdf-autotable'
 
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import ErrorMessage from '../../../Components/ErrorMessage';
-import userController from '../../../Controllers/user-controller';
+import useUserController from '../../../Controllers/user-controller-hook';
 import { ReceiptSalesItem } from '../../../Entities/DocExport/ReceiptSalesItem';
 import SVG from '../../../assets/Svg';
-import transactionsController from '../../../Controllers/transactions-controller';
+import useTransactionsController from '../../../Controllers/transactions-controller-hook';
 import { ThreeDotLoading } from '../../../Components/react-loading-indicators/Indicator';
 import handleErrMsg from '../../../Utils/error-handler';
 import EntityStartEndDateSearch from '../../../Components/EntityStartEndDate';
 
 const UserSalesRecord = () => {
+    const controllerRef = useRef(new AbortController());
+
     applyPlugin(jsPDF);
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const { staffSalesRecordsSummaryByDate } = useTransactionsController();
+    const { findAllActive } = useUserController();
 
     const schema = object().shape({
         user: object().required("Select a user"),
@@ -66,11 +72,16 @@ const UserSalesRecord = () => {
         
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
       
     const initialize = async () => {
         try {
-            const response = await userController.findAllActive();
+            controllerRef.current = new AbortController();
+            const response = await findAllActive(controllerRef.current.signal);
     
             //  check if the request to fetch user doesn't fail before setting values to display
             if (response && response.data) {
@@ -186,6 +197,7 @@ const UserSalesRecord = () => {
         try {
             if (data.startDate && data.endDate) {
                 setNetworkRequest(true);
+                resetAbortController();
                 setData([]);
                 setTotalAmount(0);
 
@@ -198,7 +210,7 @@ const UserSalesRecord = () => {
                 setStart(data.startDate);
                 setEnd(data.endDate);
 
-                const response= await transactionsController.staffSalesRecordsSummaryByDate(startDate, endDate, data.entity.value.username);
+                const response= await staffSalesRecordsSummaryByDate(startDate, endDate, data.entity.value.username, controllerRef.current.signal);
                 if(response && response.data){
                     const arr = [];
                     
@@ -239,6 +251,14 @@ const UserSalesRecord = () => {
             toast.error(handleErrMsg(error).msg);
         }
     }
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div className='container my-4'>

@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import numeral from 'numeral';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import FileSaver from 'file-saver';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -12,15 +12,20 @@ import { format } from "date-fns";
 import SVG from '../../assets/Svg';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import handleErrMsg from '../../Utils/error-handler';
-import transactionsController from '../../Controllers/transactions-controller';
+import useTransactionsController from '../../Controllers/transactions-controller-hook';
 import { SalesSummary } from '../../Entities/SalesSummary';
-import outpostController from '../../Controllers/outpost-controller';
+import useOutpostController from '../../Controllers/outpost-controller-hook';
 import EntityStartEndDateSearch from '../../Components/EntityStartEndDate';
 import { useAuthUser } from '../../app-context/user-context';
 
 const SalesReport = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
         
+    const { findAllActive } = useOutpostController();
+    const { summarizeSalesRecords } = useTransactionsController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -56,12 +61,17 @@ const SalesReport = () => {
             navigate('/404');
         }
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const response = await outpostController.findAllActive();
+            controllerRef.current = new AbortController();
+            const response = await findAllActive(controllerRef.current.signal);
 
             //	check if the request to fetch items doesn't fail before setting values to display
             if(response && response.data){
@@ -332,6 +342,7 @@ const SalesReport = () => {
                 setOutpost(data.entity.value);
 
 				setNetworkRequest(true);
+                resetAbortController();
                 setData([]);
                 setTotalGrossProfit(0);
                 setTotalSalesPrice(0);
@@ -339,7 +350,7 @@ const SalesReport = () => {
 
                 setFilename(`${data.entity.value.name}_sales_summary_${format(new Date(data.startDate), "dd/MM/yyyy")} - ${format(new Date(data.endDate), "dd/MM/yyyy")}`);
 
-				const response = await transactionsController.summarizeSalesRecords(data.entity.value.id, startDate, endDate);
+				const response = await summarizeSalesRecords(data.entity.value.id, startDate, endDate, controllerRef.current.signal);
 				if(response && response.data){
                     const arr = [];
 
@@ -397,6 +408,14 @@ const SalesReport = () => {
             toast.error(handleErrMsg(error).msg);
 		}
 	}
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div className='container my-4'>

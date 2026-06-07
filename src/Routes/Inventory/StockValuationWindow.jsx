@@ -20,7 +20,7 @@ import handleErrMsg from '../../Utils/error-handler';
 import { ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
 import ErrorMessage from '../../Components/ErrorMessage';
 import { StockSummary } from '../../Entities/StockSummary';
-import tractController from '../../Controllers/tract-controller';
+import useTractController from '../../Controllers/tract-controller-hook';
 import { useAuthUser } from '../../app-context/user-context';
 import useInventoryController from '../../Controllers/inventory-controller-hook';
 
@@ -31,6 +31,7 @@ const StockValuationWindow = () => {
     const location = useLocation();
     applyPlugin(jsPDF);
     
+    const { fetchAllActive } = useTractController();
     const { stockValuation } = useInventoryController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -74,7 +75,7 @@ const StockValuationWindow = () => {
     const initialize = async () => {
         try {
             controllerRef.current = new AbortController();
-            const tractsRequest = await tractController.fetchAllActive(controllerRef.current.signal);
+            const tractsRequest = await fetchAllActive(controllerRef.current.signal);
 
             //	check if the request to fetch items doesn't fail before setting values to display
             if(tractsRequest && tractsRequest.data){

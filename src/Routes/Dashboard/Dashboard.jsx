@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "react-bootstrap";
 import { PieChart, Pie, Cell, BarChart, Bar, Rectangle, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { getYear, subDays } from "date-fns";
@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 
 import handleErrMsg from "../../Utils/error-handler";
 import SVG from "../../assets/Svg";
-import transactionsController from "../../Controllers/transactions-controller";
+import useTransactionsController from "../../Controllers/transactions-controller-hook";
 import { useAuthUser } from "../../app-context/user-context";
       
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8a2be2"];
@@ -44,9 +44,13 @@ const renderCustomizedLabel = ({
 };
 
 const Dashboard = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
 
     const { authUser } = useAuthUser();
+    const { yearMonthlySales, summarizeSalesRecords } = useTransactionsController();
     const user = authUser();
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -58,12 +62,17 @@ const Dashboard = () => {
     
     useEffect( () => {
         initialize();
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
     
     const initialize = async () => {
         try {
             setNetworkRequest(true);
-            const yearMonthlySalesReponse = await transactionsController.yearMonthlySales();
+            controllerRef.current = new AbortController();
+            const yearMonthlySalesReponse = await yearMonthlySales(controllerRef.current.signal);
             if(yearMonthlySalesReponse && yearMonthlySalesReponse.data){
                 const temp = [];
                 for (const key in yearMonthlySalesReponse.data) {
@@ -77,7 +86,7 @@ const Dashboard = () => {
             
             const startDate = subDays(endDate, 7);
             startDate.setHours(0, 0, 0);
-            const response = await transactionsController.summarizeSalesRecords(0, startDate.toISOString(), endDate.toISOString());
+            const response = await summarizeSalesRecords(0, startDate.toISOString(), endDate.toISOString(), controllerRef.current.signal);
             if(response && response.data && response.data.length > 0){
                 const arr = [];
                 response.data.sort( (a, b) => b.soldOutQty - a.soldOutQty );

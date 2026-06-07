@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 import Select from "react-select";
 import "react-datetime/css/react-datetime.css";
@@ -14,13 +14,16 @@ import handleErrMsg from '../../Utils/error-handler';
 import { Packaging } from "../../Entities/Packaging";
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
-import pkgController from "../../Controllers/pkg-controller";
+import usePkgController from "../../Controllers/pkg-controller-hook";
 
 //	ref:	https://help.nextar.com/tutorial/stock-control
 const PurchasesUpdateForm = (props) => {
+    const controllerRef = useRef(new AbortController());
     const { data, fnSave, networkRequest }  = props;
 
     const navigate = useNavigate();
+
+    const { fetchAllActive } = usePkgController();
 
     // for pkg
     const [pkgOptions, setPkgOptions] = useState([]);
@@ -52,11 +55,16 @@ const PurchasesUpdateForm = (props) => {
     
     useEffect( () => {
         initialize();
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
     }, []);
 
     const initialize = async () => {
         try {
-            const response = await pkgController.fetchAllActive();
+            controllerRef.current = new AbortController();
+            const response = await fetchAllActive(controllerRef.current.signal);
 
             //	check if the request to fetch pkg doesn't fail before setting values to display
             if(response && response.data){
@@ -80,6 +88,10 @@ const PurchasesUpdateForm = (props) => {
                 }
             }
         } catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

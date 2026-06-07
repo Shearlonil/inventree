@@ -12,7 +12,7 @@ import { autoTable } from 'jspdf-autotable'
 import SVG from '../../../assets/Svg';
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import handleErrMsg from '../../../Utils/error-handler';
-import ledgerController from '../../../Controllers/ledger-controller';
+import useLedgerController from '../../../Controllers/ledger-controller-hook';
 import { Ledger } from '../../../Entities/Ledger';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { LedgerTransaction } from '../../../Entities/LedgerTransaction';
@@ -30,6 +30,7 @@ const LedgerDisplay = () => {
     const { id } = useParams();
 	
     const { performGetRequests } = useGenericController();
+    const { ledgerTransactions, rename, setDiscount, setAllowCreditSales } = useLedgerController();
     const { authUser } = useAuthUser();
 	const user = authUser();
 
@@ -105,7 +106,7 @@ const LedgerDisplay = () => {
             setStartDate(startDate);
             setEndDate(endDate);
     
-            const dayTransactions = await ledgerController.ledgerTransactions(id, startDate, endDate);
+            const dayTransactions = await ledgerTransactions(id, startDate, endDate, controllerRef.current.signal);
             if(dayTransactions && dayTransactions.data){
                 let dr = numeral(0);
                 let cr = numeral(0);
@@ -239,7 +240,8 @@ const LedgerDisplay = () => {
     const renameLedger = async () => {
         try {
             setNetworkRequest(true);
-            await ledgerController.rename(ledger.id, inputStr);
+            resetAbortController();
+            await rename(ledger.id, inputStr, controllerRef.current.signal);
             const temp = new Ledger(ledger);
             temp.name = inputStr;
             temp.creator = ledger.creator;
@@ -264,7 +266,8 @@ const LedgerDisplay = () => {
     const updateDiscount = async () => {
         try {
             setNetworkRequest(true);
-            await ledgerController.setDiscount(ledger.id, inputStr);
+            resetAbortController();
+            await setDiscount(ledger.id, inputStr, controllerRef.current.signal);
             const temp = new Ledger(ledger);
             temp.discount = inputStr;
             temp.creator = ledger.creator;
@@ -370,12 +373,13 @@ const LedgerDisplay = () => {
                 const startDate = format(data.startDate, "yyyy-MM-dd") + "T01:00:00.000Z";
                 const endDate = format(data.endDate, "yyyy-MM-dd") + "T23:59:59.000Z";
                 setNetworkRequest(true);
+                resetAbortController();
 
                 setFilename(`${ledger.name} ${data.startDate} - ${data.endDate}`);
                 setStartDate(startDate);
                 setEndDate(endDate);
     
-                const response = await ledgerController.ledgerTransactions(id, startDate, endDate);
+                const response = await ledgerTransactions(id, startDate, endDate, controllerRef.current.signal);
                 if(response && response.data){
                     let dr = numeral(0);
                     let cr = numeral(0);
@@ -422,7 +426,7 @@ const LedgerDisplay = () => {
         try {
             if(user.hasAuth('EDIT_lEDGER_CREDIT_SALES')){
                 resetAbortController();
-                await ledgerController.setAllowCreditSales(id, checked, controllerRef.current.signal);
+                await setAllowCreditSales(id, checked, controllerRef.current.signal);
             }else {
                 toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
                 throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");

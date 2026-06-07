@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import SVG from '../../../assets/Svg';
 import handleErrMsg from '../../../Utils/error-handler';
-import userController from '../../../Controllers/user-controller';
 import TableMain from '../../../Components/TableView/TableMain';
 import PaginationLite from '../../../Components/PaginationLite';
 import ReactMenu from '../../../Components/ReactMenu';
@@ -14,10 +13,15 @@ import ConfirmDialog from '../../../Components/DialogBoxes/ConfirmDialog';
 import InputDialog from '../../../Components/DialogBoxes/InputDialog';
 import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
 import { useAuthUser } from '../../../app-context/user-context';
+import useUserController from '../../../Controllers/user-controller-hook';
 
 const UserTrash = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
+    const location = useLocation();
+    
+    const { trashedUsers, restoreUser } = useUserController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -61,12 +65,17 @@ const UserTrash = () => {
             toast.error("Account doesn't support viewing this page. Please contact your admin");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            let response = await userController.trashedUsers();
+            controllerRef.current = new AbortController();
+            let response = await trashedUsers(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -199,9 +208,10 @@ const UserTrash = () => {
 		setShowConfirmModal(false);
 		try {
 			setNetworkRequest(true);
+            resetAbortController();
 			switch (confirmDialogEvtName) {
 				case 'restore':
-                    await userController.restoreUser(entityToEdit.username);
+                    await restoreUser(entityToEdit.username, controllerRef.current.signal);
 					//	find index position of restored item in items arr
 					let indexPos = filteredUsers.findIndex(o => o.username == entityToEdit.username);
 					if(indexPos > -1){
@@ -255,6 +265,14 @@ const UserTrash = () => {
             menuItems,
             menuItemClick: handleTableReactMenuItemClick,
         }
+    };
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
     };
 
     return (

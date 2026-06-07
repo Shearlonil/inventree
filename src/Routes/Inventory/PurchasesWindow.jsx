@@ -384,7 +384,7 @@ const PurchasesWindow = () => {
 	const fnSave = async (item) => {
 		try {
 			setNetworkRequest(true);
-				resetAbortController();
+			resetAbortController();
 			await updatePurchasedItem(item, controllerRef.current.signal);
 			//	find index position of edited item in items arr
 			const indexPos = pagedData.findIndex(i => i.id === item.id);

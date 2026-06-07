@@ -9,7 +9,7 @@ const { Column, HeaderCell, Cell } = Table;
 
 import handleErrMsg from '../../Utils/error-handler';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
-import qtyMgrController from '../../Controllers/qty-mgr-controller';
+import useQtyMgrController from '../../Controllers/qty-mgr-controller-hook';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { useAuthUser } from '../../app-context/user-context';
@@ -30,7 +30,8 @@ const SalesItemQtyMgrView = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
-                
+    
+    const { findItemSalesQtyMgr, deleteOutpostSalesQty, updateOutpostSalesQty, updateSalesQtyMgr } = useQtyMgrController();
     const { findById } = useItemController();
     const { authUser } = useAuthUser();
     const user = authUser();
@@ -130,7 +131,7 @@ const SalesItemQtyMgrView = () => {
             if(response && response.data){
                 setItem(response.data);
             }
-            response = await qtyMgrController.findItemSalesQtyMgr(id);
+            response = await findItemSalesQtyMgr(id, controllerRef.current.signal);
             if(response && response.data){
                 const data = [];
                 for (const key in response.data) {
@@ -277,21 +278,22 @@ const SalesItemQtyMgrView = () => {
         setShowConfirmModal(false);
         switch (confirmDialogEvtName) {
             case 'outpostSalesQty':
-                updateOutpostSalesQty();
+                fnUpdateOutpostSalesQty();
                 break;
             case 'qtyMgr':
                 updateQtyMgr();
                 break;
             case 'deleteOutpostSalesQty':
-                deleteOutpostSalesQty();
+                fnDeleteOutpostSalesQty();
                 break;
         }
 	};
 
-	const deleteOutpostSalesQty = async () => {
+	const fnDeleteOutpostSalesQty = async () => {
         try {
             setNetworkRequest(true);
-            await qtyMgrController.deleteOutpostSalesQty(entityToEdit.id, entityToEdit.qtyMgrId);
+            resetAbortController();
+            await deleteOutpostSalesQty(entityToEdit.id, entityToEdit.qtyMgrId, controllerRef.current.signal);
             const temp = Object.assign([], data);
             const parent = temp.find(item => item.id.trim() === entityToEdit.qtyMgrId.trim() );
             const arr = parent.children.filter(child => {
@@ -321,10 +323,11 @@ const SalesItemQtyMgrView = () => {
 		}
     };
 
-	const updateOutpostSalesQty = async () => {
+	const fnUpdateOutpostSalesQty = async () => {
         try {
             setNetworkRequest(true);
-            await qtyMgrController.updateOutpostSalesQty(entityToEdit);
+            resetAbortController();
+            await updateOutpostSalesQty(entityToEdit, controllerRef.current.signal);
             const temp = Object.assign([], data);
             const parent = temp.find(item => item.id.trim() === entityToEdit.qtyMgrId.trim() );
             const child = parent.children.find(item => {
@@ -363,6 +366,7 @@ const SalesItemQtyMgrView = () => {
 	const updateQtyMgr = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             const temp = Object.assign({}, entityToEdit);
             //  remove the creation date to avoid cast error from string to LocalDateTime on the backend... i no get time for wahala abeg :)
             temp.creationDate = null;
@@ -372,7 +376,7 @@ const SalesItemQtyMgrView = () => {
             temp.unitStockPrice = numeral(entityToEdit.unitStockPrice).value();
             //  not needed but added for Spring validation
             temp.unitStoreQty = 0;
-            await qtyMgrController.updateSalesQtyMgr(temp);
+            await updateSalesQtyMgr(temp, controllerRef.current.signal);
             //  in case of qty/pkg, update all children
             const nextData = Object.assign([], data);
             const parent = nextData.find(item => item.id === entityToEdit.id );

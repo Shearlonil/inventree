@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -13,12 +13,16 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
-import tractController from '../../Controllers/tract-controller';
+import useTractController from '../../Controllers/tract-controller-hook';
 import { useAuthUser } from '../../app-context/user-context';
 
 const TractsWindow = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
-            
+    const location = useLocation();
+    
+    const { fetchAllActive, create, rename, deleteTract } = useTractController();
     const { authUser } = useAuthUser();
     const user = authUser();
 
@@ -67,12 +71,17 @@ const TractsWindow = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await tractController.fetchAllActive();
+            controllerRef.current = new AbortController();
+            const response = await fetchAllActive(controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = [];
@@ -207,8 +216,9 @@ const TractsWindow = () => {
     const createTract = async (name) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await tractController.create(name);
+            const response = await create(name, controllerRef.current.signal);
             if(response && response.data){
                 const tract = new Tract();
                 tract.id = response.data.id;
@@ -249,8 +259,9 @@ const TractsWindow = () => {
     const renameTract = async (name) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await tractController.rename(entityToEdit.id, name);
+            const response = await rename(entityToEdit.id, name, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.name = name;
                 //	find index position of edited item in filtered tracts arr
@@ -290,7 +301,7 @@ const TractsWindow = () => {
         }
     };
     
-    const deleteTract = async (destinationTract) => {
+    const dnDeleteTract = async (destinationTract) => {
         setShowDropDownModal(false);
         if(entityToEdit.id === destinationTract.id){
             toast.error('Deleted Section and Destination Section cannot be same');
@@ -298,8 +309,8 @@ const TractsWindow = () => {
         }
         try {
             setNetworkRequest(true);
-            
-            await tractController.deleteTract(entityToEdit.id, destinationTract.id);
+            resetAbortController();
+            await deleteTract(entityToEdit.id, destinationTract.id, controllerRef.current.signal);
             //	find index position of deleted item in items arr
             let indexPos = filteredTracts.findIndex(t => t.id == entityToEdit.id);
             if(indexPos > -1){
@@ -369,6 +380,14 @@ const TractsWindow = () => {
         }
     };
 
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
+
     return (
         <div style={{minHeight: '70vh'}} className="container">
             <div className="container mx-auto d-flex flex-column bg-primary rounded-4 rounded-bottom-0 m-3 text-white align-items-center" >
@@ -416,7 +435,7 @@ const TractsWindow = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={deleteTract}
+                handleConfirm={dnDeleteTract}
                 message={'Select destination Section where items will be moved to'}
                 options={tractOptions}
             />

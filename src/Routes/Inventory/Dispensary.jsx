@@ -22,6 +22,7 @@ import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import { useAuthUser } from '../../app-context/user-context';
 import useGenericController from '../../Controllers/generic-controller-hook';
 import useInventoryController from '../../Controllers/inventory-controller-hook';
+import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 
 const defaultQtyType = 'Unit';
@@ -156,6 +157,12 @@ const Dispensary = () => {
 	};
 
 	const initializeWithDispensaryRec = async () => {
+        try {
+            positiveNumberMiscParamSchema.validateSync(dispensary_id);
+        } catch (error) {
+            toast.error(error.message);
+            return;
+        }
 		try {
 			setNetworkRequest(true);
             resetAbortController();

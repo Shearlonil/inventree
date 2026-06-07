@@ -13,13 +13,14 @@ import handleErrMsg from "../../Utils/error-handler";
 import PaginationLite from "../../Components/PaginationLite";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import DropDownDialog from "../../Components/DialogBoxes/DropDownDialog";
-import outpostController from "../../Controllers/outpost-controller";
+import useOutpostController from "../../Controllers/outpost-controller-hook";
 import { useAuth } from "../../app-context/auth-context";
 import { ItemRegDTO } from "../../Entities/ItemRegDTO";
 import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from "../../Entities/Vendor";
 import { Tract } from "../../Entities/Tract";
 import useInventoryController from "../../Controllers/inventory-controller-hook";
+import { positiveNumberMiscParamSchema } from "../../Utils/yup-schema-validator/input-validator";
 
 const StoreItemReg = () => {
 	const controllerRef = useRef(new AbortController());
@@ -29,6 +30,7 @@ const StoreItemReg = () => {
 	const { stock_rec_id } = useParams();
 	
 	const { findUnverifiedStockRecById, commitStockRecById, updateStockRecItem, persistStockRecItem, deleteStockRecItem, deleteStockRec } = useInventoryController();
+	const { findAllActive } = useOutpostController();
 	const { logout } = useAuth();
 
 	/*	Flag to indicate network fetch for stock record and it's item details to populate table in order to continue data input.
@@ -86,11 +88,17 @@ const StoreItemReg = () => {
 
 	const initialize = async () => {
 		try {
+			positiveNumberMiscParamSchema.validateSync(stock_rec_id);
+		} catch (error) {
+			toast.error(error.message);
+			return;
+		}
+		try {
 			setNetworkRequest(true);
 			resetPageStates();
             controllerRef.current = new AbortController();
 
-			const response = await outpostController.findAllActive();
+			const response = await findAllActive(controllerRef.current.signal);
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
 			if (response && response.data) {
@@ -120,7 +128,7 @@ const StoreItemReg = () => {
 			resetPageStates();
 	
 			const response = await findUnverifiedStockRecById(stock_rec_id, controllerRef.current.signal);
-			const outpostResponse = await outpostController.findAllActive();
+			const outpostResponse = await findAllActive(controllerRef.current.signal);
 	
 			//	check if the request to fetch item doesn't fail before setting values to display
 			if (response && response.data) {

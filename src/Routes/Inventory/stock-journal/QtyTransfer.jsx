@@ -124,6 +124,7 @@ const QtyTransfer = () => {
         setShowConfirmModal(false);
         try {
 			setNetworkRequest(true);
+            resetAbortController();
             /*  ItemDTO is used to receive this object on Java back-end.
                 itemName is used to hold transfor_to field,
                 tractId is used to hold destination product id
@@ -138,7 +139,7 @@ const QtyTransfer = () => {
                 status: true,
                 qtyType: 'null'
             }
-            await qtyTransfer(item);
+            await qtyTransfer(item, controllerRef.current.signal);
             /*  Update quantities for source and destination products
                 Start with source
             */

@@ -18,8 +18,8 @@ import handleErrMsg from "../../Utils/error-handler";
 import { TransactionItem } from "../../Entities/TransactionItem";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
-import transactionsController from "../../Controllers/transactions-controller";
-import printerController from "../../Controllers/printer-controller";
+import useTransactionsController from "../../Controllers/transactions-controller-hook";
+import usePrinterController from "../../Controllers/printer-controller-hook";
 import { useNumericCodeScanner } from "../../Utils/useNumericCodeScanner";
 import { useAuthUser } from "../../app-context/user-context";
 import useGenericController from "../../Controllers/generic-controller-hook";
@@ -80,6 +80,8 @@ const MonoTransaction = () => {
 	const location = useLocation();
 	useNumericCodeScanner(onCodeScan);
 	
+	const { print } = usePrinterController();
+	const { monoTransaction } = useTransactionsController();
     const { performGetRequests } = useGenericController();
 	const { authUser } = useAuthUser();
 	const user = authUser();
@@ -362,11 +364,12 @@ const MonoTransaction = () => {
     const commitTransaction = async (dtoReceipt) => {
 		try {
 			setNetworkRequest(true);
-			const response = await transactionsController.monoTransaction(dtoReceipt);
+			resetAbortController();
+			const response = await monoTransaction(dtoReceipt, controllerRef.current.signal);
 
 			resetPage();
 			if(dtoReceipt.printReceipt){
-				await printerController.print(response.data);
+				await print(response.data, controllerRef.current.signal);
 			}
 			setNetworkRequest(false);
 		} catch (error) {

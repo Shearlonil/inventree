@@ -2,31 +2,31 @@ import { useAxiosInterceptor } from '../axios/axios-interceptors';
 
 // https://stackoverflow.com/questions/75319009/how-to-use-hooks-within-function-in-react-js
 const useGenericController = () => {
-    const { xhrAios } = useAxiosInterceptor();
+    const { xhrAxios } = useAxiosInterceptor();
 
     function download(url) {
-        return xhrAios.get(url, {
+        return xhrAxios.get(url, {
             responseType: "blob",
         });
     }
     
     async function performGetRequests(urls, signal) {
         // axios.all() marked as deprecated, way forward is Promise.all();
-        return await Promise.all(urls.map((url) => xhrAios.get(url, { signal })));
+        return await Promise.all(urls.map((url) => xhrAxios.get(url, { signal })));
     }
     
     async function get(url, signal) {
         // axios.all() marked as deprecated, way forward is Promise.all();
-        return await xhrAios.get(`${url}`, {signal});
+        return await xhrAxios.get(`${url}`, {signal});
     }
     
     const paramGet = async (url, params, signal) => {
-        return await xhrAios.get(`${url}`, { params }, {signal});
+        return await xhrAxios.get(`${url}`, { params }, {signal});
     }
     
     async function post(url, data, signal) {
         // axios.all() marked as deprecated, way forward is Promise.all();
-        return await xhrAios.post(`${url}`, data, {signal});
+        return await xhrAxios.post(`${url}`, data, {signal});
     }
 
     async function performRequests(axiosReqs) {
@@ -61,11 +61,11 @@ const useGenericController = () => {
     }
     
     async function requestOTP(email, signal){
-        await xhrAios.post(`/auth/otp/${email}`, {signal})
+        await xhrAxios.post(`/auth/otp/${email}`, {signal})
     }
     
     const getAxios = () => {
-        return xhrAios;
+        return xhrAxios;
     }
     
     return {

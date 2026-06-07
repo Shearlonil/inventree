@@ -6,7 +6,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import SVG from '../../../assets/Svg';
 import { OribitalLoading } from '../../../Components/react-loading-indicators/Indicator';
-import userController from '../../../Controllers/user-controller';
+import useUserController from '../../../Controllers/user-controller-hook';
 import User from '../../../Entities/User';
 import ToggleSwitch from '../../../Components/ToggleSwitch';
 import handleErrMsg from '../../../Utils/error-handler';
@@ -21,6 +21,7 @@ const UserDetails = () => {
     const { username } = useParams();
 	
     const { performGetRequests } = useGenericController();
+    const { updateUserAuth } = useUserController();
     const { authUser } = useAuthUser();
 	const user = authUser();
       
@@ -47,6 +48,7 @@ const UserDetails = () => {
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
+            controllerRef.current = new AbortController();
             //  find user and authorities
             const urls = [ `/api/users/find/${username}`, `/api/authorities/${username}`, `/api/authorities/find/all`];
             const response = await performGetRequests(urls, controllerRef.current.signal);
@@ -86,7 +88,7 @@ const UserDetails = () => {
             if(allAuths && allAuths.data){
                 setAllAuths(allAuths.data);
             }
-            // const response = await userController.findUserAuths(username);
+            // const response = await findUserAuths(username);
             setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
@@ -109,7 +111,7 @@ const UserDetails = () => {
             const text = auth.name.split(' ').join('_');
             if(user.hasAuth(text) && user.hasAuth('EDIT_AUTH')){
                 resetAbortController();
-                await userController.updateUserAuth(username, checked, auth.code);
+                await updateUserAuth(username, checked, auth.code, controllerRef.current.signal);
             }else {
                 toast.error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
                 throw new Error("Forbidden. Your account doesn't support granting this permission. Please contact your supervisor");
@@ -131,14 +133,6 @@ const UserDetails = () => {
         }
     };
 
-    const resetAbortController = () => {
-        // Cancel previous request if it exists
-        if (controllerRef.current) {
-            controllerRef.current.abort();
-        }
-        controllerRef.current = new AbortController();
-    };
-
     const buildAuths = (userAuths) => allAuths.map(auth => {
         const text = auth.name.split('_').join(' ');
         const found = userAuths.findIndex(userAuth => userAuth.code === auth.code);
@@ -155,6 +149,14 @@ const UserDetails = () => {
             </span>
         </div>
     });
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
         <div className='container my-4'>

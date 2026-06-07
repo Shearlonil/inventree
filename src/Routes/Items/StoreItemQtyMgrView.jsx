@@ -9,11 +9,11 @@ const { Column, HeaderCell, Cell } = Table;
 
 import handleErrMsg from '../../Utils/error-handler';
 import { OribitalLoading, ThreeDotLoading } from '../../Components/react-loading-indicators/Indicator';
-import qtyMgrController from '../../Controllers/qty-mgr-controller';
 import { QuantityManager } from '../../Entities/QuantityManager';
 import ConfirmDialog from '../../Components/DialogBoxes/ConfirmDialog';
 import { useAuthUser } from '../../app-context/user-context';
 import useItemController from '../../Controllers/item-controller-hook';
+import useQtyMgrController from '../../Controllers/qty-mgr-controller-hook';
 
 const styles = `
 .table-cell-editing .rs-table-cell-content {
@@ -32,6 +32,7 @@ const StoreItemQtyMgrView = () => {
     const { id } = useParams();
                 
     const { findById } = useItemController();
+    const { findItemStoreQtyMgr, updateStoreQtyMgr } = useQtyMgrController();
     const { authUser } = useAuthUser();
     const user = authUser();
         
@@ -66,7 +67,7 @@ const StoreItemQtyMgrView = () => {
             if(response && response.data){
                 setItem(response.data);
             }
-            response = await qtyMgrController.findItemStoreQtyMgr(id);
+            response = await findItemStoreQtyMgr(id, controllerRef.current.signal);
             if(response && response.data){
                 const data = [];
                 response.data.forEach(qtyManager => {
@@ -113,7 +114,7 @@ const StoreItemQtyMgrView = () => {
             temp.packStockPrice = numeral(entityToEdit.packStockPrice).value();
             //  not needed but added for Spring validation
             temp.totalUnitSalesQty = 0;
-            await qtyMgrController.updateStoreQtyMgr(temp);
+            await updateStoreQtyMgr(temp, controllerRef.current.signal);
             //  in case of qty/pkg, pkg stock price
             const nextData = Object.assign([], data);
             const qtyMgr = nextData.find(item => item.id === entityToEdit.id );

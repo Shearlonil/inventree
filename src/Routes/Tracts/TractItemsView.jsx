@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
@@ -10,15 +10,19 @@ import PaginationLite from '../../Components/PaginationLite';
 import { Tract } from '../../Entities/Tract';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import { OribitalLoading } from '../../Components/react-loading-indicators/Indicator';
-import tractController from '../../Controllers/tract-controller';
+import useTractController from '../../Controllers/tract-controller-hook';
 import { Item } from '../../Entities/Item';
 import { useAuthUser } from '../../app-context/user-context';
 
 const TractItemsView = () => {
+    const controllerRef = useRef(new AbortController());
+
     const navigate = useNavigate();
+    const location = useLocation();
     const { tractName } = useParams();
             
     const { authUser } = useAuthUser();
+    const { fetchActiveTractItems } = useTractController();
     const user = authUser();
     
     const [networkRequest, setNetworkRequest] = useState(false);
@@ -53,12 +57,17 @@ const TractItemsView = () => {
             toast.error("Account doesn't support viewing this page. Please contact your supervisor");
             navigate('/404');
         }
-    }, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+    }, [location.pathname]);
 
 	const initialize = async () => {
 		try {
             setNetworkRequest(true);
-            const response = await tractController.fetchActiveTractItems(tractName);
+            controllerRef.current = new AbortController();
+            const response = await fetchActiveTractItems(tractName, controllerRef.current.signal);
 
             if (response && response.data && response.data.length > 0) {
                 const arr = response.data.map(item => {

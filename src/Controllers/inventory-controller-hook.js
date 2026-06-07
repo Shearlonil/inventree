@@ -2,11 +2,11 @@ import { useAxiosInterceptor } from '../axios/axios-interceptors';
 
 // https://stackoverflow.com/questions/75319009/how-to-use-hooks-within-function-in-react-js
 const useInventoryController = () => {
-    const { xhrAios } = useAxiosInterceptor();
+    const { xhrAxios } = useAxiosInterceptor();
     
     //  Stock Record (New and Restock)
     const findUnverifiedStockRecById = async (stockRecId, signal) => {
-        return await xhrAios.get(`/api/inventory/stock-record`, {
+        return await xhrAxios.get(`/api/inventory/stock-record`, {
             params: {
                 stockRecId,
             }
@@ -14,7 +14,7 @@ const useInventoryController = () => {
     }
     
     const unverifiedStockRec = async (type, signal) => {
-        return await xhrAios.get(`/api/inventory/sales/unverified`, {
+        return await xhrAxios.get(`/api/inventory/sales/unverified`, {
             params: {
                 type,
             }
@@ -22,7 +22,7 @@ const useInventoryController = () => {
     }
     
     const deleteStockRec = async (stockRecId, signal) => {
-        return await xhrAios.delete(`/api/inventory/delete/stock-rec`, {
+        return await xhrAxios.delete(`/api/inventory/delete/stock-rec`, {
             params: {
                 stockRecId,
             }
@@ -30,7 +30,7 @@ const useInventoryController = () => {
     }
     
     const commitStockRecById = async (stockRecId, outpostId, destination, signal) => {
-        return await xhrAios.post(`/api/inventory/commit`, {
+        return await xhrAxios.post(`/api/inventory/commit`, {
             id: stockRecId,
             outpost_id: outpostId
         },
@@ -42,7 +42,7 @@ const useInventoryController = () => {
     }
     
     const persistStockRecItem = async (stock_rec_id, item, signal) => {
-        return await xhrAios.post(`/api/inventory/new/sales`, [item], {
+        return await xhrAxios.post(`/api/inventory/new/sales`, [item], {
             params: {
                 stock_rec_id,
             }
@@ -50,7 +50,7 @@ const useInventoryController = () => {
     }
     
     const restock = async (stock_rec_id, item, signal) => {
-        return await xhrAios.post(`/api/inventory/restock/sales`, [item], {
+        return await xhrAxios.post(`/api/inventory/restock/sales`, [item], {
             params: {
                 stock_rec_id,
             }
@@ -58,7 +58,7 @@ const useInventoryController = () => {
     }
     
     const updateStockRecItem = async (item, signal) => {
-        return await xhrAios.put(`/api/inventory/update/stock-rec-item`, item, {
+        return await xhrAxios.put(`/api/inventory/update/stock-rec-item`, item, {
             params: {
                 stockRecItemDetailId: item.itemDetailId,
             }
@@ -66,7 +66,7 @@ const useInventoryController = () => {
     }
     
     const deleteStockRecItem = async (itemDetailId, signal) => {
-        return await xhrAios.delete(`/api/inventory/delete/stock-rec-item`, {
+        return await xhrAxios.delete(`/api/inventory/delete/stock-rec-item`, {
             params: {
                 stockRecItemDetailId: itemDetailId,
             }
@@ -75,7 +75,7 @@ const useInventoryController = () => {
     
     //  DISPENSARY
     const findUnverifiedDispensaryById = async (dispensaryId, signal) => {
-        return await xhrAios.get(`/api/inventory/id/dispensary`, {
+        return await xhrAxios.get(`/api/inventory/id/dispensary`, {
             params: {
                 dispensaryId,
             }
@@ -83,11 +83,11 @@ const useInventoryController = () => {
     }
     
     const unverifiedDispensary = async (signal) => {
-        return await xhrAios.get(`/api/inventory/dispensary/unverified`, {signal});
+        return await xhrAxios.get(`/api/inventory/dispensary/unverified`, {signal});
     }
     
     const dispense = async (dispensaryId, outpostId, signal) => {
-        return await xhrAios.post(`/api/inventory/dispensary/dispense/${dispensaryId}`, null, {
+        return await xhrAxios.post(`/api/inventory/dispensary/dispense/${dispensaryId}`, null, {
             params: {
                 outpostId,
             }
@@ -95,7 +95,7 @@ const useInventoryController = () => {
     }
     
     const dispensary = async (dispensaryId, item, signal) => {
-        return await xhrAios.post(`/api/inventory/dispensary`, [item], {
+        return await xhrAxios.post(`/api/inventory/dispensary`, [item], {
             params: {
                 dispensaryId,
             }
@@ -103,11 +103,11 @@ const useInventoryController = () => {
     }
     
     const updateDispensedItem = async (item, signal) => {
-        return await xhrAios.put(`/api/inventory/dispensary/update/item`, item, {signal});
+        return await xhrAxios.put(`/api/inventory/dispensary/update/item`, item, {signal});
     }
     
     const deleteDispensedItemDetail = async (itemDetailId, signal) => {
-        return await xhrAios.delete(`/api/inventory/dispensary/delete/item`, {
+        return await xhrAxios.delete(`/api/inventory/dispensary/delete/item`, {
             params: {
                 dispensedItemDetailId: itemDetailId,
             }
@@ -115,7 +115,7 @@ const useInventoryController = () => {
     }
     
     const deleteDispensary = async (dispensaryId, signal) => {
-        return await xhrAios.delete(`/api/inventory/delete/dispensary`, {
+        return await xhrAxios.delete(`/api/inventory/delete/dispensary`, {
             params: {
                 dispensaryId,
             }
@@ -124,19 +124,19 @@ const useInventoryController = () => {
     
     //  PURCHASES 
     const changePurchasesVendor = async (dtoItem, signal) => {
-        return await xhrAios.post(`/api/inventory/purchases/vendor/update`, dtoItem, {signal});
+        return await xhrAxios.post(`/api/inventory/purchases/vendor/update`, dtoItem, {signal});
     }
 
     const deletePurchasedItem = async (dtoItem, signal) => {
-        return await xhrAios.post(`/api/inventory/purchases/item/delete`, dtoItem, {signal});
+        return await xhrAxios.post(`/api/inventory/purchases/item/delete`, dtoItem, {signal});
     }
     
     const findItemPurchases = async (item_id, startDate, endDate, signal) => {
-        return await xhrAios.post(`/api/inventory/purchases/item/${item_id}`, { startDate, endDate }, {signal});
+        return await xhrAxios.post(`/api/inventory/purchases/item/${item_id}`, { startDate, endDate }, {signal});
     }
     
     const paginatePurchasesDateSearch = async (startDate, endDate, offset, pageSize, signal) => {
-        return await xhrAios.post(`/api/inventory/purchases`, { startDate, endDate }, {
+        return await xhrAxios.post(`/api/inventory/purchases`, { startDate, endDate }, {
             params: {
                 offset, pageSize
             }
@@ -144,27 +144,27 @@ const useInventoryController = () => {
     }
     
     const paginatePurchasesIdSearch = async (id, signal) => {
-        return await xhrAios.post(`/api/inventory/purchases/${id}`, {signal});
+        return await xhrAxios.post(`/api/inventory/purchases/${id}`, {signal});
     }
     
     const updatePurchasedItem = async (item, signal) => {
-        return await xhrAios.put(`/api/inventory/purchases/item/update`, item, {signal});
+        return await xhrAxios.put(`/api/inventory/purchases/item/update`, item, {signal});
     }
     
     const ageOfStock = async (signal) => {
-        return await xhrAios.get(`/api/inventory/stock-age`, {signal});
+        return await xhrAxios.get(`/api/inventory/stock-age`, {signal});
     };
     
     const expiring = async (signal) => {
-        return await xhrAios.get(`/api/inventory/expiring`, {signal});
+        return await xhrAxios.get(`/api/inventory/expiring`, {signal});
     };
     
     const stockValuation = async (startDate, tract_id, signal) => {
-        return await xhrAios.post(`/api/inventory/stock/valuation/${tract_id}`, { startDate, endDate: startDate }, {signal});
+        return await xhrAxios.post(`/api/inventory/stock/valuation/${tract_id}`, { startDate, endDate: startDate }, {signal});
     };
     
     const outpostStockValuation = async (startDate, outpost_id, tract_id, signal) => {
-        return await xhrAios.post(`/api/inventory/outpost/stock/valuation/${outpost_id}`, { startDate, endDate: startDate }, {
+        return await xhrAxios.post(`/api/inventory/outpost/stock/valuation/${outpost_id}`, { startDate, endDate: startDate }, {
             params: {
                 tract_id
             },
@@ -172,23 +172,23 @@ const useInventoryController = () => {
     };
     
     const qtyTransfer = async (item, signal) => {
-        return await xhrAios.put(`/api/inventory/journal/transfer`, item, {signal});
+        return await xhrAxios.put(`/api/inventory/journal/transfer`, item, {signal});
     }
     
     const qtyAdjustment = async (item, signal) => {
-        return await xhrAios.put(`/api/inventory/journal/adjust-qty`, item, {signal});
+        return await xhrAxios.put(`/api/inventory/journal/adjust-qty`, item, {signal});
     }
     
     const journalDateSearch = async (startDate, endDate, signal) => {
-        return await xhrAios.post(`/api/inventory/journal/search/date`, { startDate, endDate }, {signal});
+        return await xhrAxios.post(`/api/inventory/journal/search/date`, { startDate, endDate }, {signal});
     };
     
     const journalItemSearch = async (item_id, signal) => {
-        return await xhrAios.get(`/api/inventory/journal/search/item/${item_id}`, {signal});
+        return await xhrAxios.get(`/api/inventory/journal/search/item/${item_id}`, {signal});
     };
     
     const journalUserSearch = async (username, signal) => {
-        return await xhrAios.get(`/api/inventory/journal/search/user/${username}`, {signal});
+        return await xhrAxios.get(`/api/inventory/journal/search/user/${username}`, {signal});
     };
     
     return {

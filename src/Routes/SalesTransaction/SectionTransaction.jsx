@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Form } from "react-bootstrap";
 import { BiMinus, BiPlus } from "react-icons/bi";
 import { MdAdd, MdRemove } from "react-icons/md";
@@ -8,7 +8,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import numeral from "numeral";
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 import { product_selection_schema, invoice_disc_schema } from "../../Utils/yup-schema-validator/transactions-schema";
 import ErrorMessage from "../../Components/ErrorMessage";
@@ -17,16 +17,17 @@ import handleErrMsg from "../../Utils/error-handler";
 import { TransactionItem } from "../../Entities/TransactionItem";
 import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
-import transactionsController from "../../Controllers/transactions-controller";
 import DropDownDialog from '../../Components/DialogBoxes/DropDownDialog';
 import OffcanvasMenu from '../../Components/OffcanvasMenu';
 import InputDialog from '../../Components/DialogBoxes/InputDialog';
-import tractController from '../../Controllers/tract-controller';
+import useTractController from '../../Controllers/tract-controller-hook';
 import { useNumericCodeScanner } from '../../Utils/useNumericCodeScanner';
 import { useAuthUser } from '../../app-context/user-context';
 import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
+import useTransactionsController from '../../Controllers/transactions-controller-hook';
 
 const SectionTransaction = () => {
+	const controllerRef = useRef(new AbortController());
 
 	const onCodeScan = (code) => {
 		//	detect if item already exists in the list
@@ -78,9 +79,12 @@ const SectionTransaction = () => {
 	}
 
 	const navigate = useNavigate();
+	const location = useLocation();
 	useNumericCodeScanner(onCodeScan);
 		
 	const { authUser } = useAuthUser();
+	const { fetchAllActive } = useTractController();
+	const { findInvoiceForReceipt, fetchTractItems, generateInvoice, cancelInvoice } = useTransactionsController();
 	const user = authUser();
 
 	const {
@@ -155,11 +159,16 @@ const SectionTransaction = () => {
 
 	useEffect( () => {
 		initialize();
-	}, []);
+        return () => {
+            // This cleanup function runs when the component unmounts or when the dependencies of useEffect change (e.g., route change)
+            controllerRef.current.abort();
+        };
+	}, [location.pathname]);
 
 	const initialize = async () => {
 		try {
-            const tractsRequest = await tractController.fetchAllActive();
+            controllerRef.current = new AbortController();
+            const tractsRequest = await fetchAllActive(controllerRef.current.signal);
 
             //	check if the request to fetch items doesn't fail before setting values to display
             if(tractsRequest){
@@ -167,7 +176,6 @@ const SectionTransaction = () => {
                 setTractsLoading(false);
             }
 		} catch (error) {
-            setNetworkRequest(false);
             if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
                 // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
                 return;
@@ -313,9 +321,10 @@ const SectionTransaction = () => {
 		}
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			resetPage();
 	
-			const response = await transactionsController.findInvoiceForReceipt(id);
+			const response = await findInvoiceForReceipt(id, controllerRef.current.signal);
 	
 			//  check if the request to fetch indstries doesn't fail before setting values to display
 			if (response && response.data && response.data.length > 0) {
@@ -373,10 +382,11 @@ const SectionTransaction = () => {
         }
 	}
 
-    const fetchTractItems = async (tract) => {
+    const fnFetchTractItems = async (tract) => {
         try {
 			setNetworkRequest(true);
-            const itemsRequest = await transactionsController.fetchTractItems(tract.id);
+			resetAbortController();
+            const itemsRequest = await fetchTractItems(tract.id, controllerRef.current.signal);
     
             //	check if the request to fetch items doesn't fail before setting values to display
             if(itemsRequest){
@@ -426,15 +436,16 @@ const SectionTransaction = () => {
 			case 'generateInvoice':
 				const dtoInvoice = setUpInvoiceDTO();
 				setShowConfirmModal(false);
-				await generateInvoice(dtoInvoice);
+				await fnGenerateInvoice(dtoInvoice);
 				break;
 		}
 	};
 
-    const generateInvoice = async (dtoInvoice) => {
+    const fnGenerateInvoice = async (dtoInvoice) => {
 		try {
 			setNetworkRequest(true);
-			const response = await transactionsController.generateInvoice(dtoInvoice);
+			resetAbortController();
+			const response = await generateInvoice(dtoInvoice, controllerRef.current.signal);
 			resetPage();
             // display message
             toast.info(`Invoice id: ${response.data.id}`, { autoClose: false });
@@ -458,8 +469,9 @@ const SectionTransaction = () => {
     const cancelTransaction = async () => {
 		try {
 			setNetworkRequest(true);
+			resetAbortController();
 			setShowConfirmModal(false);
-			const response = await transactionsController.cancelInvoice(invoiceProps.invoiceId);
+			const response = await cancelInvoice(invoiceProps.invoiceId, controllerRef.current.signal);
 			resetPage();
             // display message
             toast.info(`Transaction cancelled successfully`);
@@ -509,6 +521,14 @@ const SectionTransaction = () => {
 			dtoSalesRecords: transactionItems,
 		};
 	}
+
+    const resetAbortController = () => {
+        // Cancel previous request if it exists
+        if (controllerRef.current) {
+            controllerRef.current.abort();
+        }
+        controllerRef.current = new AbortController();
+    };
 
     return (
 		<div className="container">
@@ -811,7 +831,7 @@ const SectionTransaction = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={fetchTractItems}
+                handleConfirm={fnFetchTractItems}
                 message={dropDownMsg}
                 optionsLoading={tractsLoading}
                 options={tractOptions}

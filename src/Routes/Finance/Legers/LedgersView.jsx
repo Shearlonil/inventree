@@ -10,7 +10,7 @@ import Select from "react-select";
 import OffcanvasMenu from '../../../Components/OffcanvasMenu';
 import SVG from '../../../assets/Svg';
 import handleErrMsg from '../../../Utils/error-handler';
-import ledgerController from '../../../Controllers/ledger-controller';
+import useLedgerController from '../../../Controllers/ledger-controller-hook';
 import TableMain from '../../../Components/TableView/TableMain';
 import PaginationLite from '../../../Components/PaginationLite';
 import ReactMenu from '../../../Components/ReactMenu';
@@ -30,6 +30,7 @@ const LedgersView = () => {
     const location = useLocation();
     
     const { performGetRequests } = useGenericController();
+    const { create, rename, deleteLedger } = useLedgerController();
     const { authUser } = useAuthUser();
     const user = authUser();
     
@@ -248,7 +249,7 @@ const LedgersView = () => {
         setShowConfirmModal(false);
         switch (confirmDialogEvtName) {
             case 'delete':
-                deleteLedger();
+                fnDeleteLedger();
                 break;
             case 'create':
                 if(user.hasAuth('FINANCE')){
@@ -276,8 +277,9 @@ const LedgersView = () => {
     const createLedger = async () => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await ledgerController.create(newLedger.name, newLedger.groupId);
+            const response = await create(newLedger.name, newLedger.groupId, controllerRef.current.signal);
             if(response && response.data){
                 const ledger = new Ledger(response.data);
                 const arr = [...filteredLedgers, ledger];
@@ -311,8 +313,9 @@ const LedgersView = () => {
     const renameLedger = async (name) => {
         try {
             setNetworkRequest(true);
+            resetAbortController();
             //  network request to update data
-            const response = await ledgerController.rename(entityToEdit.id, name);
+            const response = await rename(entityToEdit.id, name, controllerRef.current.signal);
             if(response && response.status === 200){
                 entityToEdit.name = name;
                 //	find index position of edited item in filtered ledgers arr
@@ -352,11 +355,11 @@ const LedgersView = () => {
         }
     };
     
-    const deleteLedger = async () => {
+    const fnDeleteLedger = async () => {
         try {
             setNetworkRequest(true);
-            
-            await ledgerController.deleteLedger(entityToEdit.id);
+            resetAbortController();
+            await deleteLedger(entityToEdit.id, controllerRef.current.signal);
             //	find index position of deleted item in items arr
             let indexPos = filteredLedgers.findIndex(o => o.id == entityToEdit.id);
             if(indexPos > -1){

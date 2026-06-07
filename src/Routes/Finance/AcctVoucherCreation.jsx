@@ -8,7 +8,6 @@ import { format, isAfter } from "date-fns";
 import { useLocation } from "react-router-dom";
 
 import OffcanvasMenu from "../../Components/OffcanvasMenu";
-import ledgerController from "../../Controllers/ledger-controller";
 import { Ledger } from "../../Entities/Ledger";
 import VchCreationForm from "../../Components/Finance/VchCreationForm";
 import TableMain from "../../Components/TableView/TableMain";
@@ -19,12 +18,14 @@ import SingleDateSelectDialog from "../../Components/DialogBoxes/SingleDateSelec
 import { ThreeDotLoading } from "../../Components/react-loading-indicators/Indicator";
 import { useAuthUser } from "../../app-context/user-context";
 import useFinanceController from "../../Controllers/finance-controller-hook";
+import useLedgerController from "../../Controllers/ledger-controller-hook";
 
 const AcctVoucherCreation = () => {
 	const controllerRef = useRef(new AbortController());
 		
 	const location = useLocation();
 	
+	const { findAllActive } = useLedgerController();
 	const { createVoucher } = useFinanceController();
 	const { authUser } = useAuthUser();
 	const user = authUser();
@@ -72,7 +73,7 @@ const AcctVoucherCreation = () => {
         try {
             setNetworkRequest(true);
             controllerRef.current = new AbortController();
-            const response = await ledgerController.findAllActive(controllerRef.current.signal);
+            const response = await findAllActive(controllerRef.current.signal);
 
             if (response && response.data) {
                 setLedgerOptions(response.data.map(datum => new Ledger(datum)).map(ledger => ({label: ledger.name, value: ledger})));
