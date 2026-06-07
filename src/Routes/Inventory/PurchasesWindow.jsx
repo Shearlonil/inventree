@@ -145,6 +145,10 @@ const PurchasesWindow = () => {
 
 		} catch (error) {
 			setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
@@ -254,12 +258,12 @@ const PurchasesWindow = () => {
 
 	const idSearch = async (id) => {
 		try {
-			try {
-				positiveNumberMiscParamSchema.validateSync(id);
-			} catch (error) {
-				toast.error(error.message);
-				return;
-			}
+			positiveNumberMiscParamSchema.validateSync(id);
+		} catch (error) {
+			toast.error(error.message);
+			return;
+		}
+		try {
 			setNetworkRequest(true);
 			resetAbortController();
 			setPagedData([]);
@@ -284,12 +288,16 @@ const PurchasesWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
 			setNetworkRequest(false);
-			// display error message
-			toast.error(handleErrMsg(error).msg);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 
@@ -320,12 +328,16 @@ const PurchasesWindow = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
-			// display error message
-			toast.error(handleErrMsg(error).msg);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -356,6 +368,14 @@ const PurchasesWindow = () => {
 			}
 		} catch (error) {
 			setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
+			// Incase of 401 Unauthorized, navigate to 404
+			if(error.response?.status === 401){
+				navigate('/404');
+			}
 			// display error message
 			toast.error(handleErrMsg(error).msg);
 		}
@@ -377,12 +397,16 @@ const PurchasesWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
 			setNetworkRequest(false);
-			// display error message
-			toast.error(handleErrMsg(error).msg);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -413,12 +437,16 @@ const PurchasesWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
 			setNetworkRequest(false);
-			// display error message
-			toast.error(handleErrMsg(error).msg);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 	
@@ -444,12 +472,16 @@ const PurchasesWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
 			setNetworkRequest(false);
-			// display error message
-			toast.error(handleErrMsg(error).msg);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
 			// Incase of 401 Unauthorized, navigate to 404
 			if(error.response?.status === 401){
 				navigate('/404');
 			}
+			// display error message
+			toast.error(handleErrMsg(error).msg);
 		}
 	}
 	

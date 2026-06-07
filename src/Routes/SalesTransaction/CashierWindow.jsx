@@ -20,6 +20,7 @@ import ConfirmDialog from "../../Components/DialogBoxes/ConfirmDialog";
 import printerController from "../../Controllers/printer-controller";
 import { useAuthUser } from "../../app-context/user-context";
 import useGenericController from "../../Controllers/generic-controller-hook";
+import { positiveNumberMiscParamSchema } from "../../Utils/yup-schema-validator/input-validator";
 
 const CashierWindow = () => {
 	const controllerRef = useRef(new AbortController());
@@ -107,6 +108,10 @@ const CashierWindow = () => {
             }
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -118,16 +123,14 @@ const CashierWindow = () => {
 	};
 	
 	const idSearch = async (data) => {
+		const id = data.invoice_id;
 		try {
-			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-				Technique 1: use the unary plus operator which is what i've adopted below
-				Technique 2: multiply by a number. 
-				etc	*/
-			const id = data.invoice_id;
-			if(!+id){
-				toast.error('Please enter a valid number');
-				return;
-			}
+			positiveNumberMiscParamSchema.validateSync(id);
+		} catch (error) {
+			toast.error(error.message);
+			return;
+		}
+		try {
 			setNetworkRequest(true);
 	
 			const response = await transactionsController.findInvoiceForReceipt(id);
@@ -164,6 +167,10 @@ const CashierWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -228,6 +235,10 @@ const CashierWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

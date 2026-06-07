@@ -127,6 +127,10 @@ const LedgersView = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -259,7 +263,6 @@ const LedgersView = () => {
 
     const onSubmit = async (data) => {
         setConfirmDialogEvtName('create');
-        console.log(data);
         const ledger = {
             name: data.name,
             groupId: data.group?.value.id
@@ -291,6 +294,10 @@ const LedgersView = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -331,6 +338,10 @@ const LedgersView = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -373,6 +384,10 @@ const LedgersView = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

@@ -90,6 +90,13 @@ const ContactTrash = () => {
 				setTotalItemsCount(response.data.length);
             }
 		} catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError') {
+                // Request was intentionally aborted, handle silently
+                return;
+            }
+            if(error.response?.status === 500 && error.response?.data.message === "Invalid Token received!"){
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -202,6 +209,10 @@ const ContactTrash = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

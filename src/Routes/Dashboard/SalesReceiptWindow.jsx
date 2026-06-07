@@ -31,6 +31,7 @@ import { Contact } from '../../Entities/Contact';
 import SingleDateSelectDialog from '../../Components/DialogBoxes/SingleDateSelectDialog';
 import { Outpost } from '../../Entities/Outpost';
 import { useAuthUser } from '../../app-context/user-context';
+import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 const SalesReceiptWindow = () => {
     applyPlugin(jsPDF);
@@ -182,6 +183,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -380,15 +385,13 @@ const SalesReceiptWindow = () => {
     }
 
 	const idSearch = async (id) => {
+        try {
+            positiveNumberMiscParamSchema.validateSync(id);
+        } catch (error) {
+            toast.error(error.message);
+            return;
+        }
 		try {
-			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-				Technique 1: use the unary plus operator which is what i've adopted below
-				Technique 2: multiply by a number. 
-				etc	*/
-			if(!+id){
-				toast.error('Please enter a valid number');
-				return;
-			}
 			setNetworkRequest(true);
 			setReceipts([]);
             setSalesRecords([]);
@@ -420,6 +423,10 @@ const SalesReceiptWindow = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -467,6 +474,10 @@ const SalesReceiptWindow = () => {
 			}
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -531,6 +542,10 @@ const SalesReceiptWindow = () => {
 			}
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -557,6 +572,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -580,6 +599,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -603,6 +626,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -621,6 +648,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -701,6 +732,10 @@ const SalesReceiptWindow = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -768,6 +803,10 @@ const SalesReceiptWindow = () => {
             
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

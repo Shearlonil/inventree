@@ -31,7 +31,6 @@ export const useAxiosInterceptor = () => {
     }
 
     const resErrInterceptor = async (error) => {
-        console.log(error);
         const originalRequest = error.config;
         if (error.response?.status === 500 && !originalRequest._retry) {
             /*
@@ -62,6 +61,18 @@ export const useAxiosInterceptor = () => {
             } catch (error) {
                 return Promise.reject(error);
             }
+        }
+        const expectedError =
+            error.response &&
+            error.response.status >= 400 &&
+            error.response.status < 600;
+
+        if (!expectedError) {
+            error.response = {
+                data: {
+                    message: error.message ? error.message : "An unexpected Error occured",
+                },
+            };
         }
         return Promise.reject(error);
     }

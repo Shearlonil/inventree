@@ -127,6 +127,10 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -278,6 +282,10 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -300,6 +308,10 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -322,6 +334,10 @@ const AcctVoucherDisplay = () => {
             setNetworkRequest(false);
         } catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -333,13 +349,13 @@ const AcctVoucherDisplay = () => {
     }
 
 	const idSearch = async (id) => {
+        try {
+            positiveNumberMiscParamSchema.validateSync(id);
+        } catch (error) {
+            toast.error(error.message);
+            return;
+        }
 		try {
-            try {
-                positiveNumberMiscParamSchema.validateSync(id);
-            } catch (error) {
-                toast.error(error.message);
-                return;
-            }
 			setNetworkRequest(true);
             resetAbortController();
 			setLedgerTransactions([]);
@@ -367,6 +383,10 @@ const AcctVoucherDisplay = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');

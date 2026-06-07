@@ -25,19 +25,4 @@ const buildString = (arr) => {
     return str;
 };
 
-const detectMsg = (errObj) => {
-    return errObj?.message 
-        ? errObj.message 
-        : errObj?.response?.data?.message
-        ?   //	in case errObj.response.data.message is an array/object of error messages
-            typeof errObj.response.data.message === "object"
-            ? buildString(errObj.response.data.message)
-            : errObj.response.data.message
-        : errObj?.response?.data
-        ? errObj.response.data
-        : errObj?.response
-        ? errObj.response
-        : errObj;
-};
-
 export default handleErrMsg;

@@ -24,6 +24,7 @@ import InputDialog from '../../Components/DialogBoxes/InputDialog';
 import tractController from '../../Controllers/tract-controller';
 import { useNumericCodeScanner } from '../../Utils/useNumericCodeScanner';
 import { useAuthUser } from '../../app-context/user-context';
+import { positiveNumberMiscParamSchema } from '../../Utils/yup-schema-validator/input-validator';
 
 const SectionTransaction = () => {
 
@@ -167,6 +168,10 @@ const SectionTransaction = () => {
             }
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -301,14 +306,12 @@ const SectionTransaction = () => {
 
 	const idSearch = async (id) => {
 		try {
-			/*	text returned from input dialog is always a string but we can use a couple of techniques to convert it to a valid number
-				Technique 1: use the unary plus operator which is what i've adopted below
-				Technique 2: multiply by a number. 
-				etc	*/
-			if(!+id){
-				toast.error('Please enter a valid number');
-				return;
-			}
+			positiveNumberMiscParamSchema.validateSync(id);
+		} catch (error) {
+			toast.error(error.message);
+			return;
+		}
+		try {
 			setNetworkRequest(true);
 			resetPage();
 	
@@ -344,6 +347,10 @@ const SectionTransaction = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -381,6 +388,10 @@ const SectionTransaction = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -430,6 +441,10 @@ const SectionTransaction = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
@@ -451,6 +466,10 @@ const SectionTransaction = () => {
 			setNetworkRequest(false);
 		} catch (error) {
             setNetworkRequest(false);
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
