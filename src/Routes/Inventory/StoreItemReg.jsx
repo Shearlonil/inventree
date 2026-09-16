@@ -88,12 +88,6 @@ const StoreItemReg = () => {
 
 	const initialize = async () => {
 		try {
-			positiveNumberMiscParamSchema.validateSync(stock_rec_id);
-		} catch (error) {
-			toast.error(error.message);
-			return;
-		}
-		try {
 			setNetworkRequest(true);
 			resetPageStates();
             controllerRef.current = new AbortController();
@@ -122,6 +116,12 @@ const StoreItemReg = () => {
 	}
 
 	const initializeWithStockRec = async () => {
+		try {
+			positiveNumberMiscParamSchema.validateSync(stock_rec_id);
+		} catch (error) {
+			toast.error(error.message);
+			return;
+		}
 		try {
 			setNetworkRequest(true);
 			resetAbortController();

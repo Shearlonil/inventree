@@ -27,7 +27,7 @@ const OffcanvasMenu = ({ menuItems, menuItemClick = () => {}, variant="success" 
 			</div>
 
 			<Offcanvas show={show} onHide={handleClose} placement="start">
-				<Offcanvas.Header closeButton>
+				<Offcanvas.Header closeButton className="align-items-start">
 					<Offcanvas.Title>
 						<img src={IMAGES.logo} width={"120px"} />
 					</Offcanvas.Title>

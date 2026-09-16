@@ -59,7 +59,7 @@ const Login = () => {
             navigate("/");
         } catch (ex) {
             setIsLoggingIn(false);
-            if (error.name === 'AbortError' || error.name === 'CanceledError') {
+            if (ex.name === 'AbortError' || ex.name === 'CanceledError') {
                 // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
                 return;
             }

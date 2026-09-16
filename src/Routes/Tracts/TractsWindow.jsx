@@ -301,7 +301,7 @@ const TractsWindow = () => {
         }
     };
     
-    const dnDeleteTract = async (destinationTract) => {
+    const fnDeleteTract = async (destinationTract) => {
         setShowDropDownModal(false);
         if(entityToEdit.id === destinationTract.id){
             toast.error('Deleted Section and Destination Section cannot be same');
@@ -435,7 +435,7 @@ const TractsWindow = () => {
             <DropDownDialog
                 show={showDropDownModal}
                 handleClose={handleCloseModal}
-                handleConfirm={dnDeleteTract}
+                handleConfirm={fnDeleteTract}
                 message={'Select destination Section where items will be moved to'}
                 options={tractOptions}
             />

@@ -14,14 +14,14 @@ const AuthContext = createContext();
 */
 export const AuthProvider = ({ children }) => {
     //  const [jwtToken, setJwtToken] = useCookieStorage(AppConstants.jwtStorageTitle, null);
-    const { xhrAios, setAxiosToken } = useAxiosInterceptor();
+    const { xhrAxios, setAxiosToken } = useAxiosInterceptor();
     const { getJwtToken, setJwtTokenValue } = useToken();
     const accessToken = getJwtToken();
     const navigate = useNavigate();
 
     // call this function when you want to authenticate the user
     const login = async (loginDetails) => {
-        const response = await xhrAios.post("/login", loginDetails);
+        const response = await xhrAxios.post("/login", loginDetails);
         //  remove the token prefix from the token for jwtDecode to decode the token
         // const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
         const jwt = response.headers[AppConstants.jwtStorageTitle];
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }) => {
 
     // call this function to sign out logged in user
     const logout = async (route) => {
-        await xhrAios.get("/signout");
+        await xhrAxios.get("/signout");
         setJwtTokenValue(null);
         if (route) {
             navigate(route, { replace: true });
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const updateProfile = async (signal, data) => {
-        const response = await xhrAios.put(`/api/users/profile/update`, data, {signal});
+        const response = await xhrAxios.put(`/api/users/profile/update`, data, {signal});
         //  remove the token prefix from the token for jwtDecode to decode the token
         const jwt = response.headers[AppConstants.jwtStorageTitle].replace(AppConstants.TOKEN_PREFIX, "");
         setJwtTokenValue(jwt);

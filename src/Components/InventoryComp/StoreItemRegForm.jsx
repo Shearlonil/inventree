@@ -5,6 +5,7 @@ import Datetime from "react-datetime";
 import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { toast } from "react-toastify";
+import numeral from "numeral";
 import { useNavigate } from "react-router-dom";
 
 import { storeItemRegSchema } from "../../Utils/yup-schema-validator/store-form-schema";
@@ -16,7 +17,6 @@ import { Packaging } from "../../Entities/Packaging";
 import { Vendor } from '../../Entities/Vendor';
 import { Tract } from '../../Entities/Tract';
 import { ThreeDotLoading } from "../react-loading-indicators/Indicator";
-import numeral from "numeral";
 import useGenericController from "../../Controllers/generic-controller-hook";
 
 //	ref:	https://help.nextar.com/tutorial/stock-control
@@ -128,6 +128,10 @@ const StoreItemRegForm = (props) => {
 				setUnitStockPrice(data.unitStockPrice);
 			}
 		} catch (error) {
+            if (error.name === 'AbortError' || error.name === 'CanceledError' || (error.response?.status === 500 && error.response?.data.message === "Invalid Token received!")) {
+                // Request was intentionally aborted or Invalid Bearer Token received which requires refresh, handle silently
+                return;
+            }
             // Incase of 401 Unauthorized, navigate to 404
             if(error.response?.status === 401){
                 navigate('/404');
