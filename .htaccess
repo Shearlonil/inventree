@@ -1,0 +1,8 @@
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [QSA,L]
+# Apache config
+<FilesMatch ".(eot|ttf|otf|woff|woff2)">
+Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
